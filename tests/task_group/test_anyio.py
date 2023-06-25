@@ -5,7 +5,7 @@ from itertools import combinations
 
 import pytest
 
-from async_wrapper.task_group import get_taskgroup_wrapper
+from async_wrapper import get_taskgroup_wrapper
 from async_wrapper.task_group._anyio import wrap_soon
 from async_wrapper.task_group.base import SoonValue
 
