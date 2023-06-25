@@ -42,11 +42,6 @@ class SoonWrapper(
         func: Callable[OtherParamT, Awaitable[OtherValueT_co]],
         task_group: TaskGroup,
     ) -> SoonWrapper[OtherParamT, OtherValueT_co]:
-        try:
-            import anyio  # type: ignore # noqa: F401
-        except (ImportError, ModuleNotFoundError) as exc:
-            raise ImportError("install extas anyio first") from exc
-
         return super().__new__(cls, func, task_group)  # type: ignore
 
     @override

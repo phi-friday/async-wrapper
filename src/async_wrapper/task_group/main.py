@@ -9,21 +9,21 @@ if TYPE_CHECKING:
 
 __all__ = ["get_taskgroup_wrapper"]
 
-DEFAULT_BACKEND = "anyio"
-TaskGroupBackendType = Literal["anyio", "asyncio"]
+DEFAULT_BACKEND = "asyncio"
+TaskGroupBackendType = Literal["asyncio", "anyio"]
 
 
 @overload
 def get_taskgroup_wrapper(
-    backend: Literal["anyio"] | None = ...,
-) -> type[anyio_taskgroup.SoonWrapper]:
+    backend: Literal["asyncio"] | None = ...,
+) -> type[asyncio_taskgroup.SoonWrapper]:
     ...
 
 
 @overload
 def get_taskgroup_wrapper(
-    backend: Literal["asyncio"] = ...,
-) -> type[asyncio_taskgroup.SoonWrapper]:
+    backend: Literal["anyio"] = ...,
+) -> type[anyio_taskgroup.SoonWrapper]:
     ...
 
 
