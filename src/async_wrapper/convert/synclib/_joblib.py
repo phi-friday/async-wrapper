@@ -8,13 +8,6 @@ from typing_extensions import ParamSpec
 
 from async_wrapper.convert.synclib.base import as_sync_func
 
-try:
-    from joblib.externals.loky.process_executor import (  # type: ignore
-        ProcessPoolExecutor,  # type: ignore
-    )
-except (ImportError, ModuleNotFoundError) as exc:
-    raise ImportError("install extas joblib first") from exc
-
 ValueT = TypeVar("ValueT")
 ParamT = ParamSpec("ParamT")
 
@@ -24,6 +17,13 @@ __all__ = ["async_to_sync"]
 def async_to_sync(
     func: Callable[ParamT, Awaitable[ValueT]],
 ) -> Callable[ParamT, ValueT]:
+    try:
+        from joblib.externals.loky.process_executor import (  # type: ignore
+            ProcessPoolExecutor,  # type: ignore
+        )
+    except (ImportError, ModuleNotFoundError) as exc:
+        raise ImportError("install extas joblib first") from exc
+
     sync_func = as_sync_func(func)
 
     @wraps(func)
