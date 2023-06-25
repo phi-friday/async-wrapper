@@ -54,4 +54,4 @@ async def main():
 
 ## License
 
-MIT, see [LICENSE](https://github.com/phi-friday/timeout-executor/blob/main/LICENSE).
+MIT, see [LICENSE](https://github.com/phi-friday/async-wrapper/blob/main/LICENSE).

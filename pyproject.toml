@@ -1,10 +1,12 @@
 [tool.poetry]
 name = "async-wrapper"
 version = "0.0.0"
-description = ""
+description = "async wrapper"
 authors = ["phi <phi.friday@gmail.com>"]
-license = "MIT License"
 readme = "README.md"
+license = "MIT License"
+homepage = "https://github.com/phi-friday/async-wrapper"
+repository = "https://github.com/phi-friday/async-wrapper"
 packages = [{ include = "async_wrapper", from = 'src' }]
 
 [tool.poetry.dependencies]
