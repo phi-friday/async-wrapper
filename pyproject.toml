@@ -11,6 +11,7 @@ packages = [{ include = "async_wrapper", from = 'src' }]
 python = ">=3.8"
 typing-extensions = "^4.6.3"
 anyio = "^3.7.0"
+aiotools = { version = "^1.6.1", python = "<3.11" }
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.0.275"
