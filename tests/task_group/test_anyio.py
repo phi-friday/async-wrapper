@@ -31,11 +31,11 @@ async def test_soon_value(x: int):
     wrapper = get_taskgroup_wrapper("anyio")
 
     async def sample_func(value: int) -> int:
-        await anyio.sleep(EPSILON)
+        await anyio.sleep(EPSILON)  # type: ignore
         return value
 
     start = time.perf_counter()
-    async with anyio.create_task_group() as task_group:
+    async with anyio.create_task_group() as task_group:  # type: ignore
         value = wrapper(sample_func, task_group)(x)
     end = time.perf_counter()
     term = end - start
@@ -52,11 +52,11 @@ async def test_soon_value_many(x: int, y: int):
     wrapper = get_taskgroup_wrapper("anyio")
 
     async def sample_func(value: int) -> int:
-        await anyio.sleep(EPSILON)
+        await anyio.sleep(EPSILON)  # type: ignore
         return value
 
     start = time.perf_counter()
-    async with anyio.create_task_group() as task_group:
+    async with anyio.create_task_group() as task_group:  # type: ignore
         wrapped = wrapper(sample_func, task_group)
         value_x = wrapped(x)
         value_y = wrapped(y)
