@@ -13,7 +13,7 @@ pytest.importorskip("anyio")
 
 
 try:
-    import anyio
+    import anyio  # type: ignore
 except (ImportError, ModuleNotFoundError) as exc:
     raise ImportError("install extas anyio first") from exc
 
