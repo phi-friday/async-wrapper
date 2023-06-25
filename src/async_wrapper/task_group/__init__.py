@@ -1,5 +1,5 @@
 from __future__ import annotations
 
-from . import anyio, asyncio
+from .main import get_taskgroup_wrapper
 
-__all__ = ["anyio", "asyncio"]
+__all__ = ["get_taskgroup_wrapper"]

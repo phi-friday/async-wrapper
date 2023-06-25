@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 __all__ = ["get_async_convertor"]
 
 DEFAULT_BACKEND = "thread"
-AsyncBackendType = Literal["greenletio", "thread"]
+AsyncBackendType = Literal["thread"]
 
 
 def get_async_convertor(
@@ -18,7 +18,7 @@ def get_async_convertor(
     """get async convertor
 
     Args:
-        backend: greenletio or thread. Defaults to None.
+        backend: thread. Defaults to None.
 
     Returns:
         sync to async

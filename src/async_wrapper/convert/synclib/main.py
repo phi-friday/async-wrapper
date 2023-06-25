@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 __all__ = ["get_sync_convertor"]
 
 DEFAULT_BACKEND = "thread"
-SyncBackendType = Literal["greenletio", "thread"]
+SyncBackendType = Literal["thread"]
 
 
 def get_sync_convertor(
@@ -18,7 +18,7 @@ def get_sync_convertor(
     """get sync convertor
 
     Args:
-        backend: greenletio or thread. Defaults to None.
+        backend: thread. Defaults to None.
 
     Returns:
         async to sync

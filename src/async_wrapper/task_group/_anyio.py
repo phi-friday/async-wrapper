@@ -1,7 +1,15 @@
 from __future__ import annotations
 
 from functools import partial, wraps
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Generic, TypeVar
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Coroutine,
+    Generic,
+    TypeVar,
+    final,
+)
 
 from typing_extensions import ParamSpec, override
 
@@ -12,39 +20,44 @@ try:
 except (ImportError, ModuleNotFoundError):
     from typing import Any as TaskGroup
 
-if TYPE_CHECKING:
-    from typing_extensions import Self
 
 ValueT = TypeVar("ValueT")
+ValueT_co = TypeVar("ValueT_co", covariant=True)
+OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
 ParamT = ParamSpec("ParamT")
+OtherParamT = ParamSpec("OtherParamT")
 
 __all__ = ["SoonWrapper", "wrap_soon"]
 
 
-class SoonWrapper(BaseSoonWrapper[TaskGroup, ParamT, ValueT], Generic[ParamT, ValueT]):
+@final
+class SoonWrapper(
+    BaseSoonWrapper[TaskGroup, ParamT, ValueT_co],
+    Generic[ParamT, ValueT_co],
+):
     @override
     def __new__(
         cls,
-        func: Callable[ParamT, Awaitable[ValueT]],
+        func: Callable[OtherParamT, Awaitable[OtherValueT_co]],
         task_group: TaskGroup,
-    ) -> Self:
+    ) -> SoonWrapper[OtherParamT, OtherValueT_co]:
         try:
             import anyio  # type: ignore # noqa: F401
         except (ImportError, ModuleNotFoundError) as exc:
             raise ImportError("install extas anyio first") from exc
 
-        return super().__new__(cls)
+        return super().__new__(cls, func, task_group)  # type: ignore
 
     @override
     def __init__(
         self,
-        func: Callable[ParamT, Awaitable[ValueT]],
+        func: Callable[ParamT, Awaitable[ValueT_co]],
         task_group: TaskGroup,
     ) -> None:
         super().__init__(func, task_group)
 
         def outer(
-            result: SoonValue[ValueT],
+            result: SoonValue[ValueT_co],
         ) -> Callable[ParamT, None]:
             @wraps(self.func)
             def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> None:
@@ -61,8 +74,8 @@ class SoonWrapper(BaseSoonWrapper[TaskGroup, ParamT, ValueT], Generic[ParamT, Va
         self,
         *args: ParamT.args,
         **kwargs: ParamT.kwargs,
-    ) -> SoonValue[ValueT]:
-        result: SoonValue[ValueT] = SoonValue()
+    ) -> SoonValue[ValueT_co]:
+        result: SoonValue[ValueT_co] = SoonValue()
         self._func(result)(*args, **kwargs)
         return result
 
