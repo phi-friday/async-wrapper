@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 from functools import partial, wraps
-from typing import Any, Awaitable, Callable, Coroutine, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Generic, TypeVar
 
-from anyio.abc import TaskGroup
 from typing_extensions import ParamSpec, override
 
 from async_wrapper.task_group.base import BaseSoonWrapper, SoonValue
+
+try:
+    from anyio.abc import TaskGroup  # type: ignore
+except (ImportError, ModuleNotFoundError):
+    from typing import Any as TaskGroup
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 ValueT = TypeVar("ValueT")
 ParamT = ParamSpec("ParamT")
@@ -15,6 +22,19 @@ __all__ = ["SoonWrapper", "wrap_soon"]
 
 
 class SoonWrapper(BaseSoonWrapper[TaskGroup, ParamT, ValueT], Generic[ParamT, ValueT]):
+    @override
+    def __new__(
+        cls,
+        func: Callable[ParamT, Awaitable[ValueT]],
+        task_group: TaskGroup,
+    ) -> Self:
+        try:
+            import anyio  # type: ignore # noqa: F401
+        except (ImportError, ModuleNotFoundError) as exc:
+            raise ImportError("install extas anyio first") from exc
+
+        return super().__new__(cls)
+
     @override
     def __init__(
         self,
