@@ -11,11 +11,13 @@ packages = [{ include = "async_wrapper", from = 'src' }]
 python = ">=3.8"
 typing-extensions = "^4.6.3"
 anyio = { version = "^3.7.0", optional = true }
+joblib = {version = "^1.2.0", optional = true}
 aiotools = { version = "^1.6.1", python = "<3.11" }
 
 [tool.poetry.extras]
-all = ['anyio']
+all = ['anyio', 'joblib']
 anyio = ['anyio']
+joblib = ['joblib']
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.0.275"
