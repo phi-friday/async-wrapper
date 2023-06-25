@@ -1,6 +1,9 @@
-# timeout-executor
+# async-wrapper
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![github action](https://github.com/phi-friday/async-wrapper/actions/workflows/check.yaml/badge.svg?event=push&branch=dev)](#)
+[![PyPI version](https://badge.fury.io/py/async-wrapper.svg)](https://badge.fury.io/py/async-wrapper)
+[![python version](https://img.shields.io/pypi/pyversions/async_wrapper.svg)](#)
 
 ## how to install
 ```shell
