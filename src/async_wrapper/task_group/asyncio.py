@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import sys
-
-if sys.version_info < (3, 11):
-    raise ModuleNotFoundError("asyncio.task_group >= 3.11")
-
-from asyncio.taskgroups import TaskGroup  # type: ignore
 from functools import partial, wraps
-from typing import Any, Awaitable, Callable, Coroutine, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Generic, TypeVar
 
 from typing_extensions import ParamSpec, override
 
 from async_wrapper.task_group.base import BaseSoonWrapper, SoonValue
+
+if sys.version_info >= (3, 11):
+    from asyncio.taskgroups import TaskGroup  # type: ignore
+else:
+    from typing import Any as TaskGroup
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 ValueT = TypeVar("ValueT")
 ParamT = ParamSpec("ParamT")
@@ -20,6 +23,16 @@ __all__ = ["SoonWrapper", "wrap_soon"]
 
 
 class SoonWrapper(BaseSoonWrapper[TaskGroup, ParamT, ValueT], Generic[ParamT, ValueT]):
+    @override
+    def __new__(
+        cls,
+        func: Callable[ParamT, Awaitable[ValueT]],
+        task_group: TaskGroup,
+    ) -> Self:
+        if sys.version_info < (3, 11):
+            raise ModuleNotFoundError("asyncio.taskgroups >= 3.11")
+        return super().__new__(cls)
+
     @override
     def __init__(
         self,
