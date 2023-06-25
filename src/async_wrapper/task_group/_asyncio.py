@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from functools import partial, wraps
 from typing import (
+    TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
@@ -36,13 +37,15 @@ class SoonWrapper(
     BaseSoonWrapper[TaskGroup, ParamT, ValueT_co],
     Generic[ParamT, ValueT_co],
 ):
-    @override
-    def __new__(
-        cls,
-        func: Callable[OtherParamT, Awaitable[OtherValueT_co]],
-        task_group: TaskGroup,
-    ) -> SoonWrapper[OtherParamT, OtherValueT_co]:
-        return super().__new__(cls, func, task_group)  # type: ignore
+    if TYPE_CHECKING:
+
+        @override
+        def __new__(
+            cls,
+            func: Callable[OtherParamT, Awaitable[OtherValueT_co]],
+            task_group: TaskGroup,
+        ) -> SoonWrapper[OtherParamT, OtherValueT_co]:
+            ...
 
     @override
     def __init__(
