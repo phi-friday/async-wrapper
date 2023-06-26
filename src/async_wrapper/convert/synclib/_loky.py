@@ -18,11 +18,11 @@ def async_to_sync(
     func: Callable[ParamT, Awaitable[ValueT]],
 ) -> Callable[ParamT, ValueT]:
     try:
-        from joblib.externals.loky.process_executor import (  # type: ignore
+        from loky.process_executor import (  # type: ignore
             ProcessPoolExecutor,  # type: ignore
         )
     except (ImportError, ModuleNotFoundError) as exc:
-        raise ImportError("install extas joblib first") from exc
+        raise ImportError("install extas loky first") from exc
 
     sync_func = as_sync_func(func)
 

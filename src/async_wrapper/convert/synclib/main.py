@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 __all__ = ["get_sync_convertor"]
 
 DEFAULT_BACKEND = "thread"
-SyncBackendType = Literal["thread", "joblib"]
+SyncBackendType = Literal["thread", "loky"]
 
 
 def get_sync_convertor(
@@ -18,7 +18,7 @@ def get_sync_convertor(
     """get sync convertor
 
     Args:
-        backend: thread or joblib. Defaults to None.
+        backend: thread or loky. Defaults to None.
 
     Returns:
         async to sync

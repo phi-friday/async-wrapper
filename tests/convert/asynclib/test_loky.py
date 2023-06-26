@@ -7,24 +7,24 @@ import time
 import pytest
 
 from async_wrapper import sync_to_async, toggle_func
-from async_wrapper.convert.asynclib._joblib import (
-    sync_to_async as sync_to_async_as_joblib,
+from async_wrapper.convert.asynclib._loky import (
+    sync_to_async as sync_to_async_as_loky,
 )
 
-pytest.importorskip("joblib")
+pytest.importorskip("loky")
 
 EPSILON = 0.3
 
 
 def test_correct_async_convertor():
-    convertor = sync_to_async("joblib")
-    assert convertor is sync_to_async_as_joblib
+    convertor = sync_to_async("loky")
+    assert convertor is sync_to_async_as_loky
 
 
 @pytest.mark.asyncio()
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_async_to_sync(x: int):
-    @sync_to_async_as_joblib
+    @sync_to_async_as_loky
     def sample(x: int) -> None:
         time.sleep(EPSILON * x)
 
@@ -38,7 +38,7 @@ async def test_async_to_sync(x: int):
 @pytest.mark.asyncio()
 @pytest.mark.parametrize("x", range(2, 5))
 async def test_async_to_sync_gather(x: int):
-    @sync_to_async_as_joblib
+    @sync_to_async_as_loky
     def sample(x: int) -> None:
         time.sleep(EPSILON * x)
 
