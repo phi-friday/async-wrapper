@@ -13,7 +13,7 @@ $ pip install "async_wrapper[all]"
 # or
 $ pip install "async_wrapper[anyio]"
 # or
-$ pip install "async_wrapper[joblib]"
+$ pip install "async_wrapper[loky]"
 ```
 
 ## how to use
