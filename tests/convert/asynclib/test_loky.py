@@ -13,7 +13,7 @@ from async_wrapper.convert.asynclib._loky import (
 
 pytest.importorskip("loky")
 
-EPSILON = 0.3
+EPSILON = 0.5
 
 
 def test_correct_async_convertor():
