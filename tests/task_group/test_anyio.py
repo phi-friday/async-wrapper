@@ -1,50 +1,52 @@
 from __future__ import annotations
 
-import asyncio
-import sys
 import time
 from itertools import combinations
 
 import pytest
 
-from async_wrapper import get_taskgroup_factory, get_taskgroup_wrapper
-from async_wrapper.taskgroup._asyncio import wrap_soon
-from async_wrapper.taskgroup.base import SoonValue
+from async_wrapper import get_task_group_factory, get_task_group_wrapper
+from async_wrapper.task_group._anyio import wrap_soon
+from async_wrapper.task_group.base import SoonValue
 
-if sys.version_info < (3, 11):
-    from aiotools.taskgroup import TaskGroup  # type: ignore
-else:
-    from asyncio.taskgroups import TaskGroup  # type: ignore
+pytest.importorskip("anyio")
 
+
+try:
+    import anyio  # type: ignore
+except ImportError as exc:
+    raise ImportError("install extas anyio first") from exc
 
 EPSILON = 0.1
 
 
 def test_correct_wrapper():
-    wrapper = get_taskgroup_wrapper("asyncio")
+    wrapper = get_task_group_wrapper("anyio")
     assert wrapper is wrap_soon
 
 
 @pytest.mark.asyncio()
-async def test_correct_taskgroup():
-    factory = get_taskgroup_factory("asyncio")
-    taskgroup = factory()
-    assert isinstance(taskgroup, TaskGroup)
+async def test_correct_task_group():
+    factory = get_task_group_factory("anyio")
+    task_group = factory()
+    task_group_from_anyio = anyio.create_task_group()  # type: ignore
+    assert isinstance(task_group, type(task_group_from_anyio))
+    assert isinstance(task_group_from_anyio, type(task_group))
 
 
 @pytest.mark.asyncio()
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_soon_value(x: int):
-    wrapper = get_taskgroup_wrapper("asyncio")
-    factory = get_taskgroup_factory("asyncio")
+    wrapper = get_task_group_wrapper("anyio")
+    factory = get_task_group_factory("anyio")
 
     async def sample_func(value: int) -> int:
-        await asyncio.sleep(EPSILON)
+        await anyio.sleep(EPSILON)  # type: ignore
         return value
 
     start = time.perf_counter()
-    async with factory() as taskgroup:
-        value = wrapper(sample_func, taskgroup)(x)
+    async with factory() as task_group:
+        value = wrapper(sample_func, task_group)(x)
     end = time.perf_counter()
     term = end - start
     assert EPSILON < term < EPSILON + EPSILON
@@ -57,16 +59,16 @@ async def test_soon_value(x: int):
 @pytest.mark.asyncio()
 @pytest.mark.parametrize(("x", "y"), combinations(range(1, 4), 2))
 async def test_soon_value_many(x: int, y: int):
-    wrapper = get_taskgroup_wrapper("asyncio")
-    factory = get_taskgroup_factory("asyncio")
+    wrapper = get_task_group_wrapper("anyio")
+    factory = get_task_group_factory("anyio")
 
     async def sample_func(value: int) -> int:
-        await asyncio.sleep(EPSILON)
+        await anyio.sleep(EPSILON)  # type: ignore
         return value
 
     start = time.perf_counter()
-    async with factory() as taskgroup:
-        wrapped = wrapper(sample_func, taskgroup)
+    async with factory() as task_group:
+        wrapped = wrapper(sample_func, task_group)
         value_x = wrapped(x)
         value_y = wrapped(y)
     end = time.perf_counter()

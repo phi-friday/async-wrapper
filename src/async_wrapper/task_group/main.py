@@ -4,40 +4,40 @@ import importlib
 from typing import TYPE_CHECKING, Literal, overload
 
 if TYPE_CHECKING:
-    from async_wrapper.taskgroup import _anyio as anyio_taskgroup
-    from async_wrapper.taskgroup import _asyncio as asyncio_taskgroup
-    from async_wrapper.taskgroup.base import TaskGroupFactory
+    from async_wrapper.task_group import _anyio as anyio_task_group
+    from async_wrapper.task_group import _asyncio as asyncio_task_group
+    from async_wrapper.task_group.base import TaskGroupFactory
 
-__all__ = ["get_taskgroup_wrapper", "get_taskgroup_factory"]
+__all__ = ["get_task_group_wrapper", "get_task_group_factory"]
 
 DEFAULT_BACKEND = "asyncio"
 TaskGroupBackendType = Literal["asyncio", "anyio"]
 
 
 @overload
-def get_taskgroup_wrapper(
+def get_task_group_wrapper(
     backend: Literal["asyncio"] | None = ...,
-) -> type[asyncio_taskgroup.SoonWrapper]:
+) -> type[asyncio_task_group.SoonWrapper]:
     ...
 
 
 @overload
-def get_taskgroup_wrapper(
+def get_task_group_wrapper(
     backend: Literal["anyio"] = ...,
-) -> type[anyio_taskgroup.SoonWrapper]:
+) -> type[anyio_task_group.SoonWrapper]:
     ...
 
 
-def get_taskgroup_wrapper(
+def get_task_group_wrapper(
     backend: TaskGroupBackendType | None = None,
-) -> type[anyio_taskgroup.SoonWrapper] | type[asyncio_taskgroup.SoonWrapper]:
-    """get taskgroup wrapper
+) -> type[anyio_task_group.SoonWrapper] | type[asyncio_task_group.SoonWrapper]:
+    """get task group wrapper
 
     Args:
         backend: anyio or asyncio. Defaults to None.
 
     Returns:
-        taskgroup soon wrapper
+        task group soon wrapper
     """
     if not backend:
         backend = DEFAULT_BACKEND
@@ -47,26 +47,26 @@ def get_taskgroup_wrapper(
 
 
 @overload
-def get_taskgroup_factory(
+def get_task_group_factory(
     backend: Literal["asyncio"] | None = ...,
-) -> TaskGroupFactory[asyncio_taskgroup.TaskGroup]:
+) -> TaskGroupFactory[asyncio_task_group.TaskGroup]:
     ...
 
 
 @overload
-def get_taskgroup_factory(
+def get_task_group_factory(
     backend: Literal["anyio"] = ...,
-) -> TaskGroupFactory[anyio_taskgroup.TaskGroup]:
+) -> TaskGroupFactory[anyio_task_group.TaskGroup]:
     ...
 
 
-def get_taskgroup_factory(
+def get_task_group_factory(
     backend: TaskGroupBackendType | None = None,
 ) -> (
-    TaskGroupFactory[asyncio_taskgroup.TaskGroup]
-    | TaskGroupFactory[anyio_taskgroup.TaskGroup]
+    TaskGroupFactory[asyncio_task_group.TaskGroup]
+    | TaskGroupFactory[anyio_task_group.TaskGroup]
 ):
-    """get taskgroup factory func
+    """get task group factory func
 
     Args:
         backend: asyncio or anyio. Defaults to None.
@@ -78,4 +78,4 @@ def get_taskgroup_factory(
         backend = DEFAULT_BACKEND
 
     module = importlib.import_module(f"._{backend}", __package__)
-    return module.get_taskgroup
+    return module.get_task_group

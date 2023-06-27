@@ -35,16 +35,16 @@ class BaseSoonWrapper(ABC, Generic[TaskGroupT, ParamT, ValueT_co]):
     def __init__(
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],
-        taskgroup: TaskGroupT,
+        task_group: TaskGroupT,
     ) -> None:
         self.func = as_coro_func(func)
-        self.taskgroup = taskgroup
+        self.task_group = task_group
 
     @override
     def __new__(
         cls,
         func: Callable[OtherParamT, Awaitable[OtherValueT_co]],
-        taskgroup: TaskGroupT,
+        task_group: TaskGroupT,
     ) -> BaseSoonWrapper[TaskGroupT, OtherParamT, OtherValueT_co]:
         return super().__new__(cls)  # type: ignore
 
