@@ -29,7 +29,7 @@ OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
 ParamT = ParamSpec("ParamT")
 OtherParamT = ParamSpec("OtherParamT")
 
-__all__ = ["SoonWrapper", "wrap_soon", "get_task_group"]
+__all__ = ["SoonWrapper", "wrap_soon", "get_taskgroup"]
 
 
 @final
@@ -43,7 +43,7 @@ class SoonWrapper(
         def __new__(
             cls,
             func: Callable[OtherParamT, Awaitable[OtherValueT_co]],
-            task_group: TaskGroup,
+            taskgroup: TaskGroup,
         ) -> SoonWrapper[OtherParamT, OtherValueT_co]:
             ...
 
@@ -51,9 +51,9 @@ class SoonWrapper(
     def __init__(
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],
-        task_group: TaskGroup,
+        taskgroup: TaskGroup,
     ) -> None:
-        super().__init__(func, task_group)
+        super().__init__(func, taskgroup)
 
         def outer(
             result: SoonValue[ValueT_co],
@@ -62,7 +62,7 @@ class SoonWrapper(
             def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> None:
                 partial_func = partial(self.func, *args, **kwargs)
                 set_value_func = partial(_set_value, partial_func, result)
-                task_group.create_task(set_value_func())
+                taskgroup.create_task(set_value_func())
 
             return inner
 
@@ -88,4 +88,4 @@ async def _set_value(
 
 
 wrap_soon = SoonWrapper
-get_task_group = TaskGroup
+get_taskgroup = TaskGroup

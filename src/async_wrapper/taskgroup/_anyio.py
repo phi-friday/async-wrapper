@@ -27,7 +27,7 @@ OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
 ParamT = ParamSpec("ParamT")
 OtherParamT = ParamSpec("OtherParamT")
 
-__all__ = ["SoonWrapper", "wrap_soon", "get_task_group"]
+__all__ = ["SoonWrapper", "wrap_soon", "get_taskgroup"]
 
 
 @final
@@ -39,22 +39,22 @@ class SoonWrapper(
     def __new__(
         cls,
         func: Callable[OtherParamT, Awaitable[OtherValueT_co]],
-        task_group: TaskGroup,
+        taskgroup: TaskGroup,
     ) -> SoonWrapper[OtherParamT, OtherValueT_co]:
         try:
             import anyio  # type: ignore # noqa: F401
         except (ImportError, ModuleNotFoundError) as exc:
             raise ImportError("install extas anyio first") from exc
 
-        return super().__new__(cls, func, task_group)  # type: ignore
+        return super().__new__(cls, func, taskgroup)  # type: ignore
 
     @override
     def __init__(
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],
-        task_group: TaskGroup,
+        taskgroup: TaskGroup,
     ) -> None:
-        super().__init__(func, task_group)
+        super().__init__(func, taskgroup)
 
         def outer(
             result: SoonValue[ValueT_co],
@@ -63,7 +63,7 @@ class SoonWrapper(
             def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> None:
                 partial_func = partial(self.func, *args, **kwargs)
                 set_value_func = partial(_set_value, partial_func, result)
-                task_group.start_soon(set_value_func)
+                taskgroup.start_soon(set_value_func)
 
             return inner
 
@@ -80,7 +80,7 @@ class SoonWrapper(
         return result
 
 
-def get_task_group() -> TaskGroup:
+def get_taskgroup() -> TaskGroup:
     try:
         from anyio import create_task_group  # type: ignore
     except ImportError as exc:

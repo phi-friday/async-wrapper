@@ -85,4 +85,4 @@ def get_taskgroup_factory(
         backend = DEFAULT_BACKEND
 
     module = importlib.import_module(f"._{backend}", __package__)
-    return module.get_task_group
+    return module.get_taskgroup

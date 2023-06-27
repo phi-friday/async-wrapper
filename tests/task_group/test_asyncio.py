@@ -35,8 +35,8 @@ async def test_soon_value(x: int):
         return value
 
     start = time.perf_counter()
-    async with TaskGroup() as task_group:
-        value = wrapper(sample_func, task_group)(x)
+    async with TaskGroup() as taskgroup:
+        value = wrapper(sample_func, taskgroup)(x)
     end = time.perf_counter()
     term = end - start
     assert EPSILON < term < EPSILON + EPSILON
@@ -56,8 +56,8 @@ async def test_soon_value_many(x: int, y: int):
         return value
 
     start = time.perf_counter()
-    async with TaskGroup() as task_group:
-        wrapped = wrapper(sample_func, task_group)
+    async with TaskGroup() as taskgroup:
+        wrapped = wrapper(sample_func, taskgroup)
         value_x = wrapped(x)
         value_y = wrapped(y)
     end = time.perf_counter()

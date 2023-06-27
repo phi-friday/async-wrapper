@@ -35,8 +35,8 @@ async def test_soon_value(x: int):
         return value
 
     start = time.perf_counter()
-    async with anyio.create_task_group() as task_group:  # type: ignore
-        value = wrapper(sample_func, task_group)(x)
+    async with anyio.create_task_group() as taskgroup:  # type: ignore
+        value = wrapper(sample_func, taskgroup)(x)
     end = time.perf_counter()
     term = end - start
     assert EPSILON < term < EPSILON + EPSILON
@@ -56,8 +56,8 @@ async def test_soon_value_many(x: int, y: int):
         return value
 
     start = time.perf_counter()
-    async with anyio.create_task_group() as task_group:  # type: ignore
-        wrapped = wrapper(sample_func, task_group)
+    async with anyio.create_task_group() as taskgroup:  # type: ignore
+        wrapped = wrapper(sample_func, taskgroup)
         value_x = wrapped(x)
         value_y = wrapped(y)
     end = time.perf_counter()
