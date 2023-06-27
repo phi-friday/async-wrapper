@@ -2,13 +2,21 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from threading import local
-from typing import Any, Awaitable, Callable, Generic, TypeVar
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Generic,
+    Protocol,
+    TypeVar,
+)
 
 from typing_extensions import ParamSpec, override
 
 from async_wrapper.convert.synclib.base import as_coro_func
 
 TaskGroupT = TypeVar("TaskGroupT")
+TaskGroupT_co = TypeVar("TaskGroupT_co", covariant=True)
 ValueT = TypeVar("ValueT")
 ValueT_co = TypeVar("ValueT_co", covariant=True)
 OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
@@ -16,7 +24,7 @@ ParamT = ParamSpec("ParamT")
 OtherParamT = ParamSpec("OtherParamT")
 Pending = local()
 
-__all__ = ["PendingError", "BaseSoonWrapper", "SoonValue"]
+__all__ = ["PendingError", "BaseSoonWrapper", "SoonValue", "TaskGroupFactory"]
 
 
 class PendingError(Exception):
@@ -70,3 +78,8 @@ class SoonValue(Generic[ValueT_co]):
     @property
     def is_ready(self) -> bool:  # noqa: D102
         return self._value is not Pending
+
+
+class TaskGroupFactory(Protocol[TaskGroupT_co]):
+    def __call__(self) -> TaskGroupT_co:  # noqa: D102
+        ...

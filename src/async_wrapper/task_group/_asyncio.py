@@ -29,7 +29,7 @@ OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
 ParamT = ParamSpec("ParamT")
 OtherParamT = ParamSpec("OtherParamT")
 
-__all__ = ["SoonWrapper", "wrap_soon"]
+__all__ = ["SoonWrapper", "wrap_soon", "get_task_group"]
 
 
 @final
@@ -88,3 +88,4 @@ async def _set_value(
 
 
 wrap_soon = SoonWrapper
+get_task_group = TaskGroup

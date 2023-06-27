@@ -27,7 +27,7 @@ OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
 ParamT = ParamSpec("ParamT")
 OtherParamT = ParamSpec("OtherParamT")
 
-__all__ = ["SoonWrapper", "wrap_soon"]
+__all__ = ["SoonWrapper", "wrap_soon", "get_task_group"]
 
 
 @final
@@ -78,6 +78,14 @@ class SoonWrapper(
         result: SoonValue[ValueT_co] = SoonValue()
         self._func(result)(*args, **kwargs)
         return result
+
+
+def get_task_group() -> TaskGroup:
+    try:
+        from anyio import create_task_group  # type: ignore
+    except ImportError as exc:
+        raise ImportError("install extas anyio first") from exc
+    return create_task_group()
 
 
 async def _set_value(
