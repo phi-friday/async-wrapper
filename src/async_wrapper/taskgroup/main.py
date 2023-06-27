@@ -4,9 +4,9 @@ import importlib
 from typing import TYPE_CHECKING, Literal, overload
 
 if TYPE_CHECKING:
-    from async_wrapper.task_group import _anyio as anyio_taskgroup
-    from async_wrapper.task_group import _asyncio as asyncio_taskgroup
-    from async_wrapper.task_group.base import TaskGroupFactory
+    from async_wrapper.taskgroup import _anyio as anyio_taskgroup
+    from async_wrapper.taskgroup import _asyncio as asyncio_taskgroup
+    from async_wrapper.taskgroup.base import TaskGroupFactory
 
 __all__ = ["get_taskgroup_wrapper", "get_taskgroup_factory"]
 

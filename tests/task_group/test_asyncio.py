@@ -8,8 +8,8 @@ from itertools import combinations
 import pytest
 
 from async_wrapper import get_taskgroup_wrapper
-from async_wrapper.task_group._asyncio import wrap_soon
-from async_wrapper.task_group.base import SoonValue
+from async_wrapper.taskgroup._asyncio import wrap_soon
+from async_wrapper.taskgroup.base import SoonValue
 
 if sys.version_info < (3, 11):
     from aiotools.taskgroup import TaskGroup  # type: ignore

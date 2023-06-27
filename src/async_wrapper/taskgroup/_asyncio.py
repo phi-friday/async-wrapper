@@ -15,7 +15,7 @@ from typing import (
 
 from typing_extensions import ParamSpec, override
 
-from async_wrapper.task_group.base import BaseSoonWrapper, SoonValue
+from async_wrapper.taskgroup.base import BaseSoonWrapper, SoonValue
 
 if sys.version_info < (3, 11):
     from aiotools.taskgroup import TaskGroup  # type: ignore
