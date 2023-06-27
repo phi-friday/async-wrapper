@@ -18,13 +18,13 @@ $ pip install "async_wrapper[loky]"
 
 ## how to use
 ```python
+from __future__ import annotations
+
 import asyncio
 
-from aiotools import TaskGroup
 # or(>=py311)
 # from asyncio.taskgroups import TaskGroup
-
-from async_wrapper import async_to_sync, get_taskgroup_wrapper
+from async_wrapper import async_to_sync, get_task_group_factory, get_task_group_wrapper
 
 
 @async_to_sync("thread")
@@ -44,8 +44,9 @@ async def sample_func_2(x: int) -> int:
 
 
 async def main():
-    wrapper = get_taskgroup_wrapper("asyncio")
-    async with TaskGroup() as task_group:
+    wrapper = get_task_group_wrapper("asyncio")
+    factory = get_task_group_factory("asyncio")
+    async with factory() as task_group:
         value_1 = wrapper(sample_func_2, task_group)(1)
         value_2 = wrapper(sample_func_2, task_group)(2)
 
