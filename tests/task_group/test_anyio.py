@@ -5,7 +5,7 @@ from itertools import combinations
 
 import pytest
 
-from async_wrapper import get_taskgroup_wrapper
+from async_wrapper import get_taskgroup_factory, get_taskgroup_wrapper
 from async_wrapper.taskgroup._anyio import wrap_soon
 from async_wrapper.taskgroup.base import SoonValue
 
@@ -26,16 +26,26 @@ def test_correct_wrapper():
 
 
 @pytest.mark.asyncio()
+async def test_correct_taskgroup():
+    factory = get_taskgroup_factory("anyio")
+    taskgroup = factory()
+    taskgroup_from_anyio = anyio.create_task_group()  # type: ignore
+    assert isinstance(taskgroup, type(taskgroup_from_anyio))
+    assert isinstance(taskgroup_from_anyio, type(taskgroup))
+
+
+@pytest.mark.asyncio()
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_soon_value(x: int):
     wrapper = get_taskgroup_wrapper("anyio")
+    factory = get_taskgroup_factory("anyio")
 
     async def sample_func(value: int) -> int:
         await anyio.sleep(EPSILON)  # type: ignore
         return value
 
     start = time.perf_counter()
-    async with anyio.create_task_group() as taskgroup:  # type: ignore
+    async with factory() as taskgroup:
         value = wrapper(sample_func, taskgroup)(x)
     end = time.perf_counter()
     term = end - start
@@ -50,13 +60,14 @@ async def test_soon_value(x: int):
 @pytest.mark.parametrize(("x", "y"), combinations(range(1, 4), 2))
 async def test_soon_value_many(x: int, y: int):
     wrapper = get_taskgroup_wrapper("anyio")
+    factory = get_taskgroup_factory("anyio")
 
     async def sample_func(value: int) -> int:
         await anyio.sleep(EPSILON)  # type: ignore
         return value
 
     start = time.perf_counter()
-    async with anyio.create_task_group() as taskgroup:  # type: ignore
+    async with factory() as taskgroup:
         wrapped = wrapper(sample_func, taskgroup)
         value_x = wrapped(x)
         value_y = wrapped(y)
