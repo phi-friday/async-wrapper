@@ -21,7 +21,7 @@ def async_to_sync(
         from loky.process_executor import (  # type: ignore
             ProcessPoolExecutor,  # type: ignore
         )
-    except (ImportError, ModuleNotFoundError) as exc:
+    except ImportError as exc:
         raise ImportError("install extas loky first") from exc
 
     sync_func = as_sync_func(func)

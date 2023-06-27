@@ -17,7 +17,7 @@ from async_wrapper.taskgroup.base import BaseSoonWrapper, SoonValue
 
 try:
     from anyio.abc import TaskGroup  # type: ignore
-except (ImportError, ModuleNotFoundError):
+except ImportError:
     from typing import Any as TaskGroup
 
 
@@ -43,7 +43,7 @@ class SoonWrapper(
     ) -> SoonWrapper[OtherParamT, OtherValueT_co]:
         try:
             import anyio  # type: ignore # noqa: F401
-        except (ImportError, ModuleNotFoundError) as exc:
+        except ImportError as exc:
             raise ImportError("install extas anyio first") from exc
 
         return super().__new__(cls, func, taskgroup)  # type: ignore
