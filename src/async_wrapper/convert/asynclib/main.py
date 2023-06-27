@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 __all__ = ["get_async_convertor"]
 
 DEFAULT_BACKEND = "thread"
-AsyncBackendType = Literal["thread"]
+AsyncBackendType = Literal["thread", "loky"]
 
 
 def get_async_convertor(
