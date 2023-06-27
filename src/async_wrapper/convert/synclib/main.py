@@ -13,7 +13,7 @@ SyncBackendType = Literal["thread", "loky"]
 
 
 def get_sync_convertor(
-    backend: SyncBackendType | str | None = None,
+    backend: SyncBackendType | None = None,
 ) -> AsyncToSync:
     """get sync convertor
 

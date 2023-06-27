@@ -28,15 +28,8 @@ def get_taskgroup_wrapper(
     ...
 
 
-@overload
 def get_taskgroup_wrapper(
-    backend: str = ...,
-) -> type[anyio_taskgroup.SoonWrapper] | type[asyncio_taskgroup.SoonWrapper]:
-    ...
-
-
-def get_taskgroup_wrapper(
-    backend: TaskGroupBackendType | str | None = None,
+    backend: TaskGroupBackendType | None = None,
 ) -> type[anyio_taskgroup.SoonWrapper] | type[asyncio_taskgroup.SoonWrapper]:
     """get taskgroup wrapper
 

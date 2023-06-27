@@ -29,7 +29,7 @@ __all__ = ["toggle_func", "async_to_sync", "sync_to_async"]
 def toggle_func(
     func: Callable[ParamT, Coroutine[Any, Any, ValueT]],
     *,
-    backend: SyncBackendType | str | None = None,
+    backend: SyncBackendType | None = None,
 ) -> Callable[ParamT, ValueT]:
     ...
 
@@ -38,7 +38,7 @@ def toggle_func(
 def toggle_func(
     func: Callable[ParamT, ValueT],
     *,
-    backend: AsyncBackendType | str | None = None,
+    backend: AsyncBackendType | None = None,
 ) -> Callable[ParamT, Coroutine[Any, Any, ValueT]]:
     ...
 
@@ -46,7 +46,7 @@ def toggle_func(
 def toggle_func(
     func: Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]],
     *,
-    backend: SyncBackendType | AsyncBackendType | str | None = None,
+    backend: SyncBackendType | AsyncBackendType | None = None,
 ) -> Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]]:
     """sync to async, async to sync
 
@@ -61,7 +61,7 @@ def toggle_func(
         convertor = get_sync_convertor(backend)
         return convertor(func)  # type: ignore
 
-    convertor = get_async_convertor(backend)
+    convertor = get_async_convertor(backend)  # type: ignore
     return convertor(func)  # type: ignore
 
 
