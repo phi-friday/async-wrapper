@@ -21,10 +21,14 @@ $ pip install "async_wrapper[loky]"
 from __future__ import annotations
 
 import asyncio
+import time
 
-# or(>=py311)
-# from asyncio.taskgroups import TaskGroup
-from async_wrapper import async_to_sync, get_task_group_factory, get_task_group_wrapper
+from async_wrapper import (
+    async_to_sync,
+    get_semaphore_class,
+    get_task_group_factory,
+    get_task_group_wrapper,
+)
 
 
 @async_to_sync("thread")
@@ -46,14 +50,24 @@ async def sample_func_2(x: int) -> int:
 async def main():
     wrapper = get_task_group_wrapper("asyncio")
     factory = get_task_group_factory("asyncio")
+    Semaphore = get_semaphore_class("asyncio")
+    semaphore = Semaphore(2)
+
+    start = time.perf_counter()
     async with factory() as task_group:
-        value_1 = wrapper(sample_func_2, task_group)(1)
-        value_2 = wrapper(sample_func_2, task_group)(2)
+        wrapped = wrapper(sample_func_2, task_group, semaphore)
+        value_1 = wrapped(1)
+        value_2 = wrapped(2)
+        value_3 = wrapped(3)
+    end = time.perf_counter()
 
     assert isinstance(value_1.value, int)
     assert isinstance(value_2.value, int)
+    assert isinstance(value_3.value, int)
     assert value_1.value == 1
     assert value_2.value == 2
+    assert value_3.value == 3
+    assert 1.5 < end - start < 2.5
 ```
 
 ## License
