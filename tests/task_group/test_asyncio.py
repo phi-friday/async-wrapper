@@ -7,7 +7,11 @@ from itertools import combinations
 
 import pytest
 
-from async_wrapper import get_task_group_factory, get_task_group_wrapper
+from async_wrapper import (
+    get_semaphore_class,
+    get_task_group_factory,
+    get_task_group_wrapper,
+)
 from async_wrapper.task_group._asyncio import wrap_soon
 from async_wrapper.task_group.base import SoonValue
 
@@ -79,3 +83,43 @@ async def test_soon_value_many(x: int, y: int):
     assert value_y.is_ready
     assert value_x.value == x
     assert value_y.value == y
+
+
+@pytest.mark.asyncio()
+async def test_semaphore():
+    wrapper = get_task_group_wrapper("asyncio")
+    factory = get_task_group_factory("asyncio")
+    semaphore = get_semaphore_class("asyncio")
+    sema = semaphore(2)
+
+    async def sample_func() -> None:
+        await asyncio.sleep(EPSILON)
+
+    start = time.perf_counter()
+    async with factory() as task_group:
+        wrapped = wrapper(sample_func, task_group, sema)
+        _ = [wrapped() for _ in range(3)]
+    end = time.perf_counter()
+    term = end - start
+    assert EPSILON * 2 < term < EPSILON * 2 + EPSILON
+
+
+@pytest.mark.asyncio()
+async def test_overwrite_semaphore():
+    wrapper = get_task_group_wrapper("asyncio")
+    factory = get_task_group_factory("asyncio")
+    semaphore = get_semaphore_class("asyncio")
+    sema = semaphore(2)
+    new_sema = semaphore(3)
+
+    async def sample_func() -> None:
+        await asyncio.sleep(EPSILON)
+
+    start = time.perf_counter()
+    async with factory() as task_group:
+        wrapped = wrapper(sample_func, task_group, sema)
+        new_wrapped = wrapped.copy(new_sema)
+        _ = [new_wrapped() for _ in range(3)]
+    end = time.perf_counter()
+    term = end - start
+    assert EPSILON < term < EPSILON + EPSILON

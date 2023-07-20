@@ -1,17 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from contextlib import AbstractAsyncContextManager
 from threading import local
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Generic,
-    Protocol,
-    TypeVar,
-)
+from typing import Any, Awaitable, Callable, Generic, Protocol, TypeVar
 
-from typing_extensions import ParamSpec, override
+from typing_extensions import ParamSpec, Self, override
 
 from async_wrapper.convert.synclib.base import as_coro_func
 
@@ -31,20 +25,28 @@ class PendingError(Exception):
     ...
 
 
+class Semaphore(AbstractAsyncContextManager, Protocol):
+    async def acquire(self) -> Any:
+        ...
+
+
 class BaseSoonWrapper(ABC, Generic[TaskGroupT, ParamT, ValueT_co]):
     def __init__(
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],
         task_group: TaskGroupT,
+        semaphore: Semaphore | None = None,
     ) -> None:
         self.func = as_coro_func(func)
         self.task_group = task_group
+        self.semaphore = semaphore
 
     @override
     def __new__(
         cls,
         func: Callable[OtherParamT, Awaitable[OtherValueT_co]],
         task_group: TaskGroupT,
+        semaphore: Semaphore | None = None,
     ) -> BaseSoonWrapper[TaskGroupT, OtherParamT, OtherValueT_co]:
         return super().__new__(cls)  # type: ignore
 
@@ -54,6 +56,10 @@ class BaseSoonWrapper(ABC, Generic[TaskGroupT, ParamT, ValueT_co]):
         *args: ParamT.args,
         **kwargs: ParamT.kwargs,
     ) -> SoonValue[ValueT_co]:
+        ...
+
+    @abstractmethod
+    def copy(self, semaphore: Semaphore | None = None) -> Self:  # noqa: D102
         ...
 
 

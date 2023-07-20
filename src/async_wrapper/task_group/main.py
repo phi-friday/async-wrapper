@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from async_wrapper.task_group import _asyncio as asyncio_task_group
     from async_wrapper.task_group.base import TaskGroupFactory
 
-__all__ = ["get_task_group_wrapper", "get_task_group_factory"]
+__all__ = ["get_task_group_wrapper", "get_task_group_factory", "get_semaphore_class"]
 
 DEFAULT_BACKEND = "asyncio"
 TaskGroupBackendType = Literal["asyncio", "anyio"]
@@ -79,3 +79,35 @@ def get_task_group_factory(
 
     module = importlib.import_module(f"._{backend}", __package__)
     return module.get_task_group
+
+
+@overload
+def get_semaphore_class(
+    backend: Literal["asyncio"] | None = ...,
+) -> type[asyncio_task_group.AsyncioSemaphore]:
+    ...
+
+
+@overload
+def get_semaphore_class(
+    backend: Literal["anyio"] = ...,
+) -> type[anyio_task_group.AnyioSemaphore]:
+    ...
+
+
+def get_semaphore_class(
+    backend: TaskGroupBackendType | None = None,
+) -> type[asyncio_task_group.AsyncioSemaphore] | type[anyio_task_group.AnyioSemaphore]:
+    """get semaphore class using in wrap func
+
+    Args:
+        backend: asyncio or anyio. Defaults to None.
+
+    Returns:
+        semaphore class
+    """
+    if not backend:
+        backend = DEFAULT_BACKEND
+
+    module = importlib.import_module(f"._{backend}", __package__)
+    return module.get_semaphore_class()

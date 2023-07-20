@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import sys
+from asyncio import Semaphore as AsyncioSemaphore
+from contextlib import AsyncExitStack
 from functools import partial, wraps
 from typing import (
     TYPE_CHECKING,
@@ -13,9 +15,9 @@ from typing import (
     final,
 )
 
-from typing_extensions import ParamSpec, override
+from typing_extensions import ParamSpec, Self, override
 
-from async_wrapper.task_group.base import BaseSoonWrapper, SoonValue
+from async_wrapper.task_group.base import BaseSoonWrapper, Semaphore, SoonValue
 
 if sys.version_info < (3, 11):
     from aiotools.taskgroup import TaskGroup  # type: ignore
@@ -29,7 +31,7 @@ OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
 ParamT = ParamSpec("ParamT")
 OtherParamT = ParamSpec("OtherParamT")
 
-__all__ = ["SoonWrapper", "wrap_soon", "get_task_group"]
+__all__ = ["SoonWrapper", "wrap_soon", "get_task_group", "get_semaphore_class"]
 
 
 @final
@@ -44,6 +46,7 @@ class SoonWrapper(
             cls,
             func: Callable[OtherParamT, Awaitable[OtherValueT_co]],
             task_group: TaskGroup,
+            semaphore: Semaphore | None = None,
         ) -> SoonWrapper[OtherParamT, OtherValueT_co]:
             ...
 
@@ -52,8 +55,9 @@ class SoonWrapper(
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],
         task_group: TaskGroup,
+        semaphore: Semaphore | None = None,
     ) -> None:
-        super().__init__(func, task_group)
+        super().__init__(func, task_group, semaphore)
 
         def outer(
             result: SoonValue[ValueT_co],
@@ -61,7 +65,7 @@ class SoonWrapper(
             @wraps(self.func)
             def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> None:
                 partial_func = partial(self.func, *args, **kwargs)
-                set_value_func = partial(_set_value, partial_func, result)
+                set_value_func = partial(_set_value, partial_func, result, semaphore)
                 task_group.create_task(set_value_func())
 
             return inner
@@ -78,12 +82,26 @@ class SoonWrapper(
         self._func(result)(*args, **kwargs)
         return result
 
+    @override
+    def copy(self, semaphore: Semaphore | None = None) -> Self:
+        if semaphore is None:
+            semaphore = self.semaphore
+        return SoonWrapper(self.func, self.task_group, semaphore)
+
+
+def get_semaphore_class() -> type[AsyncioSemaphore]:
+    return AsyncioSemaphore
+
 
 async def _set_value(
     func: Callable[[], Coroutine[Any, Any, ValueT]],
     value: SoonValue[ValueT],
+    semaphore: Semaphore | None,
 ) -> None:
-    result = await func()
+    async with AsyncExitStack() as stack:
+        if semaphore is not None:
+            await stack.enter_async_context(semaphore)
+        result = await func()
     value.value = result
 
 
