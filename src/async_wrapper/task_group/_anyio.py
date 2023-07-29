@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from asyncio import create_task, wait
-from functools import partial, wraps
+from asyncio import create_task, ensure_future, wait
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -12,7 +11,7 @@ from typing import (
     TypeVar,
     final,
 )
-from weakref import WeakSet
+from weakref import WeakSet, WeakValueDictionary
 
 from typing_extensions import ParamSpec, Self, override
 
@@ -29,7 +28,7 @@ except ImportError:
     from typing import Any as _TaskGroup
 
 if TYPE_CHECKING:
-    from asyncio import Task
+    from asyncio import Future, Task
     from types import TracebackType
 
     from anyio.abc import Semaphore as AnyioSemaphore  # type: ignore
@@ -47,7 +46,11 @@ __all__ = ["SoonWrapper", "wrap_soon", "get_task_group", "get_semaphore_class"]
 class TaskGroup(BaseTaskGroup):
     def __init__(self) -> None:
         self._task_group: _TaskGroup = _get_task_group()
-        self._tasks: WeakSet[Task[Any]] = WeakSet()
+        self._futures: WeakSet[Future[Any]] = WeakSet()
+        self._task_futures: WeakValueDictionary[
+            Task[Any],
+            Future[Any],
+        ] = WeakValueDictionary()
 
     @override
     def start_soon(
@@ -57,24 +60,30 @@ class TaskGroup(BaseTaskGroup):
         **kwargs: ParamT.kwargs,
     ) -> SoonValue[ValueT_co]:
         value = SoonValue()
-        wrapped = self._wrap_as_value(func, value)
-        self._task_group.start_soon(partial(wrapped, **kwargs), *args)
+        future = self._as_future(func, *args, **kwargs)
+        value._set_task_or_future(future)  # noqa: SLF001
+        self._task_group.start_soon(self._as_task, future)
         return value
 
-    def _wrap_as_value(
+    def _as_future(
         self,
         func: Callable[ParamT, Coroutine[Any, Any, ValueT_co]],
-        value: SoonValue[ValueT_co],
-    ) -> Callable[ParamT, Coroutine[None, None, None]]:
-        @wraps(func)
-        async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> None:
-            coro = func(*args, **kwargs)
-            task = create_task(coro)
-            value._set_task_or_future(task)  # noqa: SLF001
-            self.tasks.add(task)
-            await task
+        *args: ParamT.args,
+        **kwargs: ParamT.kwargs,
+    ) -> Future[ValueT_co]:
+        coro = func(*args, **kwargs)
+        future = ensure_future(coro)
+        self._futures.add(future)
+        return future
 
-        return inner
+    async def _as_coro(self, future: Future[ValueT_co]) -> ValueT_co:
+        return await future
+
+    async def _as_task(self, future: Future[ValueT_co]) -> ValueT_co:
+        coro = self._as_coro(future)
+        task = create_task(coro)
+        self._task_futures[task] = future
+        return await task
 
     @property
     @override
@@ -84,7 +93,7 @@ class TaskGroup(BaseTaskGroup):
     @property
     @override
     def tasks(self) -> WeakSet[Task[Any]]:
-        return self._tasks
+        return WeakSet(self._task_futures.keys())
 
     @override
     async def __aenter__(self) -> Self:
