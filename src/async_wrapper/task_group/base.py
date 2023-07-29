@@ -134,7 +134,7 @@ class SoonValue(Generic[ValueT_co]):
         if task_or_future is None:
             self._task_or_future = None
         else:
-            self.set_task_or_future(task_or_future)
+            self._set_task_or_future(task_or_future)
 
     def __repr__(self) -> str:
         status = "pending" if self._value is Pending else "done"
@@ -176,16 +176,16 @@ class SoonValue(Generic[ValueT_co]):
         future = run_coroutine_threadsafe(coro, loop=task.get_loop())
         return future.result(timeout)
 
-    def set_task_or_future(  # noqa: D102
+    def _set_task_or_future(
         self,
         task_or_future: Task[ValueT_co] | Future[ValueT_co],
     ) -> None:
         if self._value is not Pending:
             raise AttributeError("value is already setted")
-        task_or_future.add_done_callback(self.set_from_task_or_future)
+        task_or_future.add_done_callback(self._set_from_task_or_future)
         self._task_or_future = task_or_future
 
-    def set_from_task_or_future(  # noqa: D102
+    def _set_from_task_or_future(
         self,
         task_or_future: Task[ValueT_co] | Future[ValueT_co],
     ) -> None:

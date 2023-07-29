@@ -70,7 +70,7 @@ class TaskGroup(BaseTaskGroup):
         async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> None:
             coro = func(*args, **kwargs)
             task = create_task(coro)
-            value.set_task_or_future(task)
+            value._set_task_or_future(task)  # noqa: SLF001
             self.tasks.add(task)
             await task
 
