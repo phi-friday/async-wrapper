@@ -48,29 +48,27 @@ class TaskGroup(BaseTaskGroup):
     def __init__(self) -> None:
         self._task_group: _TaskGroup = _get_task_group()
         self._tasks: WeakSet[Task[Any]] = WeakSet()
-        self._semaphore = None
 
     @override
     def start_soon(
         self,
-        func: Callable[ParamT, Awaitable[ValueT_co]],
+        func: Callable[ParamT, Coroutine[Any, Any, ValueT_co]],
         *args: ParamT.args,
         **kwargs: ParamT.kwargs,
     ) -> SoonValue[ValueT_co]:
         value = SoonValue()
-        wrapped = self._wrap(func, value)
+        wrapped = self._wrap_as_value(func, value)
         self._task_group.start_soon(partial(wrapped, **kwargs), *args)
         return value
 
-    def _wrap(
+    def _wrap_as_value(
         self,
-        func: Callable[ParamT, Awaitable[ValueT_co]],
+        func: Callable[ParamT, Coroutine[Any, Any, ValueT_co]],
         value: SoonValue[ValueT_co],
     ) -> Callable[ParamT, Coroutine[None, None, None]]:
         @wraps(func)
         async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> None:
-            awaitable = func(*args, **kwargs)
-            coro = self(awaitable)
+            coro = func(*args, **kwargs)
             task = create_task(coro)
             value.set_task_or_future(task)
             self.tasks.add(task)
@@ -131,7 +129,8 @@ class SoonWrapper(
         *args: ParamT.args,
         **kwargs: ParamT.kwargs,
     ) -> SoonValue[ValueT_co]:
-        return self.task_group.start_soon(self.func, *args, **kwargs)
+        wrapped = self.task_group._wrap(self.func, self.semaphore)  # noqa: SLF001
+        return self.task_group.start_soon(wrapped, *args, **kwargs)
 
     @override
     def copy(self, semaphore: Semaphore | None = None) -> Self:

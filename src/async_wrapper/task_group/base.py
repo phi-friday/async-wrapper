@@ -3,12 +3,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from asyncio import wait
 from contextlib import AbstractAsyncContextManager, suppress
+from functools import wraps
 from threading import local
 from typing import (
     TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
+    Coroutine,
     Generic,
     Protocol,
     TypeVar,
@@ -45,12 +47,10 @@ class Semaphore(AbstractAsyncContextManager, Protocol):
 
 
 class BaseTaskGroup(ABC):
-    _semaphore: Semaphore | None
-
     @abstractmethod
     def start_soon(
         self,
-        func: Callable[ParamT, Awaitable[ValueT_co]],
+        func: Callable[ParamT, Coroutine[Any, Any, ValueT_co]],
         *args: ParamT.args,
         **kwargs: ParamT.kwargs,
     ) -> SoonValue[ValueT_co]:
@@ -60,20 +60,6 @@ class BaseTaskGroup(ABC):
     @abstractmethod
     def is_active(self) -> bool:
         ...
-
-    @property
-    def semaphore(self) -> Semaphore:
-        if self._semaphore is None:
-            raise AttributeError("there is no Semaphore")
-        return self._semaphore
-
-    @semaphore.setter
-    def semaphore(self, value: Semaphore) -> None:
-        self._semaphore = value
-
-    @semaphore.deleter
-    def semaphore(self) -> None:
-        self._semaphore = None
 
     @property
     @abstractmethod
@@ -93,12 +79,19 @@ class BaseTaskGroup(ABC):
     ) -> Any:
         ...
 
-    async def __call__(self, coro: Awaitable[ValueT_co]) -> ValueT_co:
-        if self._semaphore is None:
-            return await coro
+    @staticmethod
+    def _wrap(
+        func: Callable[ParamT, Awaitable[ValueT_co]],
+        semaphore: Semaphore | None = None,
+    ) -> Callable[ParamT, Coroutine[Any, Any, ValueT_co]]:
+        @wraps(func)
+        async def wrapped(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT_co:
+            if semaphore is None:
+                return await func(*args, **kwargs)
+            async with semaphore:
+                return await func(*args, **kwargs)
 
-        async with self.semaphore:
-            return await coro
+        return wrapped
 
 
 class BaseSoonWrapper(ABC, Generic[TaskGroupT, ParamT, ValueT_co]):
@@ -111,9 +104,6 @@ class BaseSoonWrapper(ABC, Generic[TaskGroupT, ParamT, ValueT_co]):
         self.func = func
         self.task_group = task_group
         self.semaphore = semaphore
-
-        if semaphore is not None:
-            self.task_group.semaphore = semaphore
 
     @override
     def __new__(

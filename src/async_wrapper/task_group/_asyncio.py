@@ -8,6 +8,7 @@ from typing import (
     Any,
     Awaitable,
     Callable,
+    Coroutine,
     Generic,
     TypeVar,
     final,
@@ -49,12 +50,11 @@ class TaskGroup(BaseTaskGroup):
     @override
     def start_soon(
         self,
-        func: Callable[ParamT, Awaitable[ValueT_co]],
+        func: Callable[ParamT, Coroutine[Any, Any, ValueT_co]],
         *args: ParamT.args,
         **kwargs: ParamT.kwargs,
     ) -> SoonValue[ValueT_co]:
-        awaitable = func(*args, **kwargs)
-        coro = self(awaitable)
+        coro = func(*args, **kwargs)
         task = self._task_group.create_task(coro)
         return SoonValue(task_or_future=task)
 
@@ -108,7 +108,8 @@ class SoonWrapper(
         *args: ParamT.args,
         **kwargs: ParamT.kwargs,
     ) -> SoonValue[ValueT_co]:
-        return self.task_group.start_soon(self.func, *args, **kwargs)
+        wrapped = self.task_group._wrap(self.func, self.semaphore)  # noqa: SLF001
+        return self.task_group.start_soon(wrapped, *args, **kwargs)
 
     @override
     def copy(self, semaphore: Semaphore | None = None) -> Self:
