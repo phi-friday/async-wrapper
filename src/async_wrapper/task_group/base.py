@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from asyncio import wait
+from asyncio import run_coroutine_threadsafe
 from contextlib import AbstractAsyncContextManager, suppress
 from functools import wraps
 from threading import local
@@ -17,8 +17,6 @@ from typing import (
 )
 
 from typing_extensions import ParamSpec, Self, override
-
-from async_wrapper import async_to_sync
 
 if TYPE_CHECKING:
     from asyncio import Future, Task
@@ -168,19 +166,15 @@ class SoonValue(Generic[ValueT_co]):
         with suppress(PendingError):
             return self.value
 
-        async def wrap_task() -> ValueT_co:
-            task = self._task_or_future
-            if task is None:
-                with suppress(PendingError):
-                    return self.value
-                raise AttributeError("task is None")
-            _, pending = await wait([task], timeout=timeout)
-            if pending:
-                error_msg = f"timeout! > {timeout}s"
-                raise TimeoutError(error_msg)
-            return await task
+        task = self._task_or_future
+        if task is None:
+            with suppress(PendingError):
+                return self.value
+            raise AttributeError("task is None")
 
-        return async_to_sync("thread")(wrap_task)()
+        coro = _as_coro(task)
+        future = run_coroutine_threadsafe(coro, loop=task.get_loop())
+        return future.result(timeout)
 
     def set_task_or_future(  # noqa: D102
         self,
@@ -213,3 +207,9 @@ class SoonValue(Generic[ValueT_co]):
 class TaskGroupFactory(Protocol[TaskGroupT_co]):
     def __call__(self) -> TaskGroupT_co:  # noqa: D102
         ...
+
+
+async def _as_coro(
+    task_or_future: Task[Any] | Future[Any],
+) -> Any:
+    return await task_or_future
