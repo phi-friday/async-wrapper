@@ -329,7 +329,7 @@ async def _await(future: Future[Any], timeout: float | None) -> None:
     event = anyio.Event()
     waiter = Future.new(event)
     scope = anyio.CancelScope(shield=True, deadline=timeout or math.inf)
-    callback = partial(_release, waiter=waiter, event=event, scope=scope)
+    callback = partial(_release, event=event, scope=scope)
     future.add_final_callback(callback)
 
     async with anyio.maybe_async_cm(anyio.fail_after(timeout)):
@@ -337,14 +337,14 @@ async def _await(future: Future[Any], timeout: float | None) -> None:
 
 
 def _release(
-    future: Future[Any],  # noqa: ARG001
-    waiter: Future[Any],
+    future: Future[Any],
     event: AnyioEvent,
     scope: anyio.CancelScope,
 ) -> None:
+    if not future.running:
+        raise RuntimeError("call future first")
     with scope:
-        if not waiter.done:
-            event.set()
+        event.set()
 
 
 async def _dummy(event: AnyioEvent) -> None:
