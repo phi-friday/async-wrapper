@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from asyncio import run_coroutine_threadsafe
 from contextlib import AbstractAsyncContextManager, suppress
 from functools import wraps
 from threading import local
@@ -11,15 +10,17 @@ from typing import (
     Awaitable,
     Callable,
     Coroutine,
+    Generator,
     Generic,
     Protocol,
     TypeVar,
 )
 
+import anyio
 from typing_extensions import ParamSpec, Self, override
 
 if TYPE_CHECKING:
-    from asyncio import Future, Task
+    from contextvars import Context
     from types import TracebackType
     from weakref import WeakSet
 
@@ -44,6 +45,25 @@ class Semaphore(AbstractAsyncContextManager, Protocol):
         ...
 
 
+class Futurelike(Protocol, Generic[ValueT_co]):
+    def __await__(self) -> Generator[Any, None, ValueT_co]:
+        ...
+
+    def exception(self) -> BaseException | None:
+        ...
+
+    def result(self) -> ValueT_co:
+        ...
+
+    def add_done_callback(
+        self,
+        __fn: Callable[[Self], Any],
+        *,
+        context: Context | None = None,
+    ) -> None:
+        ...
+
+
 class BaseTaskGroup(ABC):
     @abstractmethod
     def start_soon(
@@ -61,7 +81,7 @@ class BaseTaskGroup(ABC):
 
     @property
     @abstractmethod
-    def tasks(self) -> WeakSet[Task[Any]]:
+    def tasks(self) -> WeakSet[Futurelike[Any]]:
         ...
 
     @abstractmethod
@@ -128,7 +148,7 @@ class BaseSoonWrapper(ABC, Generic[TaskGroupT, ParamT, ValueT_co]):
 class SoonValue(Generic[ValueT_co]):
     def __init__(
         self,
-        task_or_future: Task[ValueT_co] | Future[ValueT_co] | None = None,
+        task_or_future: Futurelike[ValueT_co] | None = None,
     ) -> None:
         self._value = Pending
         if task_or_future is None:
@@ -172,13 +192,19 @@ class SoonValue(Generic[ValueT_co]):
                 return self.value
             raise AttributeError("task is None")
 
-        coro = _as_coro(task)
-        future = run_coroutine_threadsafe(coro, loop=task.get_loop())
-        return future.result(timeout)
+        async def wrap_task() -> ValueT_co:
+            task = self._task_or_future
+            if task is None:
+                with suppress(PendingError):
+                    return self.value
+                raise AttributeError("task is None")
+            return await _wait_for(task, timeout)
+
+        return anyio.from_thread.run(wrap_task)
 
     def _set_task_or_future(
         self,
-        task_or_future: Task[ValueT_co] | Future[ValueT_co],
+        task_or_future: Futurelike[ValueT_co],
     ) -> None:
         if self._value is not Pending:
             raise AttributeError("value is already setted")
@@ -187,7 +213,7 @@ class SoonValue(Generic[ValueT_co]):
 
     def _set_from_task_or_future(
         self,
-        task_or_future: Task[ValueT_co] | Future[ValueT_co],
+        task_or_future: Futurelike[ValueT_co],
     ) -> None:
         if task_or_future.exception() is None:
             self.value = task_or_future.result()
@@ -200,7 +226,9 @@ class TaskGroupFactory(Protocol[TaskGroupT_co]):
         ...
 
 
-async def _as_coro(
-    task_or_future: Task[Any] | Future[Any],
-) -> Any:
-    return await task_or_future
+async def _wait_for(
+    future: Futurelike[ValueT_co],
+    timeout: float | None = None,
+) -> ValueT_co:
+    async with anyio.maybe_async_cm(anyio.fail_after(timeout)):
+        return await future

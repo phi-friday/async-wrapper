@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 import time
 from functools import partial
 from itertools import combinations
 from typing import ClassVar, Final, Literal
 
+import anyio
 import pytest
 
 from async_wrapper import (
@@ -100,7 +100,7 @@ class BaseTest:
 
 
 async def sample_func(value: int, sleep: float) -> int:
-    await asyncio.sleep(sleep)
+    await anyio.sleep(sleep)
     return value
 
 

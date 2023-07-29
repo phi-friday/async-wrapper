@@ -10,21 +10,21 @@ if TYPE_CHECKING:
 
 __all__ = ["get_task_group_wrapper", "get_task_group_factory", "get_semaphore_class"]
 
-DEFAULT_BACKEND = "asyncio"
+DEFAULT_BACKEND = "anyio"
 TaskGroupBackendType = Literal["asyncio", "anyio"]
 
 
 @overload
 def get_task_group_wrapper(
-    backend: Literal["asyncio"] | None = ...,
-) -> type[asyncio_task_group.SoonWrapper]:
+    backend: Literal["anyio"] | None = ...,
+) -> type[anyio_task_group.SoonWrapper]:
     ...
 
 
 @overload
 def get_task_group_wrapper(
-    backend: Literal["anyio"] = ...,
-) -> type[anyio_task_group.SoonWrapper]:
+    backend: Literal["asyncio"] = ...,
+) -> type[asyncio_task_group.SoonWrapper]:
     ...
 
 
@@ -48,15 +48,15 @@ def get_task_group_wrapper(
 
 @overload
 def get_task_group_factory(
-    backend: Literal["asyncio"] | None = ...,
-) -> TaskGroupFactory[asyncio_task_group.TaskGroup]:
+    backend: Literal["anyio"] | None = ...,
+) -> TaskGroupFactory[anyio_task_group.TaskGroup]:
     ...
 
 
 @overload
 def get_task_group_factory(
-    backend: Literal["anyio"] = ...,
-) -> TaskGroupFactory[anyio_task_group.TaskGroup]:
+    backend: Literal["asyncio"] = ...,
+) -> TaskGroupFactory[asyncio_task_group.TaskGroup]:
     ...
 
 
@@ -83,15 +83,15 @@ def get_task_group_factory(
 
 @overload
 def get_semaphore_class(
-    backend: Literal["asyncio"] | None = ...,
-) -> type[asyncio_task_group.AsyncioSemaphore]:
+    backend: Literal["anyio"] | None = ...,
+) -> type[anyio_task_group.AnyioSemaphore]:
     ...
 
 
 @overload
 def get_semaphore_class(
-    backend: Literal["anyio"] = ...,
-) -> type[anyio_task_group.AnyioSemaphore]:
+    backend: Literal["asyncio"] = ...,
+) -> type[asyncio_task_group.AsyncioSemaphore]:
     ...
 
 
