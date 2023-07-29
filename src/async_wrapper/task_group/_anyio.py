@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from asyncio import create_task, wait
+from functools import partial, wraps
 from typing import (
     TYPE_CHECKING,
     Any,
     Awaitable,
     Callable,
+    Coroutine,
     Generic,
     TypeVar,
     final,
@@ -56,9 +58,17 @@ class TaskGroup(BaseTaskGroup):
         **kwargs: ParamT.kwargs,
     ) -> SoonValue[ValueT_co]:
         value = SoonValue()
+        wrapped = self._wrap(func, value)
+        self._task_group.start_soon(partial(wrapped, **kwargs), *args)
+        return value
 
-        async def wrapped() -> None:
-            nonlocal value
+    def _wrap(
+        self,
+        func: Callable[ParamT, Awaitable[ValueT_co]],
+        value: SoonValue[ValueT_co],
+    ) -> Callable[ParamT, Coroutine[None, None, None]]:
+        @wraps(func)
+        async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> None:
             awaitable = func(*args, **kwargs)
             coro = self(awaitable)
             task = create_task(coro)
@@ -66,8 +76,7 @@ class TaskGroup(BaseTaskGroup):
             self.tasks.add(task)
             await task
 
-        self._task_group.start_soon(wrapped)
-        return value
+        return inner
 
     @property
     @override
