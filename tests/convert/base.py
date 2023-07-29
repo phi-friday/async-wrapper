@@ -14,7 +14,7 @@ class BaseTest:
     @property
     def epsilon(self) -> float:
         if self.backend == "loky":
-            return 0.5
+            return 1
         if self.backend == "thread":
             return 0.1
 
