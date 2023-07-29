@@ -11,8 +11,6 @@ $ pip install async_wrapper
 # or
 $ pip install "async_wrapper[all]"
 # or
-$ pip install "async_wrapper[anyio]"
-# or
 $ pip install "async_wrapper[loky]"
 ```
 
