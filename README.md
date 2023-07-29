@@ -46,9 +46,9 @@ async def sample_func_2(x: int) -> int:
 
 
 async def main():
-    wrapper = get_task_group_wrapper("asyncio")
-    factory = get_task_group_factory("asyncio")
-    Semaphore = get_semaphore_class("asyncio")
+    wrapper = get_task_group_wrapper()
+    factory = get_task_group_factory()
+    Semaphore = get_semaphore_class()
     semaphore = Semaphore(2)
 
     start = time.perf_counter()
