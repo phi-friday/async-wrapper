@@ -104,13 +104,4 @@ async def sample_func(value: int, sleep: float) -> int:
     return value
 
 
-@pytest.fixture(
-    params=[
-        pytest.param(("asyncio", {"use_uvloop": False}), id="anyio-asyncio"),
-    ],
-)
-def anyio_backend(request):
-    return request.param
-
-
 sample_func_without_value = partial(sample_func, 0)

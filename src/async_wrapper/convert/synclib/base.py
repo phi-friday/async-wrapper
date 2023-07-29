@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import asyncio
-from functools import wraps
-from typing import Any, Awaitable, Callable, Coroutine, Protocol, TypeVar
+from functools import partial, wraps
+from typing import Awaitable, Callable, Protocol, TypeVar
 
+import anyio
 from typing_extensions import ParamSpec
 
 ValueT = TypeVar("ValueT")
 ParamT = ParamSpec("ParamT")
 
-__all__ = ["as_coro_func", "as_sync_func", "AsyncToSync"]
+__all__ = ["as_sync_func", "AsyncToSync"]
 
 
 class AsyncToSync(Protocol):
@@ -18,25 +18,6 @@ class AsyncToSync(Protocol):
         func: Callable[ParamT, Awaitable[ValueT]],
     ) -> Callable[ParamT, ValueT]:
         ...
-
-
-def as_coro_func(
-    func: Callable[ParamT, Awaitable[ValueT]],
-) -> Callable[ParamT, Coroutine[Any, Any, ValueT]]:
-    """awaitable func to corotine func
-
-    Args:
-        func: awaitable func
-
-    Returns:
-        corotine func
-    """
-
-    @wraps(func)
-    async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
-        return await func(*args, **kwargs)
-
-    return inner
 
 
 def as_sync_func(
@@ -71,5 +52,4 @@ def run_awaitable_func(
     Returns:
         func result
     """
-    func = as_coro_func(func)
-    return asyncio.run(func(*args, **kwargs))
+    return anyio.run(partial(func, *args, **kwargs))

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 import inspect
 import time
 
+import anyio
 import pytest
 
 from async_wrapper import sync_to_async, toggle_func
@@ -19,7 +19,7 @@ def test_correct_async_convertor():
     assert convertor is sync_to_async_as_thread
 
 
-@pytest.mark.asyncio()
+@pytest.mark.anyio()
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_async_to_sync(x: int):
     @sync_to_async_as_thread
@@ -33,22 +33,23 @@ async def test_async_to_sync(x: int):
     assert EPSILON * x < term < EPSILON * x + EPSILON
 
 
-@pytest.mark.asyncio()
+@pytest.mark.anyio()
 @pytest.mark.parametrize("x", range(2, 5))
 async def test_async_to_sync_gather(x: int):
     @sync_to_async_as_thread
     def sample(x: int) -> None:
         time.sleep(EPSILON * x)
 
-    coro = asyncio.gather(*(sample(1) for _ in range(x)))
     start = time.perf_counter()
-    await coro
+    async with anyio.create_task_group() as task_group:
+        for _ in range(x):
+            task_group.start_soon(sample, 1)
     end = time.perf_counter()
     term = end - start
     assert EPSILON < term < EPSILON + EPSILON
 
 
-@pytest.mark.asyncio()
+@pytest.mark.anyio()
 @pytest.mark.parametrize("x", range(2, 5))
 async def test_toggle(x: int):
     @toggle_func

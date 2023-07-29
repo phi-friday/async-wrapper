@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 from concurrent.futures import ThreadPoolExecutor, wait
-from functools import wraps
+from functools import partial, wraps
 from typing import Awaitable, Callable, TypeVar
 
+import anyio
 from typing_extensions import ParamSpec
-
-from async_wrapper.convert.synclib.base import as_coro_func
 
 ValueT = TypeVar("ValueT")
 ParamT = ParamSpec("ParamT")
@@ -45,5 +43,4 @@ def _run(
     *args: ParamT.args,
     **kwargs: ParamT.kwargs,
 ) -> ValueT:
-    func = as_coro_func(func)
-    return asyncio.run(func(*args, **kwargs))
+    return anyio.run(partial(func, *args, **kwargs))

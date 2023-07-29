@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from functools import wraps
+from functools import partial, wraps
 from typing import Any, Callable, Coroutine, TypeVar
 
+import anyio
 from typing_extensions import ParamSpec
 
 ValueT = TypeVar("ValueT")
@@ -18,9 +17,6 @@ def sync_to_async(
 ) -> Callable[ParamT, Coroutine[Any, Any, ValueT]]:
     @wraps(func)
     async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
-        with ThreadPoolExecutor(1) as pool:
-            future = pool.submit(func, *args, **kwargs)
-            coro = asyncio.wrap_future(future)
-            return await coro
+        return await anyio.to_thread.run_sync(partial(func, *args, **kwargs))
 
     return inner

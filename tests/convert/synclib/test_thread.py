@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 import inspect
 import time
 
+import anyio
 import pytest
 
 from async_wrapper import async_to_sync, toggle_func
@@ -23,7 +23,7 @@ def test_correct_sync_convertor():
 def test_async_to_sync(x: int):
     @async_to_sync_as_thread
     async def sample(x: int) -> None:
-        await asyncio.sleep(EPSILON * x)
+        await anyio.sleep(EPSILON * x)
 
     start = time.perf_counter()
     sample(x)
@@ -36,7 +36,7 @@ def test_async_to_sync(x: int):
 def test_toggle(x: int):
     @toggle_func
     async def sample(x: int) -> None:
-        await asyncio.sleep(EPSILON * x)
+        await anyio.sleep(EPSILON * x)
 
     assert not inspect.iscoroutinefunction(sample)
 
