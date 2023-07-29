@@ -43,7 +43,7 @@ __all__ = ["SoonWrapper", "wrap_soon", "get_task_group", "get_semaphore_class"]
 class TaskGroup(BaseTaskGroup):
     def __init__(self) -> None:
         self._task_group: _TaskGroup = create_task_group()
-        self._futures: WeakSet[Future[Any]] = WeakSet()
+        self._futures: WeakSet[Future[Any, Self]] = WeakSet()
 
     @override
     def start_soon(
@@ -63,9 +63,9 @@ class TaskGroup(BaseTaskGroup):
         func: Callable[ParamT, Coroutine[Any, Any, ValueT_co]],
         *args: ParamT.args,
         **kwargs: ParamT.kwargs,
-    ) -> Future[ValueT_co]:
+    ) -> Future[ValueT_co, Self]:
         coro = func(*args, **kwargs)
-        future = Future(coro)
+        future = Future(coro, self)
         self._futures.add(future)
         return future
 
@@ -76,7 +76,7 @@ class TaskGroup(BaseTaskGroup):
 
     @property
     @override
-    def tasks(self) -> WeakSet[Future[Any]]:
+    def tasks(self) -> WeakSet[Future[Any, Self]]:
         return self._futures
 
     @override
@@ -133,7 +133,7 @@ def get_semaphore_class() -> type[AnyioSemaphore]:
     return _Semaphore
 
 
-async def _as_coro(future: Future[ValueT_co]) -> ValueT_co:
+async def _as_coro(future: Future[ValueT_co, Any]) -> ValueT_co:
     return await future
 
 

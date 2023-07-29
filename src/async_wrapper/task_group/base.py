@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import math
 from abc import ABC, abstractmethod
 from collections import deque
@@ -15,8 +16,10 @@ from typing import (
     Generator,
     Generic,
     Iterable,
+    Literal,
     Protocol,
     TypeVar,
+    final,
 )
 
 import anyio
@@ -85,38 +88,72 @@ class StreamQueue(Generic[ValueT]):
         return status.current_buffer_used
 
 
-class Future(Generic[ValueT_co]):
-    def __init__(self, coro: Coroutine[Any, Any, ValueT_co]) -> None:
+@final
+class Future(Generic[ValueT_co, TaskGroupT_co]):
+    def __init__(
+        self,
+        coro: Coroutine[Any, Any, ValueT_co],
+        task_group: TaskGroupT_co,
+    ) -> None:
+        if inspect.getcoroutinestate(coro) != "CORO_CREATED":
+            raise RuntimeError("future use only created coro")
+
         self.coro = coro
+        self.task_group = task_group
+
         self.exc: BaseException | None = None
-
         self.value_queue: StreamQueue[ValueT_co] = StreamQueue(1)
-
-        self.running: bool = False
-        self.done: bool = False
-        self.canceled: bool = False
 
         self.callbacks: deque[tuple[Callable[[Self], Any], Context | None]] = deque()
         self.final_callbacks: StreamQueue[Callable[[Self], Any]] = StreamQueue(1)
 
-    @classmethod
-    def new(cls, event: AnyioEvent) -> Self:
-        return cls(_dummy(event))
+    def dummy(self, event: AnyioEvent) -> Future[Any, TaskGroupT_co]:
+        return Future(_dummy(event), self.task_group)
+
+    @property
+    def running(self) -> bool:
+        return self.coro_state != "CORO_CREATED"
+
+    @property
+    def done(self) -> bool:
+        return self.coro_state == "CORO_CLOSED"
+
+    @property
+    def pending(self) -> bool:
+        return self.coro_state not in {"CORO_CREATED", "CORO_CLOSED"}
+
+    @property
+    def cancelled(self) -> bool:
+        return self.exc is not None
+
+    @property
+    def coro_state(
+        self,
+    ) -> Literal["CORO_CREATED", "CORO_RUNNING", "CORO_SUSPENDED", "CORO_CLOSED"]:
+        return inspect.getcoroutinestate(self.coro)
 
     def __repr__(self) -> str:
-        return (
-            "<future: "
-            f"running={self.running}, done={self.done}, cancel={self.canceled}>"
-        )
+        if self.cancelled:
+            state = "error"
+        else:
+            state = self.coro_state
+            if state == "CORO_CREATED":
+                state = "before running"
+            elif state == "CORO_CLOSED":
+                state = "finished"
+            else:
+                state = "pending"
+
+        return f"<future: state={state}>"
 
     def __await__(self) -> Generator[Any, None, ValueT_co]:
-        self.running = True
+        if self.running:
+            raise RuntimeError("coro has already running")
+
         try:
             result = yield from self.coro.__await__()
         except BaseException as exc:
             self.exc = exc
-            self.done = True
-            self.canceled = True
 
             while self.final_callbacks.size:
                 callback = self.final_callbacks.get()
@@ -124,7 +161,6 @@ class Future(Generic[ValueT_co]):
 
             raise
 
-        self.done = True
         self.value_queue.set(result)
 
         try:
@@ -152,7 +188,7 @@ class Future(Generic[ValueT_co]):
             raise RuntimeError("await first")
         if not self.done:
             raise RuntimeError("still await")
-        if self.canceled:
+        if self.cancelled:
             raise self.exc  # type: ignore
         return self.value_queue.touch()
 
@@ -185,7 +221,7 @@ class BaseTaskGroup(ABC):
 
     @property
     @abstractmethod
-    def tasks(self) -> WeakSet[Future[Any]]:
+    def tasks(self) -> WeakSet[Future[Any, Self]]:
         ...
 
     @abstractmethod
@@ -201,7 +237,7 @@ class BaseTaskGroup(ABC):
     ) -> Any:
         ...
 
-    async def wait(self, tasks: tuple[Future[Any], ...]) -> None:
+    async def wait(self, tasks: Iterable[Future[Any, Self]]) -> None:
         await _wait(tasks)
 
     @staticmethod
@@ -255,7 +291,7 @@ class BaseSoonWrapper(ABC, Generic[TaskGroupT, ParamT, ValueT_co]):
 class SoonValue(Generic[ValueT_co]):
     def __init__(
         self,
-        future: Future[ValueT_co] | None = None,
+        future: Future[ValueT_co, Any] | None = None,
     ) -> None:
         self._value = Pending
         if future is None:
@@ -287,7 +323,7 @@ class SoonValue(Generic[ValueT_co]):
 
     def _set_future(
         self,
-        future: Future[ValueT_co],
+        future: Future[ValueT_co, Any],
     ) -> None:
         if self._value is not Pending:
             raise AttributeError("value is already setted")
@@ -296,7 +332,7 @@ class SoonValue(Generic[ValueT_co]):
 
     def _set_from_future(
         self,
-        future: Future[ValueT_co],
+        future: Future[ValueT_co, Any],
     ) -> None:
         if future.exception() is None:
             self.value = future.result()
@@ -310,7 +346,7 @@ class TaskGroupFactory(Protocol[TaskGroupT_co]):
 
 
 async def _wait(
-    futures: Iterable[Future[Any]],
+    futures: Iterable[Future[Any, Any]],
     timeout: float | None = None,
 ) -> None:
     futures = set(futures)
@@ -322,12 +358,12 @@ async def _wait(
             task_group.start_soon(_await, future, timeout)
 
 
-async def _await(future: Future[Any], timeout: float | None) -> None:
+async def _await(future: Future[Any, Any], timeout: float | None) -> None:
     if future.done:
         return
 
     event = anyio.Event()
-    waiter = Future.new(event)
+    waiter = future.dummy(event)
     scope = anyio.CancelScope(shield=True, deadline=timeout or math.inf)
     callback = partial(_release, event=event, scope=scope)
     future.add_final_callback(callback)
@@ -337,7 +373,7 @@ async def _await(future: Future[Any], timeout: float | None) -> None:
 
 
 def _release(
-    future: Future[Any],
+    future: Future[Any, Any],
     event: AnyioEvent,
     scope: anyio.CancelScope,
 ) -> None:
