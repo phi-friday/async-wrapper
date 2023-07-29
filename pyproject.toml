@@ -116,8 +116,6 @@ known-local-folder = ["async_wrapper"]
 required-imports = ["from __future__ import annotations"]
 
 [tool.pyright]
-venvPath = "."
-venv = '.venv'
 pythonVersion = '3.8'
 pythonPlatform = 'Linux'
 diagnostic = 'basic'
