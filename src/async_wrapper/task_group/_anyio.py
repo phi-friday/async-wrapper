@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from asyncio import create_task, ensure_future, wait
+from itertools import chain
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -95,6 +96,10 @@ class TaskGroup(BaseTaskGroup):
     def tasks(self) -> WeakSet[Task[Any]]:
         return WeakSet(self._task_futures.keys())
 
+    @property
+    def futures(self) -> WeakSet[Future[Any]]:
+        return self._futures
+
     @override
     async def __aenter__(self) -> Self:
         await self._task_group.__aenter__()
@@ -108,8 +113,9 @@ class TaskGroup(BaseTaskGroup):
         traceback: TracebackType | None,
     ) -> Any:
         tasks = tuple(self.tasks)
+        futures = tuple(self.futures)
         if tasks:
-            await wait(tasks)
+            await wait(chain(futures, tasks))
         return await self._task_group.__aexit__(exc_type, exc, traceback)
 
 
