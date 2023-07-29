@@ -194,15 +194,6 @@ class SoonValue(Generic[ValueT_co]):
         if self._task_or_future is not None:
             self._task_or_future = None
 
-    async def catch_and_set(  # noqa: D102
-        self,
-        func: Callable[ParamT, Awaitable[ValueT_co]],
-        *args: ParamT.args,
-        **kwargs: ParamT.kwargs,
-    ) -> Self:
-        self.value = await func(*args, **kwargs)
-        return self
-
 
 class TaskGroupFactory(Protocol[TaskGroupT_co]):
     def __call__(self) -> TaskGroupT_co:  # noqa: D102
