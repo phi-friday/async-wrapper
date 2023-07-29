@@ -4,8 +4,6 @@ import pytest
 
 from .base import BaseTest
 
-pytest.importorskip("anyio")
-
 
 @pytest.mark.anyio()
 class TestAnyio(BaseTest):

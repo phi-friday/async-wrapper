@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
-from contextlib import AbstractAsyncContextManager, suppress
-from functools import wraps
+from collections import deque
+from contextlib import AbstractAsyncContextManager
+from functools import partial, wraps
 from threading import local
 from typing import (
     TYPE_CHECKING,
@@ -12,6 +14,7 @@ from typing import (
     Coroutine,
     Generator,
     Generic,
+    Iterable,
     Protocol,
     TypeVar,
 )
@@ -23,6 +26,9 @@ if TYPE_CHECKING:
     from contextvars import Context
     from types import TracebackType
     from weakref import WeakSet
+
+    from anyio.abc import Event as AnyioEvent
+    from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
 TaskGroupT = TypeVar("TaskGroupT", bound="BaseTaskGroup")
 TaskGroupT_co = TypeVar("TaskGroupT_co", covariant=True, bound="BaseTaskGroup")
@@ -45,15 +51,110 @@ class Semaphore(AbstractAsyncContextManager, Protocol):
         ...
 
 
-class Futurelike(Protocol, Generic[ValueT_co]):
+class StreamQueue(Generic[ValueT]):
+    def __init__(self, size: float = 0) -> None:
+        setter, getter = anyio.create_memory_object_stream(size)
+        self.getter: MemoryObjectReceiveStream[ValueT] = getter
+        self.setter: MemoryObjectSendStream[ValueT] = setter
+
+    def set(self, value: ValueT) -> None:  # noqa: A003
+        self.setter.send_nowait(value)
+
+    async def aset(self, value: ValueT) -> None:
+        await self.setter.send(value)
+
+    def get(self) -> ValueT:
+        return self.getter.receive_nowait()
+
+    async def aget(self) -> ValueT:
+        return await self.getter.receive()
+
+    def touch(self) -> ValueT:
+        result = self.getter.receive_nowait()
+        self.setter.send_nowait(result)
+        return result
+
+    async def atouch(self) -> ValueT:
+        result = await self.getter.receive()
+        await self.setter.send(result)
+        return result
+
+    @property
+    def size(self) -> int:
+        status = self.getter.statistics()
+        return status.current_buffer_used
+
+
+class Future(Generic[ValueT_co]):
+    def __init__(self, coro: Coroutine[Any, Any, ValueT_co]) -> None:
+        self.coro = coro
+        self.exc: BaseException | None = None
+
+        self.value_queue: StreamQueue[ValueT_co] = StreamQueue(1)
+
+        self.running: bool = False
+        self.done: bool = False
+        self.canceled: bool = False
+
+        self.callbacks: deque[tuple[Callable[[Self], Any], Context | None]] = deque()
+        self.final_callbacks: StreamQueue[Callable[[Self], Any]] = StreamQueue(1)
+
+    @classmethod
+    def new(cls, event: AnyioEvent) -> Self:
+        return cls(_dummy(event))
+
+    def __repr__(self) -> str:
+        return (
+            "<future: "
+            f"running={self.running}, done={self.done}, cancel={self.canceled}>"
+        )
+
     def __await__(self) -> Generator[Any, None, ValueT_co]:
-        ...
+        self.running = True
+        try:
+            result = yield from self.coro.__await__()
+        except BaseException as exc:
+            self.exc = exc
+            self.done = True
+            self.canceled = True
+
+            while self.final_callbacks.size:
+                callback = self.final_callbacks.get()
+                callback(self)
+
+            raise
+
+        self.done = True
+        self.value_queue.set(result)
+
+        try:
+            return result
+        finally:
+            if self.callbacks:
+                for callback, context in self.callbacks:
+                    if context is None:
+                        callback(self)
+                    else:
+                        context.run(callback, self)
+                self.callbacks.clear()
+
+            while self.final_callbacks.size:
+                callback = self.final_callbacks.get()
+                callback(self)
 
     def exception(self) -> BaseException | None:
-        ...
+        if not self.running:
+            raise RuntimeError("await first")
+        return self.exc
 
     def result(self) -> ValueT_co:
-        ...
+        if not self.running:
+            raise RuntimeError("await first")
+        if not self.done:
+            raise RuntimeError("still await")
+        if self.canceled:
+            raise self.exc  # type: ignore
+        return self.value_queue.touch()
 
     def add_done_callback(
         self,
@@ -61,7 +162,10 @@ class Futurelike(Protocol, Generic[ValueT_co]):
         *,
         context: Context | None = None,
     ) -> None:
-        ...
+        self.callbacks.append((__fn, context))
+
+    def add_final_callback(self, func: Callable[[Self], Any]) -> None:
+        self.final_callbacks.set(func)
 
 
 class BaseTaskGroup(ABC):
@@ -81,7 +185,7 @@ class BaseTaskGroup(ABC):
 
     @property
     @abstractmethod
-    def tasks(self) -> WeakSet[Futurelike[Any]]:
+    def tasks(self) -> WeakSet[Future[Any]]:
         ...
 
     @abstractmethod
@@ -96,6 +200,9 @@ class BaseTaskGroup(ABC):
         traceback: TracebackType | None,
     ) -> Any:
         ...
+
+    async def wait(self, tasks: tuple[Future[Any], ...]) -> None:
+        await _wait(tasks)
 
     @staticmethod
     def _wrap(
@@ -148,13 +255,13 @@ class BaseSoonWrapper(ABC, Generic[TaskGroupT, ParamT, ValueT_co]):
 class SoonValue(Generic[ValueT_co]):
     def __init__(
         self,
-        task_or_future: Futurelike[ValueT_co] | None = None,
+        future: Future[ValueT_co] | None = None,
     ) -> None:
         self._value = Pending
-        if task_or_future is None:
-            self._task_or_future = None
+        if future is None:
+            self._future = None
         else:
-            self._set_task_or_future(task_or_future)
+            self._set_future(future)
 
     def __repr__(self) -> str:
         status = "pending" if self._value is Pending else "done"
@@ -178,47 +285,23 @@ class SoonValue(Generic[ValueT_co]):
     def is_ready(self) -> bool:  # noqa: D102
         return self._value is not Pending
 
-    def result(  # noqa: D102
+    def _set_future(
         self,
-        *,
-        timeout: float | None = None,
-    ) -> ValueT_co:
-        with suppress(PendingError):
-            return self.value
-
-        task = self._task_or_future
-        if task is None:
-            with suppress(PendingError):
-                return self.value
-            raise AttributeError("task is None")
-
-        async def wrap_task() -> ValueT_co:
-            task = self._task_or_future
-            if task is None:
-                with suppress(PendingError):
-                    return self.value
-                raise AttributeError("task is None")
-            return await _wait_for(task, timeout)
-
-        return anyio.from_thread.run(wrap_task)
-
-    def _set_task_or_future(
-        self,
-        task_or_future: Futurelike[ValueT_co],
+        future: Future[ValueT_co],
     ) -> None:
         if self._value is not Pending:
             raise AttributeError("value is already setted")
-        task_or_future.add_done_callback(self._set_from_task_or_future)
-        self._task_or_future = task_or_future
+        future.add_done_callback(self._set_from_future)
+        self._future = future
 
-    def _set_from_task_or_future(
+    def _set_from_future(
         self,
-        task_or_future: Futurelike[ValueT_co],
+        future: Future[ValueT_co],
     ) -> None:
-        if task_or_future.exception() is None:
-            self.value = task_or_future.result()
-        if self._task_or_future is not None:
-            self._task_or_future = None
+        if future.exception() is None:
+            self.value = future.result()
+        if self._future is not None:
+            self._future = None
 
 
 class TaskGroupFactory(Protocol[TaskGroupT_co]):
@@ -226,9 +309,43 @@ class TaskGroupFactory(Protocol[TaskGroupT_co]):
         ...
 
 
-async def _wait_for(
-    future: Futurelike[ValueT_co],
+async def _wait(
+    futures: Iterable[Future[Any]],
     timeout: float | None = None,
-) -> ValueT_co:
+) -> None:
+    futures = set(futures)
+    if not futures:
+        return
+
+    async with anyio.create_task_group() as task_group:
+        for future in futures:
+            task_group.start_soon(_await, future, timeout)
+
+
+async def _await(future: Future[Any], timeout: float | None) -> None:
+    if future.done:
+        return
+
+    event = anyio.Event()
+    waiter = Future.new(event)
+    scope = anyio.CancelScope(shield=True, deadline=timeout or math.inf)
+    callback = partial(_release, waiter=waiter, event=event, scope=scope)
+    future.add_final_callback(callback)
+
     async with anyio.maybe_async_cm(anyio.fail_after(timeout)):
-        return await future
+        await waiter
+
+
+def _release(
+    future: Future[Any],  # noqa: ARG001
+    waiter: Future[Any],
+    event: AnyioEvent,
+    scope: anyio.CancelScope,
+) -> None:
+    with scope:
+        if not waiter.done:
+            event.set()
+
+
+async def _dummy(event: AnyioEvent) -> None:
+    await event.wait()

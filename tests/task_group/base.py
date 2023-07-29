@@ -13,21 +13,36 @@ from async_wrapper import (
     get_task_group_factory,
     get_task_group_wrapper,
 )
-from async_wrapper.task_group.base import SoonValue
+from async_wrapper.task_group.base import (
+    BaseSoonWrapper,
+    BaseTaskGroup,
+    Semaphore,
+    SoonValue,
+    TaskGroupFactory,
+)
 
 
 class BaseTest:
     epsilon: Final[float] = 0.1
-    backend: ClassVar[Literal["anyio", "asyncio"]]
+    backend: ClassVar[Literal["anyio"]]
+
+    @classmethod
+    def wrapper(cls) -> type[BaseSoonWrapper]:
+        return get_task_group_wrapper(cls.backend)
+
+    @classmethod
+    def factory(cls) -> TaskGroupFactory[BaseTaskGroup]:
+        return get_task_group_factory(cls.backend)
+
+    @classmethod
+    def semaphore(cls) -> type[Semaphore]:
+        return get_semaphore_class(cls.backend)
 
     @pytest.mark.parametrize("x", range(1, 4))
     async def test_soon_value(self, x: int):
-        wrapper = get_task_group_wrapper(self.backend)
-        factory = get_task_group_factory(self.backend)
-
         start = time.perf_counter()
-        async with factory() as task_group:
-            value = wrapper(sample_func, task_group)(x, self.epsilon)  # type: ignore
+        async with self.factory()() as task_group:
+            value = self.wrapper()(sample_func, task_group)(x, self.epsilon)
         end = time.perf_counter()
         term = end - start
         assert self.epsilon < term < self.epsilon + self.epsilon
@@ -35,16 +50,12 @@ class BaseTest:
         assert isinstance(value, SoonValue)
         assert value.is_ready
         assert value.value == x
-        assert value.result() == x
 
     @pytest.mark.parametrize(("x", "y"), tuple(combinations(range(1, 4), 2)))
     async def test_soon_value_many(self, x: int, y: int):
-        wrapper = get_task_group_wrapper(self.backend)
-        factory = get_task_group_factory(self.backend)
-
         start = time.perf_counter()
-        async with factory() as task_group:
-            wrapped = wrapper(sample_func, task_group)  # type: ignore
+        async with self.factory()() as task_group:
+            wrapped = self.wrapper()(sample_func, task_group)
             value_x = wrapped(x, self.epsilon)
             value_y = wrapped(y, self.epsilon)
         end = time.perf_counter()
@@ -57,8 +68,6 @@ class BaseTest:
         assert value_y.is_ready
         assert value_x.value == x
         assert value_y.value == y
-        assert value_x.result() == x
-        assert value_y.result() == y
 
     async def test_semaphore(self):
         wrapper = get_task_group_wrapper(self.backend)
