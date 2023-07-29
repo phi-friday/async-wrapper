@@ -1249,4 +1249,4 @@ loky = ["cloudpickle", "loky", "psutil"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8"
-content-hash = "1e46339e9502f600eb5c5319cf3113cd5c8f1784acbed3e2d861dda49ddb3726"
+content-hash = "1845b7e51799452621fa716829929ceb7b1788998e7157257b933a517d3fc103"
