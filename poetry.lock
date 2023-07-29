@@ -22,7 +22,7 @@ typecheck = ["mypy (>=0.920)"]
 name = "anyio"
 version = "3.7.1"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "anyio-3.7.1-py3-none-any.whl", hash = "sha256:91dee416e570e92c64041bd18b900d1d6fa78dff7048769ce5ac5ddad004fbb5"},
@@ -397,7 +397,7 @@ license = ["ukkonen"]
 name = "idna"
 version = "3.4"
 description = "Internationalized Domain Names in Applications (IDNA)"
-optional = true
+optional = false
 python-versions = ">=3.5"
 files = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
@@ -1118,7 +1118,7 @@ files = [
 name = "sniffio"
 version = "1.3.0"
 description = "Sniff out which async library your code is running under"
-optional = true
+optional = false
 python-versions = ">=3.7"
 files = [
     {file = "sniffio-1.3.0-py3-none-any.whl", hash = "sha256:eecefdce1e5bbfb7ad2eeaabf7c1eeb404d7757c379bd1f7e5cce9d8bf425384"},
@@ -1279,12 +1279,11 @@ docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.link
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [extras]
-all = ["anyio", "cloudpickle", "loky", "psutil"]
-anyio = ["anyio"]
+all = ["cloudpickle", "loky", "psutil", "trio"]
 loky = ["cloudpickle", "loky", "psutil"]
-trio = ["anyio", "trio"]
+trio = ["trio"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8"
-content-hash = "f6f375243f7cea05316f4bcbcbe9daa2d7e72a683791808dada1b5a9bd86c192"
+content-hash = "10c3ab78bbaaca535b4aac11669200be951a983d7417f9d39b1611b128c6bf25"
