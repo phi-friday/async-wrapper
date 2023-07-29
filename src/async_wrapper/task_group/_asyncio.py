@@ -45,7 +45,6 @@ __all__ = ["SoonWrapper", "wrap_soon", "get_task_group", "get_semaphore_class"]
 class TaskGroup(BaseTaskGroup):
     def __init__(self) -> None:
         self._task_group = _TaskGroup()
-        self._semaphore = None
 
     @override
     def start_soon(
