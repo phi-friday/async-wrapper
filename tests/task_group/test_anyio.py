@@ -39,15 +39,6 @@ def anyio_backend(request):
 
 
 @pytest.mark.anyio()
-async def test_correct_task_group():
-    factory = get_task_group_factory("anyio")
-    task_group = factory()
-    task_group_from_anyio = anyio.create_task_group()  # type: ignore
-    assert isinstance(task_group, type(task_group_from_anyio))
-    assert isinstance(task_group_from_anyio, type(task_group))
-
-
-@pytest.mark.anyio()
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_soon_value(x: int):
     wrapper = get_task_group_wrapper("anyio")

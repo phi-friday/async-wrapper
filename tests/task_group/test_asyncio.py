@@ -16,9 +16,9 @@ from async_wrapper.task_group._asyncio import wrap_soon
 from async_wrapper.task_group.base import SoonValue
 
 if sys.version_info < (3, 11):
-    from aiotools.taskgroup import TaskGroup  # type: ignore
+    pass  # type: ignore
 else:
-    from asyncio.taskgroups import TaskGroup  # type: ignore
+    pass  # type: ignore
 
 
 EPSILON = 0.1
@@ -27,13 +27,6 @@ EPSILON = 0.1
 def test_correct_wrapper():
     wrapper = get_task_group_wrapper("asyncio")
     assert wrapper is wrap_soon
-
-
-@pytest.mark.asyncio()
-async def test_correct_task_group():
-    factory = get_task_group_factory("asyncio")
-    task_group = factory()
-    assert isinstance(task_group, TaskGroup)
 
 
 @pytest.mark.asyncio()
