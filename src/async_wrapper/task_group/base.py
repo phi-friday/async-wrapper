@@ -17,7 +17,6 @@ from typing import (
 from typing_extensions import ParamSpec, Self, override
 
 from async_wrapper import async_to_sync
-from async_wrapper.convert.synclib.base import as_coro_func
 
 if TYPE_CHECKING:
     from asyncio import Future, Task
@@ -109,7 +108,7 @@ class BaseSoonWrapper(ABC, Generic[TaskGroupT, ParamT, ValueT_co]):
         task_group: TaskGroupT,
         semaphore: Semaphore | None = None,
     ) -> None:
-        self.func = as_coro_func(func)
+        self.func = func
         self.task_group = task_group
         self.semaphore = semaphore
 
