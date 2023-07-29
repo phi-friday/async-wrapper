@@ -112,10 +112,9 @@ class TaskGroup(BaseTaskGroup):
         exc: BaseException | None,
         traceback: TracebackType | None,
     ) -> Any:
-        tasks = tuple(self.tasks)
-        futures = tuple(self.futures)
-        if tasks:
-            await wait(chain(futures, tasks))
+        task_and_futures = tuple(self._task_futures.items())
+        if task_and_futures:
+            await wait(chain.from_iterable(task_and_futures))
         return await self._task_group.__aexit__(exc_type, exc, traceback)
 
 
