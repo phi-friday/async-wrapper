@@ -161,4 +161,4 @@ cython_debug/
 
 *.ipynb
 # asdf
-.tool-version
+.tool-versions
