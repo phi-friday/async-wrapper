@@ -10,7 +10,8 @@ if TYPE_CHECKING:
 __all__ = ["get_task_group_wrapper", "get_task_group_factory", "get_semaphore_class"]
 
 DEFAULT_BACKEND = "anyio"
-TaskGroupBackendType = Literal["anyio", "asyncio"]
+TaskGroupBackendType = Literal["anyio", "asyncio", "trio"]
+ValidTaskGroupBackendType = Literal["anyio"]
 
 
 def get_task_group_wrapper(
@@ -24,9 +25,7 @@ def get_task_group_wrapper(
     Returns:
         task group soon wrapper
     """
-    if not backend or backend == "asyncio":
-        backend = DEFAULT_BACKEND
-
+    backend = _get_valid_backend(backend)
     module = importlib.import_module(f"._{backend}", __package__)
     return module.wrap_soon
 
@@ -42,9 +41,7 @@ def get_task_group_factory(
     Returns:
         task group factory
     """
-    if not backend or backend == "asyncio":
-        backend = DEFAULT_BACKEND
-
+    backend = _get_valid_backend(backend)
     module = importlib.import_module(f"._{backend}", __package__)
     return module.get_task_group
 
@@ -60,8 +57,14 @@ def get_semaphore_class(
     Returns:
         semaphore class
     """
-    if not backend or backend == "asyncio":
-        backend = DEFAULT_BACKEND
-
+    backend = _get_valid_backend(backend)
     module = importlib.import_module(f"._{backend}", __package__)
     return module.get_semaphore_class()
+
+
+def _get_valid_backend(backend: str | None) -> ValidTaskGroupBackendType:
+    if not backend:
+        return DEFAULT_BACKEND
+    if backend in {"anyio", "asyncio", "trio"}:
+        return "anyio"
+    raise NotImplementedError
