@@ -18,45 +18,40 @@ $ pip install "async_wrapper[loky]"
 ```python
 from __future__ import annotations
 
-import asyncio
 import time
 
-from async_wrapper import (
-    async_to_sync,
-    get_semaphore_class,
-    get_task_group_factory,
-    get_task_group_wrapper,
-)
+import anyio
+
+from async_wrapper import TaskGroupWrapper, async_to_sync
 
 
 @async_to_sync("thread")
 async def sample_func() -> int:
-    await asyncio.sleep(1)
+    await anyio.sleep(1)
     return 1
 
 
-result = sample_func()
-assert isinstance(result, int)
-assert result == 1
-
-
 async def sample_func_2(x: int) -> int:
-    await asyncio.sleep(1)
+    await anyio.sleep(1)
     return x
 
 
-async def main():
-    wrapper = get_task_group_wrapper()
-    factory = get_task_group_factory()
-    Semaphore = get_semaphore_class()
-    semaphore = Semaphore(2)
+def main():
+    result = sample_func()
+    assert isinstance(result, int)
+    assert result == 1
+
+
+async def async_main():
+    semaphore = anyio.Semaphore(2)
 
     start = time.perf_counter()
-    async with factory() as task_group:
-        wrapped = wrapper(sample_func_2, task_group, semaphore)
-        value_1 = wrapped(1)
-        value_2 = wrapped(2)
-        value_3 = wrapped(3)
+    async with anyio.create_task_group() as task_group:
+        wrapper = TaskGroupWrapper(task_group)
+        func = wrapper.wrap(sample_func_2, semaphore)
+        value_1 = func(1)
+        value_2 = func(2)
+        value_3 = func(3)
     end = time.perf_counter()
 
     assert isinstance(value_1.value, int)
@@ -66,6 +61,11 @@ async def main():
     assert value_2.value == 2
     assert value_3.value == 3
     assert 1.5 < end - start < 2.5
+
+
+if __name__ == "__main__":
+    main()
+    anyio.run(async_main)
 ```
 
 ## License
