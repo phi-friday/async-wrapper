@@ -14,7 +14,6 @@ from typing import (
     Generic,
     Literal,
     TypeVar,
-    final,
 )
 
 import anyio
@@ -114,7 +113,6 @@ class StreamQueue(Generic[ValueT]):
         self.setter.close()
 
 
-@final
 class Future(Generic[ValueT_co]):
     def __init__(self, coro: Coroutine[Any, Any, ValueT_co]) -> None:
         if inspect.getcoroutinestate(coro) != "CORO_CREATED":
