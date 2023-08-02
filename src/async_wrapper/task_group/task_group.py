@@ -2,19 +2,16 @@ from __future__ import annotations
 
 from functools import partial, wraps
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Generic, TypeVar
-from weakref import WeakSet
 
 from anyio.abc import TaskGroup as _TaskGroup
-from typing_extensions import ParamSpec, Self, override
+from typing_extensions import Concatenate, ParamSpec, Self, override
 
-from async_wrapper.task_group.future import Future
 from async_wrapper.task_group.value import SoonValue
 
 if TYPE_CHECKING:
     from types import TracebackType
 
     from anyio.abc import CancelScope, Semaphore
-
 
 ValueT_co = TypeVar("ValueT_co", covariant=True)
 OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
@@ -25,12 +22,6 @@ OtherParamT = ParamSpec("OtherParamT")
 class TaskGroupWrapper(_TaskGroup):
     def __init__(self, task_group: _TaskGroup) -> None:
         self._task_group = task_group
-        self._futures: WeakSet[Future[Any]] = WeakSet()
-
-    @property
-    def futures(self) -> WeakSet[Future[Any]]:
-        """futures using wrapper"""
-        return self._futures.copy()
 
     @property
     @override
@@ -53,8 +44,7 @@ class TaskGroupWrapper(_TaskGroup):
         *args: Any,
         name: Any = None,
     ) -> None:
-        future = self._as_future(func, *args)
-        return self._task_group.start_soon(future, name=name)
+        return self._task_group.start_soon(_as_coro, func, *args, name=name)
 
     @override
     async def start(
@@ -97,18 +87,6 @@ class TaskGroupWrapper(_TaskGroup):
         """
         return SoonWrapper(func, self, semaphore)
 
-    def _as_future(
-        self,
-        func: Callable[ParamT, Awaitable[ValueT_co]],
-        *args: ParamT.args,
-        **kwargs: ParamT.kwargs,
-    ) -> Future[ValueT_co]:
-        coro = _as_coro(func, *args, **kwargs)
-        future = Future(coro)
-        self._futures.add(future)
-        future.add_done_callback(partial(_remove_future, task_group=self))
-        return future
-
 
 class SoonWrapper(Generic[ParamT, ValueT_co]):
     def __init__(
@@ -128,24 +106,35 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
         **kwargs: ParamT.kwargs,
     ) -> SoonValue[ValueT_co]:
         value: SoonValue[ValueT_co] = SoonValue()
-        coro = self.wrapped(*args, **kwargs)
-        future = Future(coro)
-        value._set_future(future)  # noqa: SLF001
-        self.task_group.start_soon(future)
+        wrapped = partial(self.wrapped, value, *args, **kwargs)
+        self.task_group.start_soon(wrapped)
         return value
 
     @property
-    def wrapped(self) -> Callable[ParamT, Coroutine[Any, Any, ValueT_co]]:
+    def wrapped(
+        self,
+    ) -> Callable[
+        Concatenate[SoonValue[ValueT_co], ParamT],
+        Coroutine[Any, Any, ValueT_co],
+    ]:
         """wrapped func using semaphore"""
         if self._wrapped is not None:
             return self._wrapped
 
         @wraps(self.func)
-        async def wrapped(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT_co:
+        async def wrapped(
+            value: SoonValue[ValueT_co],
+            *args: ParamT.args,
+            **kwargs: ParamT.kwargs,
+        ) -> ValueT_co:
             if self.semaphore is None:
-                return await self.func(*args, **kwargs)
-            async with self.semaphore:
-                return await self.func(*args, **kwargs)
+                result = await self.func(*args, **kwargs)
+            else:
+                async with self.semaphore:
+                    result = await self.func(*args, **kwargs)
+            value._value = result  # noqa: SLF001
+            value._run_callbacks()  # noqa: SLF001
+            return result
 
         self._wrapped = wrapped
         return wrapped
@@ -172,7 +161,3 @@ async def _as_coro(
     **kwargs: ParamT.kwargs,
 ) -> ValueT_co:
     return await func(*args, **kwargs)
-
-
-def _remove_future(future: Future[Any], task_group: TaskGroupWrapper) -> None:
-    task_group._futures.remove(future)  # noqa: SLF001

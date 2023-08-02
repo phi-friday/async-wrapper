@@ -76,19 +76,6 @@ class TestTaskGroupWrapper:
         term = end - start
         assert self.epsilon < term < self.epsilon + self.epsilon
 
-    async def test_wait_value(self):
-        start = time.perf_counter()
-        async with anyio.create_task_group() as task_group:
-            wrapped = TaskGroupWrapper(task_group)
-            func = wrapped.wrap(sample_func)
-            value = func(1, self.epsilon)
-
-            task_group.start_soon(value.future.wait, self.epsilon * 1_000_000)
-            wrapped.start_soon(value.future.wait, self.epsilon * 1_000_000)
-        end = time.perf_counter()
-        term = end - start
-        assert self.epsilon < term < self.epsilon + self.epsilon
-
     async def test_value_callback(self):
         origin = outer = 1
 
