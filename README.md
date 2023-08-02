@@ -8,10 +8,6 @@
 ## how to install
 ```shell
 $ pip install async_wrapper
-# or
-$ pip install "async_wrapper[all]"
-# or
-$ pip install "async_wrapper[loky]"
 ```
 
 ## how to use
@@ -22,10 +18,10 @@ import time
 
 import anyio
 
-from async_wrapper import TaskGroupWrapper, async_to_sync
+from async_wrapper import TaskGroupWrapper, toggle_func
 
 
-@async_to_sync("thread")
+@toggle_func
 async def sample_func() -> int:
     await anyio.sleep(1)
     return 1
