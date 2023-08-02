@@ -6,14 +6,14 @@ import time
 import anyio
 import pytest
 
-from ..base import BaseTest  # noqa: TID252
+from .base import BaseTest
 
 
 @pytest.mark.anyio()
-class BaseAsyncTest(BaseTest):
+class TestAsync(BaseTest):
     @pytest.mark.parametrize("x", range(1, 4))
-    async def test_async_to_sync(self, x: int):
-        sample = self.sync_to_async()(sample_func)
+    async def test_sync_to_async(self, x: int):
+        sample = self.sync_to_async()(sample_sync_func)
         start = time.perf_counter()
         await sample(x, self.epsilon)
         end = time.perf_counter()
@@ -21,8 +21,8 @@ class BaseAsyncTest(BaseTest):
         assert self.epsilon * x < term < self.epsilon * x + self.epsilon
 
     @pytest.mark.parametrize("x", range(2, 5))
-    async def test_async_to_sync_gather(self, x: int):
-        sample = self.sync_to_async()(sample_func)
+    async def test_sync_to_async_gather(self, x: int):
+        sample = self.sync_to_async()(sample_sync_func)
         start = time.perf_counter()
         async with anyio.create_task_group() as task_group:
             for _ in range(x):
@@ -33,7 +33,7 @@ class BaseAsyncTest(BaseTest):
 
     @pytest.mark.parametrize("x", range(2, 5))
     async def test_toggle(self, x: int):
-        sample = self.toggle()(sample_func)
+        sample = self.toggle()(sample_sync_func)
         assert inspect.iscoroutinefunction(sample)
         start = time.perf_counter()
         await sample(x, self.epsilon)
@@ -42,5 +42,5 @@ class BaseAsyncTest(BaseTest):
         assert self.epsilon * x < term < self.epsilon * x + self.epsilon
 
 
-def sample_func(x: int, epsilon: float) -> None:
+def sample_sync_func(x: int, epsilon: float) -> None:
     time.sleep(epsilon * x)
