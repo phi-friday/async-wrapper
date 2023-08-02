@@ -80,6 +80,8 @@ class TaskGroupWrapper(_TaskGroup):
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],
         semaphore: Semaphore | None = None,
+        limiter: CapacityLimiter | None = None,
+        lock: Lock | None = None,
     ) -> SoonWrapper[ParamT, ValueT_co]:
         """wrap function to use in wrapper.
 
@@ -88,11 +90,13 @@ class TaskGroupWrapper(_TaskGroup):
         Args:
             func: target func
             semaphore: anyio semaphore. Defaults to None.
+            limiter: anyio capacity limiter. defaults to None.
+            lock: anyio lock. defaults to None.
 
         Returns:
             wrapped func
         """
-        return SoonWrapper(func, self, semaphore)
+        return SoonWrapper(func, self, semaphore=semaphore, limiter=limiter, lock=lock)
 
 
 class SoonWrapper(Generic[ParamT, ValueT_co]):

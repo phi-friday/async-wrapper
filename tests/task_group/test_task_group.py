@@ -76,6 +76,59 @@ class TestTaskGroupWrapper:
         term = end - start
         assert self.epsilon < term < self.epsilon + self.epsilon
 
+    async def test_limit(self):
+        limit = anyio.CapacityLimiter(2)
+
+        start = time.perf_counter()
+        async with anyio.create_task_group() as task_group:
+            wrapped = TaskGroupWrapper(task_group)
+            func = wrapped.wrap(sample_func_without_value, limiter=limit)
+            _ = [func(self.epsilon) for _ in range(3)]
+        end = time.perf_counter()
+        term = end - start
+        assert self.epsilon * 2 < term < self.epsilon * 2 + self.epsilon
+
+    async def test_overwrite_limit(self):
+        limit = anyio.CapacityLimiter(2)
+        new_limit = anyio.CapacityLimiter(3)
+
+        start = time.perf_counter()
+        async with anyio.create_task_group() as task_group:
+            wrapped = TaskGroupWrapper(task_group)
+            func = wrapped.wrap(sample_func_without_value, limiter=limit)
+            new_func = func.copy(limiter=new_limit)
+            _ = [new_func(self.epsilon) for _ in range(3)]
+        end = time.perf_counter()
+        term = end - start
+        assert self.epsilon < term < self.epsilon + self.epsilon
+
+    async def test_lock(self):
+        lock = anyio.Lock()
+
+        start = time.perf_counter()
+        async with anyio.create_task_group() as task_group:
+            wrapped = TaskGroupWrapper(task_group)
+            func = wrapped.wrap(sample_func_without_value, lock=lock)
+            _ = [func(self.epsilon) for _ in range(3)]
+        end = time.perf_counter()
+        term = end - start
+        assert self.epsilon * 3 < term < self.epsilon * 3 + self.epsilon
+
+    async def test_overwrite_lock(self):
+        lock = anyio.Lock()
+        new_lock = anyio.Lock()
+
+        start = time.perf_counter()
+        async with anyio.create_task_group() as task_group:
+            wrapped = TaskGroupWrapper(task_group)
+            func = wrapped.wrap(sample_func_without_value, lock=lock)
+            new_func = func.copy(lock=new_lock)
+            _ = [func(self.epsilon) for _ in range(2)]
+            _ = new_func(self.epsilon)
+        end = time.perf_counter()
+        term = end - start
+        assert self.epsilon * 2 < term < self.epsilon * 2 + self.epsilon
+
 
 async def sample_func(value: int, sleep: float) -> int:
     await anyio.sleep(sleep)
