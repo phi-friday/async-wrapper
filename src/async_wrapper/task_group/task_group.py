@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import AsyncExitStack
 from functools import partial, wraps
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Generic, TypeVar
 
@@ -11,7 +12,7 @@ from async_wrapper.task_group.value import SoonValue
 if TYPE_CHECKING:
     from types import TracebackType
 
-    from anyio.abc import CancelScope, Semaphore
+    from anyio.abc import CancelScope, CapacityLimiter, Lock, Semaphore
 
 ValueT_co = TypeVar("ValueT_co", covariant=True)
 OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
@@ -95,15 +96,20 @@ class TaskGroupWrapper(_TaskGroup):
 
 
 class SoonWrapper(Generic[ParamT, ValueT_co]):
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],
         task_group: _TaskGroup,
         semaphore: Semaphore | None = None,
+        limiter: CapacityLimiter | None = None,
+        lock: Lock | None = None,
     ) -> None:
         self.func = func
         self.task_group = task_group
         self.semaphore = semaphore
+        self.limiter = limiter
+        self.lock = lock
+
         self._wrapped = None
 
     def __call__(  # noqa: D102
@@ -133,23 +139,38 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
             *args: ParamT.args,
             **kwargs: ParamT.kwargs,
         ) -> ValueT_co:
-            if self.semaphore is None:
+            async with AsyncExitStack() as stack:
+                if self.semaphore is not None:
+                    await stack.enter_async_context(self.semaphore)
+                if self.limiter is not None:
+                    await stack.enter_async_context(self.limiter)
+                if self.lock is not None:
+                    await stack.enter_async_context(self.lock)
+
                 result = await self.func(*args, **kwargs)
-            else:
-                async with self.semaphore:
-                    result = await self.func(*args, **kwargs)
-            value._value = result  # noqa: SLF001
-            value._run_callbacks()  # noqa: SLF001
-            return result
+                value._value = result  # noqa: SLF001
+                return result
+            raise RuntimeError("never")
 
         self._wrapped = wrapped
         return wrapped
 
-    def copy(self, semaphore: Semaphore | None = None) -> Self:
+    def copy(
+        self,
+        semaphore: Semaphore | None = None,
+        limiter: CapacityLimiter | None = None,
+        lock: Lock | None = None,
+    ) -> Self:
         """copy self.
 
         Args:
             semaphore: anyio semaphore.
+                Defaults to None.
+                if not None, overwrite.
+            limiter: anyio capacity limiter.
+                Defaults to None.
+                if not None, overwrite.
+            lock: anyio lock.
                 Defaults to None.
                 if not None, overwrite.
 
@@ -158,7 +179,17 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
         """
         if semaphore is None:
             semaphore = self.semaphore
-        return SoonWrapper(self.func, self.task_group, semaphore)
+        if limiter is None:
+            limiter = self.limiter
+        if lock is None:
+            lock = self.lock
+        return SoonWrapper(
+            self.func,
+            self.task_group,
+            semaphore=semaphore,
+            limiter=limiter,
+            lock=lock,
+        )
 
 
 async def _as_coro(

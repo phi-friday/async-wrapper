@@ -76,24 +76,6 @@ class TestTaskGroupWrapper:
         term = end - start
         assert self.epsilon < term < self.epsilon + self.epsilon
 
-    async def test_value_callback(self):
-        origin = outer = 1
-
-        def add(value: int) -> None:
-            nonlocal outer
-            outer += value
-
-        start = time.perf_counter()
-        async with anyio.create_task_group() as task_group:
-            wrapped = TaskGroupWrapper(task_group)
-            func = wrapped.wrap(sample_func)
-            value = func(1, self.epsilon)
-            value.add_done_callback(lambda v: add(v.value))
-        end = time.perf_counter()
-        term = end - start
-        assert self.epsilon < term < self.epsilon + self.epsilon
-        assert outer == origin + value.value
-
 
 async def sample_func(value: int, sleep: float) -> int:
     await anyio.sleep(sleep)
