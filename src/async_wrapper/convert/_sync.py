@@ -7,19 +7,19 @@ from typing import Awaitable, Callable, TypeVar
 import anyio
 from typing_extensions import ParamSpec
 
-ValueT = TypeVar("ValueT")
+ValueT_co = TypeVar("ValueT_co", covariant=True)
 ParamT = ParamSpec("ParamT")
 
 __all__ = ["async_to_sync"]
 
 
 def async_to_sync(
-    func: Callable[ParamT, Awaitable[ValueT]],
-) -> Callable[ParamT, ValueT]:
+    func: Callable[ParamT, Awaitable[ValueT_co]],
+) -> Callable[ParamT, ValueT_co]:
     sync_func = _as_sync(func)
 
     @wraps(func)
-    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
+    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT_co:
         with ThreadPoolExecutor(1) as pool:
             future = pool.submit(sync_func, *args, **kwargs)
             wait([future])
@@ -29,18 +29,18 @@ def async_to_sync(
 
 
 def _as_sync(
-    func: Callable[ParamT, Awaitable[ValueT]],
-) -> Callable[ParamT, ValueT]:
+    func: Callable[ParamT, Awaitable[ValueT_co]],
+) -> Callable[ParamT, ValueT_co]:
     @wraps(func)
-    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
+    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT_co:
         return _run(func, *args, **kwargs)
 
     return inner
 
 
 def _run(
-    func: Callable[ParamT, Awaitable[ValueT]],
+    func: Callable[ParamT, Awaitable[ValueT_co]],
     *args: ParamT.args,
     **kwargs: ParamT.kwargs,
-) -> ValueT:
+) -> ValueT_co:
     return anyio.run(partial(func, *args, **kwargs))
