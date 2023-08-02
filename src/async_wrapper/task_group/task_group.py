@@ -22,6 +22,7 @@ OtherParamT = ParamSpec("OtherParamT")
 class TaskGroupWrapper(_TaskGroup):
     def __init__(self, task_group: _TaskGroup) -> None:
         self._task_group = task_group
+        self._active_self = False
 
     @property
     @override
@@ -57,7 +58,10 @@ class TaskGroupWrapper(_TaskGroup):
 
     @override
     async def __aenter__(self) -> Self:
+        if _is_active(self._task_group):
+            return self
         await self._task_group.__aenter__()
+        self._active_self = True
         return self
 
     @override
@@ -67,7 +71,9 @@ class TaskGroupWrapper(_TaskGroup):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> bool | None:
-        return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+        if self._active_self:
+            return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+        return None
 
     def wrap(
         self,
@@ -161,3 +167,8 @@ async def _as_coro(
     **kwargs: ParamT.kwargs,
 ) -> ValueT_co:
     return await func(*args, **kwargs)
+
+
+def _is_active(task_group: _TaskGroup) -> bool:
+    # trio, asyncio
+    return task_group._active  # type: ignore # noqa: SLF001
