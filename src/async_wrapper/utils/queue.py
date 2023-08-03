@@ -193,6 +193,17 @@ class Queue(Generic[ValueT]):
     ) -> None:
         self.close()
 
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        await self.aclose()
+
     def __aiter__(self) -> Self:
         return self
 
