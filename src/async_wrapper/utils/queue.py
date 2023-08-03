@@ -164,19 +164,30 @@ class Queue(Generic[ValueT]):
         self._getter.close()
         self._setter.close()
 
-    def clone(self) -> Queue[ValueT]:
-        """create clone of this queue"""
+    def clone(self, *, setter: bool = False, getter: bool = False) -> Queue[ValueT]:
+        """create clone of this queue.
+
+        Args:
+            setter: if true, clone setter. Defaults to False.
+            getter: if true, clone getter. Defaults to False.
+
+        Returns:
+            clone
+        """
         try:
-            return self._clone()
+            return self._clone(setter=setter, getter=getter)
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
-    def _clone(self) -> Queue[ValueT]:
+    def _clone(self, *, setter: bool, getter: bool) -> Queue[ValueT]:
         """create clone of this queue"""
         if self._closed:
             raise QueueBrokenError("the queue is already closed")
-        setter, getter = self._setter.clone(), self._getter.clone()
-        return Queue(stream=(setter, getter))
+        if not setter and not getter:
+            raise ValueError("setter and getter are None.")
+        _setter = self._setter.clone() if setter else self._setter
+        _getter = self._getter.clone() if getter else self._getter
+        return Queue(stream=(_setter, _getter))
 
     def statistics(self) -> MemoryObjectStreamStatistics:
         """return statstics from stream"""
@@ -210,7 +221,7 @@ class Queue(Generic[ValueT]):
     async def __anext__(self) -> ValueT:
         try:
             return await self.aget()
-        except (EndOfStream, QueueEmptyError) as exc:
+        except (EndOfStream, QueueEmptyError, QueueBrokenError) as exc:
             raise StopAsyncIteration from exc
 
     def __iter__(self) -> Self:
@@ -219,5 +230,5 @@ class Queue(Generic[ValueT]):
     def __next__(self) -> ValueT:
         try:
             return self.get()
-        except (EndOfStream, QueueEmptyError) as exc:
+        except (EndOfStream, QueueEmptyError, QueueBrokenError) as exc:
             raise StopIteration from exc
