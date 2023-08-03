@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import math
+import sys
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from anyio import WouldBlock, create_memory_object_stream, create_task_group, fail_after
 from anyio.streams.memory import BrokenResourceError, ClosedResourceError, EndOfStream
 
 from async_wrapper.exception import QueueBrokenError, QueueEmptyError, QueueFullError
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -134,6 +138,13 @@ class Queue(Generic[ValueT]):
             await self._aclose()
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
+        except ExceptionGroup as exc:
+            if all(
+                isinstance(error, (ClosedResourceError, BrokenResourceError))
+                for error in exc.exceptions
+            ):
+                raise QueueBrokenError from exc
+            raise
 
     def close(self) -> None:
         """close the stream as sync"""
