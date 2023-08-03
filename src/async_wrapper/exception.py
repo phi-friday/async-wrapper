@@ -4,4 +4,4 @@ __all__ = ["PendingError"]
 
 
 class PendingError(Exception):
-    ...
+    """using only in soon value"""
