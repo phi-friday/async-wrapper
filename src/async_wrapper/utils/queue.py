@@ -10,7 +10,7 @@ from anyio.streams.memory import BrokenResourceError, ClosedResourceError, EndOf
 from async_wrapper.exception import QueueBrokenError, QueueEmptyError, QueueFullError
 
 if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup
+    from exceptiongroup import ExceptionGroup  # type: ignore
 
 if TYPE_CHECKING:
     from types import TracebackType
