@@ -4,7 +4,7 @@ import math
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from anyio import WouldBlock, create_memory_object_stream, create_task_group, fail_after
-from anyio.streams.memory import BrokenResourceError, ClosedResourceError
+from anyio.streams.memory import BrokenResourceError, ClosedResourceError, EndOfStream
 
 from async_wrapper.exception import QueueBrokenError, QueueEmptyError, QueueFullError
 
@@ -181,3 +181,21 @@ class Queue(Generic[ValueT]):
         exc_tb: TracebackType | None,
     ) -> None:
         self.close()
+
+    def __aiter__(self) -> Self:
+        return self
+
+    async def __anext__(self) -> ValueT:
+        try:
+            return await self.aget()
+        except (EndOfStream, QueueEmptyError) as exc:
+            raise StopAsyncIteration from exc
+
+    def __iter__(self) -> Self:
+        return self
+
+    def __next__(self) -> ValueT:
+        try:
+            return self.get()
+        except (EndOfStream, QueueEmptyError) as exc:
+            raise StopIteration from exc
