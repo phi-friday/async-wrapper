@@ -3,7 +3,7 @@ from __future__ import annotations
 from threading import local
 from typing import Generic, TypeVar
 
-from .exception import PendingError
+from async_wrapper.exception import PendingError
 
 ValueT_co = TypeVar("ValueT_co", covariant=True)
 Pending = local()
