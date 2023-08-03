@@ -11,7 +11,11 @@ from async_wrapper.exception import QueueBrokenError, QueueEmptyError, QueueFull
 if TYPE_CHECKING:
     from types import TracebackType
 
-    from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
+    from anyio.streams.memory import (
+        MemoryObjectReceiveStream,
+        MemoryObjectSendStream,
+        MemoryObjectStreamStatistics,
+    )
     from typing_extensions import Self
 
 __all__ = ["Queue"]
@@ -162,6 +166,10 @@ class Queue(Generic[ValueT]):
             raise QueueBrokenError("the queue is already closed")
         setter, getter = self._setter.clone(), self._getter.clone()
         return Queue(stream=(setter, getter))
+
+    def statistics(self) -> MemoryObjectStreamStatistics:
+        """return statstics from stream"""
+        return self._getter._state.statistics()  # noqa: SLF001
 
     def __enter__(self) -> Self:
         return self
