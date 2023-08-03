@@ -160,7 +160,8 @@ class Queue(Generic[ValueT]):
         """create clone of this queue"""
         if self._closed:
             raise QueueBrokenError("the queue is already closed")
-        return Queue(stream=(self._setter, self._getter))
+        setter, getter = self._setter.clone(), self._getter.clone()
+        return Queue(stream=(setter, getter))
 
     def __enter__(self) -> Self:
         return self
