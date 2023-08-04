@@ -5,8 +5,8 @@ from typing import Any
 import anyio
 import pytest
 
+from async_wrapper import Waiter, wait_for
 from async_wrapper.task_group import SoonValue
-from async_wrapper.utils.wait import Waiter, wait_for
 
 
 @pytest.mark.anyio()

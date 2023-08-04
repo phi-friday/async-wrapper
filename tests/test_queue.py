@@ -4,15 +4,10 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from anyio import (
-    CancelScope,
-    create_task_group,
-    fail_after,
-    wait_all_tasks_blocked,
-)
+from anyio import CancelScope, create_task_group, fail_after, wait_all_tasks_blocked
 
+from async_wrapper import Queue
 from async_wrapper.exception import QueueBrokenError
-from async_wrapper.utils.queue import Queue
 
 pytestmark = pytest.mark.anyio
 
