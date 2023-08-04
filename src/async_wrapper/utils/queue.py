@@ -30,7 +30,7 @@ ValueT = TypeVar("ValueT")
 class Queue(Generic[ValueT]):
     """obtained from asyncio.Queue"""
 
-    _setter: MemoryObjectSendStream[ValueT]
+    _putter: MemoryObjectSendStream[ValueT]
     _getter: MemoryObjectReceiveStream[ValueT]
 
     def __init__(
@@ -40,20 +40,20 @@ class Queue(Generic[ValueT]):
         | None = None,
     ) -> None:
         if stream is None:
-            self._setter, self._getter = create_memory_object_stream(
+            self._putter, self._getter = create_memory_object_stream(
                 max_buffer_size=max_size or math.inf,
             )
         else:
-            setter, getter = stream
-            if setter._closed or getter._closed:  # noqa: SLF001
-                raise QueueBrokenError("setter or getter is closed")
-            if setter._state.buffer is not getter._state.buffer:  # noqa: SLF001
-                raise QueueBrokenError("setter and getter has diff buffer.")
-            self._setter, self._getter = stream
+            putter, getter = stream
+            if putter._closed or getter._closed:  # noqa: SLF001
+                raise QueueBrokenError("putter or getter is closed")
+            if putter._state.buffer is not getter._state.buffer:  # noqa: SLF001
+                raise QueueBrokenError("putter and getter has diff buffer.")
+            self._putter, self._getter = stream
 
     @property
     def _closed(self) -> bool:
-        return self._setter._closed or self._getter._closed  # noqa: SLF001
+        return self._putter._closed or self._getter._closed  # noqa: SLF001
 
     def qsize(self) -> int:
         """number of items in the queue."""
@@ -101,16 +101,20 @@ class Queue(Generic[ValueT]):
         try:
             return await self._getter.receive()
         except WouldBlock as exc:
-            raise QueueEmptyError from exc
+            if self.empty():
+                raise QueueEmptyError from exc
+            raise QueueBrokenError from exc
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
     async def _aput(self, value: ValueT) -> None:
         """put an item into the queue."""
         try:
-            await self._setter.send(value)
+            await self._putter.send(value)
         except WouldBlock as exc:
-            raise QueueFullError from exc
+            if self.full():
+                raise QueueFullError from exc
+            raise QueueBrokenError from exc
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
@@ -119,16 +123,20 @@ class Queue(Generic[ValueT]):
         try:
             return self._getter.receive_nowait()
         except WouldBlock as exc:
-            raise QueueEmptyError from exc
+            if self.empty():
+                raise QueueEmptyError from exc
+            raise QueueBrokenError from exc
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
     def put(self, value: ValueT) -> None:
         """put an item into the queue without blocking."""
         try:
-            self._setter.send_nowait(value)
+            self._putter.send_nowait(value)
         except WouldBlock as exc:
-            raise QueueFullError from exc
+            if self.full():
+                raise QueueFullError from exc
+            raise QueueBrokenError from exc
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
@@ -157,37 +165,37 @@ class Queue(Generic[ValueT]):
         """close the stream as async"""
         async with create_task_group() as task_group:
             task_group.start_soon(self._getter.aclose)
-            task_group.start_soon(self._setter.aclose)
+            task_group.start_soon(self._putter.aclose)
 
     def _close(self) -> None:
         """close the stream as sync"""
         self._getter.close()
-        self._setter.close()
+        self._putter.close()
 
-    def clone(self, *, setter: bool = False, getter: bool = False) -> Queue[ValueT]:
+    def clone(self, *, putter: bool = False, getter: bool = False) -> Queue[ValueT]:
         """create clone of this queue.
 
         Args:
-            setter: if true, clone setter. Defaults to False.
+            putter: if true, clone putter. Defaults to False.
             getter: if true, clone getter. Defaults to False.
 
         Returns:
             clone
         """
         try:
-            return self._clone(setter=setter, getter=getter)
+            return self._clone(putter=putter, getter=getter)
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
-    def _clone(self, *, setter: bool, getter: bool) -> Queue[ValueT]:
+    def _clone(self, *, putter: bool, getter: bool) -> Queue[ValueT]:
         """create clone of this queue"""
         if self._closed:
             raise QueueBrokenError("the queue is already closed")
-        if not setter and not getter:
-            raise ValueError("setter and getter are None.")
-        _setter = self._setter.clone() if setter else self._setter
+        if not putter and not getter:
+            raise ValueError("putter and getter are None.")
+        _putter = self._putter.clone() if putter else self._putter
         _getter = self._getter.clone() if getter else self._getter
-        return Queue(stream=(_setter, _getter))
+        return Queue(stream=(_putter, _getter))
 
     def statistics(self) -> MemoryObjectStreamStatistics:
         """return statstics from stream"""

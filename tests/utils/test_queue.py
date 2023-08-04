@@ -1,7 +1,6 @@
 """obtained from anyio.tests"""
 from __future__ import annotations
 
-import sys
 from typing import Any
 
 import pytest
@@ -14,9 +13,6 @@ from anyio import (
 
 from async_wrapper.exception import QueueBrokenError
 from async_wrapper.utils import Queue
-
-if sys.version_info < (3, 11):
-    pass
 
 pytestmark = pytest.mark.anyio
 
@@ -135,7 +131,7 @@ async def test_aget_aput_closed_queue() -> None:
 
 async def test_clone() -> None:
     queue: Queue[str] = Queue(1)
-    queue2 = queue.clone(setter=True, getter=True)
+    queue2 = queue.clone(putter=True, getter=True)
 
     await queue.aclose()
     queue2.put("hello")
@@ -221,7 +217,7 @@ async def test_close_queue_after_aput() -> None:
 
 async def test_statistics() -> None:
     queue: Queue[None] = Queue(1)
-    streams = queue._setter, queue._getter  # noqa: SLF001
+    streams = queue._putter, queue._getter  # noqa: SLF001
 
     for stream in streams:
         statistics = stream.statistics()
