@@ -69,6 +69,21 @@ async def test_wait_for():
     assert soon.value == 1
 
 
+@pytest.mark.anyio()
+async def test_wait_many():
+    events = [anyio.Event() for _ in range(10)]
+    soon = SoonValue()
+    async with anyio.create_task_group() as task_group:
+        task_group.start_soon(wait_for, events, sample_func, 0.1, 1, soon)
+        for event in events:
+            task_group.start_soon(sample_wait, event, 2, soon)
+
+    for event in events:
+        assert event.is_set()
+    assert soon.is_ready
+    assert soon.value == 1
+
+
 async def sample_wait(event: anyio.Event, value: Any, soon: SoonValue[Any]) -> None:
     await event.wait()
     if not soon.is_ready:

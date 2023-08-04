@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Iterable, TypeVar
 
 from anyio import Event
 from typing_extensions import ParamSpec, Self, override
@@ -121,7 +121,7 @@ class Waiter(Event):
 
 
 async def wait_for(
-    event: Event,
+    event: Event | Iterable[Event],
     func: Callable[ParamT, Awaitable[ValueT_co]],
     *args: ParamT.args,
     **kwargs: ParamT.kwargs,
@@ -170,7 +170,9 @@ async def wait_for(
     >>> test: end
     >>> test2: end
     """
+    event = set(event) if not isinstance(event, Event) else (event,)
     try:
         return await func(*args, **kwargs)
     finally:
-        event.set()
+        for sub in event:
+            sub.set()
