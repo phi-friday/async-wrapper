@@ -12,7 +12,7 @@ from anyio import (
 )
 
 from async_wrapper.exception import QueueBrokenError
-from async_wrapper.utils import Queue
+from async_wrapper.utils.queue import Queue
 
 pytestmark = pytest.mark.anyio
 
