@@ -76,7 +76,7 @@ class TaskGroupWrapper(_TaskGroup):
         *args: Any,
         name: Any = None,
     ) -> None:
-        return self._task_group.start_soon(_as_coro, func, *args, name=name)
+        return self._task_group.start_soon(func, *args, name=name)
 
     @override
     async def start(
@@ -229,14 +229,6 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
             limiter=limiter,
             lock=lock,
         )
-
-
-async def _as_coro(
-    func: Callable[ParamT, Awaitable[ValueT_co]],
-    *args: ParamT.args,
-    **kwargs: ParamT.kwargs,
-) -> ValueT_co:
-    return await func(*args, **kwargs)
 
 
 def _is_active(task_group: _TaskGroup) -> bool:
