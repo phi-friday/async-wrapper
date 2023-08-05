@@ -28,6 +28,7 @@ pytest = "^7.4.0"
 pre-commit = "^3.3.3"
 trio = "^0.22.2"
 pyyaml = ">=6.0.1"    # cython error
+pytest-cov = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -117,3 +118,7 @@ required-imports = ["from __future__ import annotations"]
 pythonVersion = '3.8'
 pythonPlatform = 'Linux'
 diagnostic = 'basic'
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-report html"
+testpaths = ["tests"]
