@@ -22,7 +22,7 @@ uvloop = ['uvloop']
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.0.282"
-black = "23.3.0"
+black = "23.7.0"
 ipykernel = "^6.23.3"
 pytest = "^7.4.0"
 pre-commit = "^3.3.3"

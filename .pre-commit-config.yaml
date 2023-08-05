@@ -9,7 +9,7 @@ repos:
       - id: black
         args:
           - "--check"
-    rev: 23.3.0
+    rev: 23.7.0
     repo: https://github.com/psf/black
 
   - hooks:
