@@ -162,3 +162,5 @@ cython_debug/
 *.ipynb
 # asdf
 .tool-versions
+# extra
+.DS_Store
