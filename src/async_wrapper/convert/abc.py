@@ -11,6 +11,8 @@ __all__ = ["SyncToAsync", "AsyncToSync", "Toggle"]
 
 
 class SyncToAsync(Protocol):
+    """convert sync func to async"""
+
     def __call__(  # noqa: D102
         self,
         func: Callable[ParamT, ValueT_co],
@@ -19,6 +21,8 @@ class SyncToAsync(Protocol):
 
 
 class AsyncToSync(Protocol):
+    """convert awaitable func to sync"""
+
     def __call__(  # noqa: D102
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],
@@ -27,6 +31,8 @@ class AsyncToSync(Protocol):
 
 
 class Toggle(Protocol):
+    """convert sync func to async. or awaitable func to sync."""
+
     @overload
     def __call__(
         self,

@@ -21,6 +21,36 @@ OtherParamT = ParamSpec("OtherParamT")
 
 
 class TaskGroupWrapper(_TaskGroup):
+    """wrap anyio.TaskGroup
+
+    how to use:
+    >>> import anyio
+    >>>
+    >>> from async_wrapper import TaskGroupWrapper
+    >>>
+    >>>
+    >>> async def test(x: int) -> int:
+    >>>     await anyio.sleep(0.1)
+    >>>     return x
+    >>>
+    >>>
+    >>> async def main() -> None:
+    >>>     async with anyio.create_task_group() as task_group:
+    >>>         async with TaskGroupWrapper(task_group) as tg:
+    >>>             func = tg.wrap(test)
+    >>>             soon_1 = func(1)
+    >>>             soon_2 = func(2)
+    >>>
+    >>>     assert soon_1.is_ready
+    >>>     assert soon_2.is_ready
+    >>>     assert soon_1.value == 1
+    >>>     assert soon_2.value == 2
+    >>>
+    >>>
+    >>> if __name__ == "__main__":
+    >>>     anyio.run(main)
+    """
+
     def __init__(self, task_group: _TaskGroup) -> None:
         self._task_group = task_group
         self._active_self = False
@@ -100,6 +130,8 @@ class TaskGroupWrapper(_TaskGroup):
 
 
 class SoonWrapper(Generic[ParamT, ValueT_co]):
+    """wrapped func using in TaskGroupWrapper"""
+
     def __init__(  # noqa: PLR0913
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],

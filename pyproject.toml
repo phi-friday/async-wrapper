@@ -90,7 +90,6 @@ ignore = [
     "D105",   # undocumented-magic-method
     "TD",     # flake8-todos
     "FIX",    # flake8-fixme
-    "D101",   # "undocumented-public-class"
 ]
 
 [tool.ruff.per-file-ignores]
