@@ -6,6 +6,7 @@ from typing import Final
 
 import anyio
 import pytest
+from anyio.lowlevel import checkpoint
 
 from ..base import Timer  # noqa: TID252
 from async_wrapper import TaskGroupWrapper, create_task_group_wrapper
@@ -14,7 +15,7 @@ from async_wrapper.task_group import SoonValue
 
 @pytest.mark.anyio()
 class TestTaskGroupWrapper:
-    epsilon: Final[float] = 0.1
+    epsilon: Final[float] = 0.001
 
     @pytest.mark.parametrize("x", range(1, 4))
     async def test_soon_value(self, x: int):
@@ -22,8 +23,8 @@ class TestTaskGroupWrapper:
             async with anyio.create_task_group() as task_group:
                 wrapped = TaskGroupWrapper(task_group)
                 func = wrapped.wrap(sample_func)
-                value = func(x, self.epsilon)
-        assert self.epsilon < timer.term < self.epsilon + self.epsilon
+                value = func(x)
+        assert timer.term < self.epsilon + self.epsilon
 
         assert isinstance(value, SoonValue)
         assert value.is_ready
@@ -34,8 +35,8 @@ class TestTaskGroupWrapper:
         with Timer() as timer:
             async with create_task_group_wrapper() as task_group:
                 func = task_group.wrap(sample_func)
-                value = func(x, self.epsilon)
-        assert self.epsilon < timer.term < self.epsilon + self.epsilon
+                value = func(x)
+        assert timer.term < self.epsilon + self.epsilon
 
         assert isinstance(value, SoonValue)
         assert value.is_ready
@@ -47,9 +48,9 @@ class TestTaskGroupWrapper:
             async with anyio.create_task_group() as task_group:
                 wrapped = TaskGroupWrapper(task_group)
                 func = wrapped.wrap(sample_func)
-                value_x = func(x, self.epsilon)
-                value_y = func(y, self.epsilon)
-        assert self.epsilon < timer.term < self.epsilon + self.epsilon
+                value_x = func(x)
+                value_y = func(y)
+        assert timer.term < self.epsilon + self.epsilon
 
         assert isinstance(value_x, SoonValue)
         assert isinstance(value_y, SoonValue)
@@ -63,9 +64,9 @@ class TestTaskGroupWrapper:
         with Timer() as timer:
             async with create_task_group_wrapper() as task_group:
                 func = task_group.wrap(sample_func)
-                value_x = func(x, self.epsilon)
-                value_y = func(y, self.epsilon)
-        assert self.epsilon < timer.term < self.epsilon + self.epsilon
+                value_x = func(x)
+                value_y = func(y)
+        assert timer.term < self.epsilon + self.epsilon
 
         assert isinstance(value_x, SoonValue)
         assert isinstance(value_y, SoonValue)
@@ -81,8 +82,8 @@ class TestTaskGroupWrapper:
             async with anyio.create_task_group() as task_group:
                 wrapped = TaskGroupWrapper(task_group)
                 func = wrapped.wrap(sample_func_without_value, sema)
-                _ = [func(self.epsilon) for _ in range(3)]
-        assert self.epsilon * 2 < timer.term < self.epsilon * 2 + self.epsilon
+                _ = [func() for _ in range(3)]
+        assert timer.term < self.epsilon * 2 + self.epsilon
 
     async def test_semaphore_direct(self):
         sema = anyio.Semaphore(2)
@@ -90,8 +91,8 @@ class TestTaskGroupWrapper:
         with Timer() as timer:
             async with create_task_group_wrapper() as task_group:
                 func = task_group.wrap(sample_func_without_value, sema)
-                _ = [func(self.epsilon) for _ in range(3)]
-        assert self.epsilon * 2 < timer.term < self.epsilon * 2 + self.epsilon
+                _ = [func() for _ in range(3)]
+        assert timer.term < self.epsilon * 2 + self.epsilon
 
     async def test_overwrite_semaphore(self):
         sema = anyio.Semaphore(2)
@@ -102,8 +103,8 @@ class TestTaskGroupWrapper:
                 wrapped = TaskGroupWrapper(task_group)
                 func = wrapped.wrap(sample_func_without_value, sema)
                 new_func = func.copy(new_sema)
-                _ = [new_func(self.epsilon) for _ in range(3)]
-        assert self.epsilon < timer.term < self.epsilon + self.epsilon
+                _ = [new_func() for _ in range(3)]
+        assert timer.term < self.epsilon + self.epsilon
 
     async def test_overwrite_semaphore_direct(self):
         sema = anyio.Semaphore(2)
@@ -113,8 +114,8 @@ class TestTaskGroupWrapper:
             async with create_task_group_wrapper() as task_group:
                 func = task_group.wrap(sample_func_without_value, sema)
                 new_func = func.copy(new_sema)
-                _ = [new_func(self.epsilon) for _ in range(3)]
-        assert self.epsilon < timer.term < self.epsilon + self.epsilon
+                _ = [new_func() for _ in range(3)]
+        assert timer.term < self.epsilon + self.epsilon
 
     async def test_limit(self):
         limit = anyio.CapacityLimiter(2)
@@ -123,8 +124,8 @@ class TestTaskGroupWrapper:
             async with anyio.create_task_group() as task_group:
                 wrapped = TaskGroupWrapper(task_group)
                 func = wrapped.wrap(sample_func_without_value, limiter=limit)
-                _ = [func(self.epsilon) for _ in range(3)]
-        assert self.epsilon * 2 < timer.term < self.epsilon * 2 + self.epsilon
+                _ = [func() for _ in range(3)]
+        assert timer.term < self.epsilon * 2 + self.epsilon
 
     async def test_limit_direct(self):
         limit = anyio.CapacityLimiter(2)
@@ -132,8 +133,8 @@ class TestTaskGroupWrapper:
         with Timer() as timer:
             async with create_task_group_wrapper() as task_group:
                 func = task_group.wrap(sample_func_without_value, limiter=limit)
-                _ = [func(self.epsilon) for _ in range(3)]
-        assert self.epsilon * 2 < timer.term < self.epsilon * 2 + self.epsilon
+                _ = [func() for _ in range(3)]
+        assert timer.term < self.epsilon * 2 + self.epsilon
 
     async def test_overwrite_limit(self):
         limit = anyio.CapacityLimiter(2)
@@ -144,8 +145,8 @@ class TestTaskGroupWrapper:
                 wrapped = TaskGroupWrapper(task_group)
                 func = wrapped.wrap(sample_func_without_value, limiter=limit)
                 new_func = func.copy(limiter=new_limit)
-                _ = [new_func(self.epsilon) for _ in range(3)]
-        assert self.epsilon < timer.term < self.epsilon + self.epsilon
+                _ = [new_func() for _ in range(3)]
+        assert timer.term < self.epsilon + self.epsilon
 
     async def test_overwrite_limit_direct(self):
         limit = anyio.CapacityLimiter(2)
@@ -155,8 +156,8 @@ class TestTaskGroupWrapper:
             async with create_task_group_wrapper() as task_group:
                 func = task_group.wrap(sample_func_without_value, limiter=limit)
                 new_func = func.copy(limiter=new_limit)
-                _ = [new_func(self.epsilon) for _ in range(3)]
-        assert self.epsilon < timer.term < self.epsilon + self.epsilon
+                _ = [new_func() for _ in range(3)]
+        assert timer.term < self.epsilon + self.epsilon
 
     async def test_lock(self):
         lock = anyio.Lock()
@@ -165,8 +166,8 @@ class TestTaskGroupWrapper:
             async with anyio.create_task_group() as task_group:
                 wrapped = TaskGroupWrapper(task_group)
                 func = wrapped.wrap(sample_func_without_value, lock=lock)
-                _ = [func(self.epsilon) for _ in range(3)]
-        assert self.epsilon * 3 < timer.term < self.epsilon * 3 + self.epsilon
+                _ = [func() for _ in range(3)]
+        assert timer.term < self.epsilon * 3 + self.epsilon
 
     async def test_lock_direct(self):
         lock = anyio.Lock()
@@ -174,8 +175,8 @@ class TestTaskGroupWrapper:
         with Timer() as timer:
             async with create_task_group_wrapper() as task_group:
                 func = task_group.wrap(sample_func_without_value, lock=lock)
-                _ = [func(self.epsilon) for _ in range(3)]
-        assert self.epsilon * 3 < timer.term < self.epsilon * 3 + self.epsilon
+                _ = [func() for _ in range(3)]
+        assert timer.term < self.epsilon * 3 + self.epsilon
 
     async def test_overwrite_lock(self):
         lock = anyio.Lock()
@@ -186,9 +187,9 @@ class TestTaskGroupWrapper:
                 wrapped = TaskGroupWrapper(task_group)
                 func = wrapped.wrap(sample_func_without_value, lock=lock)
                 new_func = func.copy(lock=new_lock)
-                _ = [func(self.epsilon) for _ in range(2)]
-                _ = new_func(self.epsilon)
-        assert self.epsilon * 2 < timer.term < self.epsilon * 2 + self.epsilon
+                _ = [func() for _ in range(2)]
+                _ = new_func()
+        assert timer.term < self.epsilon * 2 + self.epsilon
 
     async def test_overwrite_lock_direct(self):
         lock = anyio.Lock()
@@ -198,13 +199,13 @@ class TestTaskGroupWrapper:
             async with create_task_group_wrapper() as task_group:
                 func = task_group.wrap(sample_func_without_value, lock=lock)
                 new_func = func.copy(lock=new_lock)
-                _ = [func(self.epsilon) for _ in range(2)]
-                _ = new_func(self.epsilon)
-        assert self.epsilon * 2 < timer.term < self.epsilon * 2 + self.epsilon
+                _ = [func() for _ in range(2)]
+                _ = new_func()
+        assert timer.term < self.epsilon * 2 + self.epsilon
 
 
-async def sample_func(value: int, sleep: float) -> int:
-    await anyio.sleep(sleep)
+async def sample_func(value: int) -> int:
+    await checkpoint()
     return value
 
 

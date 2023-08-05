@@ -4,6 +4,7 @@ from typing import Any
 
 import anyio
 import pytest
+from anyio.lowlevel import checkpoint
 
 from async_wrapper import Completed, Waiter, wait_for
 from async_wrapper.exception import PendingError
@@ -15,7 +16,7 @@ async def test_waiter():
     soon = SoonValue()
 
     async with anyio.create_task_group() as task_group:
-        event = Waiter(sample_func, 0.1, 1, soon)(task_group)
+        event = Waiter(sample_func, 1, soon)(task_group)
         task_group.start_soon(sample_wait, event, 2, soon)
 
     assert event.is_set()
@@ -29,7 +30,7 @@ async def test_waiter_reuse():
     new_soon = SoonValue()
 
     async with anyio.create_task_group() as task_group:
-        event = Waiter(sample_func, 0.1)(task_group)
+        event = Waiter(sample_func)(task_group)
         task_group.start_soon(sample_wait, event, 1, soon)
         new_event = event.copy()(task_group)
         task_group.start_soon(sample_wait, event, 2, new_soon)
@@ -47,8 +48,8 @@ async def test_waiter_reuse_overwrite():
     soon = SoonValue()
 
     async with anyio.create_task_group() as task_group:
-        event = Waiter(sample_func, 0.1)
-        new_event = event.copy(0.1, 3, soon)(task_group)
+        event = Waiter(sample_func)
+        new_event = event.copy(3, soon)(task_group)
         task_group.start_soon(sample_wait, new_event, 2, soon)
 
     assert not event.is_set()
@@ -62,7 +63,7 @@ async def test_wait_for():
     event = anyio.Event()
     soon = SoonValue()
     async with anyio.create_task_group() as task_group:
-        task_group.start_soon(wait_for, event, sample_func, 0.1, 1, soon)
+        task_group.start_soon(wait_for, event, sample_func, 1, soon)
         task_group.start_soon(sample_wait, event, 2, soon)
 
     assert event.is_set()
@@ -75,7 +76,7 @@ async def test_wait_many():
     events = [anyio.Event() for _ in range(10)]
     soon = SoonValue()
     async with anyio.create_task_group() as task_group:
-        task_group.start_soon(wait_for, events, sample_func, 0.1, 1, soon)
+        task_group.start_soon(wait_for, events, sample_func, 1, soon)
         for event in events:
             task_group.start_soon(sample_wait, event, 2, soon)
 
@@ -167,14 +168,10 @@ async def sample_wait(event: anyio.Event, value: Any, soon: SoonValue[Any]) -> N
         soon._value = value  # noqa: SLF001
 
 
-async def sample_func(
-    sleep: float,
-    value: Any = None,
-    soon: SoonValue[Any] | None = None,
-) -> None:
-    await anyio.sleep(sleep)
+async def sample_func(value: Any = None, soon: SoonValue[Any] | None = None) -> None:
+    await checkpoint()
     if soon is not None and not soon.is_ready:
-        await anyio.sleep(sleep)
+        await checkpoint()
         soon._value = value  # noqa: SLF001
 
 
