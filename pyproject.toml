@@ -120,7 +120,7 @@ pythonPlatform = 'Linux'
 diagnostic = 'basic'
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report html"
+addopts = "--cov=src/async_wrapper --cov-report html --cov-report=xml"
 testpaths = ["tests"]
 
 [tool.coverage.run]
