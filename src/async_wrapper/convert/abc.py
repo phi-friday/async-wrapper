@@ -17,7 +17,7 @@ class SyncToAsync(Protocol):
         self,
         func: Callable[ParamT, ValueT_co],
     ) -> Callable[ParamT, Coroutine[Any, Any, ValueT_co]]:
-        ...
+        ...  # pragma: no cover
 
 
 class AsyncToSync(Protocol):
@@ -27,7 +27,7 @@ class AsyncToSync(Protocol):
         self,
         func: Callable[ParamT, Awaitable[ValueT_co]],
     ) -> Callable[ParamT, ValueT_co]:
-        ...
+        ...  # pragma: no cover
 
 
 class Toggle(Protocol):
@@ -38,18 +38,18 @@ class Toggle(Protocol):
         self,
         func: Callable[ParamT, Coroutine[Any, Any, ValueT_co]],
     ) -> Callable[ParamT, ValueT_co]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __call__(
         self,
         func: Callable[ParamT, ValueT_co],
     ) -> Callable[ParamT, Coroutine[Any, Any, ValueT_co]]:
-        ...
+        ...  # pragma: no cover
 
     def __call__(  # noqa: D102
         self,
         func: Callable[ParamT, ValueT_co]
         | Callable[ParamT, Coroutine[Any, Any, ValueT_co]],
     ) -> Callable[ParamT, ValueT_co] | Callable[ParamT, Coroutine[Any, Any, ValueT_co]]:
-        ...
+        ...  # pragma: no cover

@@ -18,14 +18,14 @@ __all__ = ["toggle_func", "async_to_sync", "sync_to_async"]
 def toggle_func(
     func: Callable[ParamT, Coroutine[Any, Any, ValueT]],
 ) -> Callable[ParamT, ValueT]:
-    ...
+    ...  # pragma: no cover
 
 
 @overload
 def toggle_func(
     func: Callable[ParamT, ValueT],
 ) -> Callable[ParamT, Coroutine[Any, Any, ValueT]]:
-    ...
+    ...  # pragma: no cover
 
 
 def toggle_func(

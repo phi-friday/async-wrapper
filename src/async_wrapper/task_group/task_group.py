@@ -192,7 +192,7 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
                 result = await self.func(*args, **kwargs)
                 value._value = result  # noqa: SLF001
                 return result
-            raise RuntimeError("never")
+            raise RuntimeError("never")  # pragma: no cover
 
         self._wrapped = wrapped
         return wrapped
