@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from functools import partial
 from threading import local
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Iterable, TypeVar
@@ -9,9 +8,6 @@ from anyio import EndOfStream, Event, create_memory_object_stream, create_task_g
 from typing_extensions import ParamSpec, Self, override
 
 from async_wrapper.exception import PendingError
-
-if sys.version_info < (3, 11):
-    pass
 
 if TYPE_CHECKING:
     from types import TracebackType
