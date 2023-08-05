@@ -4,6 +4,7 @@ from contextlib import AsyncExitStack
 from functools import partial, wraps
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Generic, TypeVar
 
+from anyio import create_task_group as _create_task_group
 from anyio.abc import TaskGroup as _TaskGroup
 from typing_extensions import Concatenate, ParamSpec, Self, override
 
@@ -18,6 +19,8 @@ ValueT_co = TypeVar("ValueT_co", covariant=True)
 OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
 ParamT = ParamSpec("ParamT")
 OtherParamT = ParamSpec("OtherParamT")
+
+__all__ = ["TaskGroupWrapper", "create_task_group_wrapper"]
 
 
 class TaskGroupWrapper(_TaskGroup):
@@ -151,7 +154,7 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
 
         self._wrapped = None
 
-    def __call__(  # noqa: D102
+    def __call__(
         self,
         *args: ParamT.args,
         **kwargs: ParamT.kwargs,
@@ -229,6 +232,15 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
             limiter=limiter,
             lock=lock,
         )
+
+
+def create_task_group_wrapper() -> TaskGroupWrapper:
+    """create new task group wrapper
+
+    Returns:
+        task group wrapper
+    """
+    return TaskGroupWrapper(_create_task_group())
 
 
 def _is_active(task_group: _TaskGroup) -> bool:
