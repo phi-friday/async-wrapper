@@ -9,8 +9,6 @@ from anyio import CancelScope, create_task_group, fail_after, wait_all_tasks_blo
 from async_wrapper import Queue
 from async_wrapper.exception import QueueBrokenError
 
-pytestmark = pytest.mark.anyio
-
 
 def test_invalid_max_buffer() -> None:
     with pytest.raises(
@@ -25,6 +23,7 @@ def test_negative_max_buffer() -> None:
         Queue(-1)
 
 
+@pytest.mark.anyio()
 async def test_aget_then_aput() -> None:
     queue: Queue[str] = Queue()
     result: list[str] = []
@@ -42,6 +41,7 @@ async def test_aget_then_aput() -> None:
     assert result == ["hello", "anyio"]
 
 
+@pytest.mark.anyio()
 async def test_aget_then_put() -> None:
     queue: Queue[str] = Queue()
     result: list[str] = []
@@ -59,6 +59,7 @@ async def test_aget_then_put() -> None:
     assert sorted(result, reverse=True) == ["hello", "anyio"]
 
 
+@pytest.mark.anyio()
 async def test_aput_then_get() -> None:
     queue: Queue[str] = Queue()
     async with create_task_group() as task_group:
@@ -67,6 +68,7 @@ async def test_aput_then_get() -> None:
         assert queue.get() == "hello"
 
 
+@pytest.mark.anyio()
 async def test_aput_is_unblocked_after_get() -> None:
     queue: Queue[str] = Queue()
     queue.put("hello")
@@ -80,6 +82,7 @@ async def test_aput_is_unblocked_after_get() -> None:
     assert queue.get() == "anyio"
 
 
+@pytest.mark.anyio()
 async def test_put_then_get() -> None:
     queue: Queue[str] = Queue()
     queue.put("hello")
@@ -89,14 +92,16 @@ async def test_put_then_get() -> None:
     assert queue.get() == "anyio"
 
 
+@pytest.mark.anyio()
 async def test_iterate() -> None:
     queue: Queue[str] = Queue()
     result: list[str] = []
     clone = queue.clone(getter=True)
 
     async def getter() -> None:
-        async for item in clone:
-            result.append(item)  # noqa: PERF402
+        async with clone:
+            async for item in clone:
+                result.append(item)  # noqa: PERF402
 
     async with create_task_group() as task_group:
         task_group.start_soon(getter)
@@ -107,6 +112,7 @@ async def test_iterate() -> None:
     assert result == ["hello", "anyio"]
 
 
+@pytest.mark.anyio()
 async def test_aget_aput_closed_queue() -> None:
     queue: Queue[Any] = Queue()
 
@@ -124,6 +130,7 @@ async def test_aget_aput_closed_queue() -> None:
         await queue.aput(None)
 
 
+@pytest.mark.anyio()
 async def test_clone() -> None:
     queue: Queue[str] = Queue(1)
     queue2 = queue.clone(putter=True, getter=True)
@@ -133,12 +140,14 @@ async def test_clone() -> None:
     assert queue2.get() == "hello"
 
 
+@pytest.mark.anyio()
 async def test_clone_closed() -> None:
     queue: Queue[str] = Queue(1)
     await queue.aclose()
     pytest.raises(QueueBrokenError, queue.clone)
 
 
+@pytest.mark.anyio()
 async def test_aget_when_cancelled() -> None:
     queue: Queue[str] = Queue()
     async with create_task_group() as task_group:
@@ -155,6 +164,7 @@ async def test_aget_when_cancelled() -> None:
         assert await queue.aget() == "world"
 
 
+@pytest.mark.anyio()
 async def test_aput_when_cancelled() -> None:
     queue: Queue[str] = Queue()
     result: list[str] = []
@@ -172,6 +182,7 @@ async def test_aput_when_cancelled() -> None:
     assert result == ["world"]
 
 
+@pytest.mark.anyio()
 async def test_cancel_during_aget() -> None:
     receiver_scope: CancelScope | None = None
     queue: Queue[str] = Queue()
@@ -194,6 +205,7 @@ async def test_cancel_during_aget() -> None:
     assert result == ["hello"]
 
 
+@pytest.mark.anyio()
 async def test_close_queue_after_aput() -> None:
     queue: Queue[str] = Queue()
 
@@ -210,6 +222,7 @@ async def test_close_queue_after_aput() -> None:
         task_group.start_soon(get)
 
 
+@pytest.mark.anyio()
 async def test_statistics() -> None:
     queue: Queue[None] = Queue(1)
     streams = queue._putter, queue._getter  # noqa: SLF001
@@ -265,6 +278,7 @@ async def test_statistics() -> None:
         assert stream.statistics().tasks_waiting_receive == 0
 
 
+@pytest.mark.anyio()
 async def test_sync_close() -> None:
     queue: Queue[None] = Queue(1)
     with queue:
@@ -275,3 +289,36 @@ async def test_sync_close() -> None:
 
     with pytest.raises(QueueBrokenError):
         queue.get()
+
+
+@pytest.mark.anyio()
+async def test_clone_each():
+    queue: Queue[Any] = Queue(1)
+
+    async def test_put(q: Queue[Any]) -> None:
+        async with q:
+            await q.aput(1)
+
+    async def test_get(q: Queue[Any]) -> None:
+        async with q:
+            await q.aget()
+
+    async with create_task_group() as task_group:
+        task_group.start_soon(test_put, queue.clone(putter=True))
+        task_group.start_soon(test_put, queue.clone(putter=True))
+        task_group.start_soon(test_get, queue.clone(getter=True))
+        task_group.start_soon(test_get, queue.clone(getter=True))
+
+    assert not queue._closed  # noqa: SLF001
+    assert queue.empty()
+
+    status = queue.statistics()
+    assert status.open_receive_streams == 1
+    assert status.open_send_streams == 1
+
+
+@pytest.mark.anyio()
+def test_queue_clone_uset():
+    queue: Queue[Any] = Queue(1)
+    with pytest.raises(ValueError, match="putter and getter are None."):
+        queue.clone()

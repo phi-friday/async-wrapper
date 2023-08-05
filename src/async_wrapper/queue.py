@@ -51,6 +51,9 @@ class Queue(Generic[ValueT]):
                 raise QueueBrokenError("putter and getter has diff buffer.")
             self._putter, self._getter = stream
 
+        self._close_putter: bool = True
+        self._close_getter: bool = True
+
     @property
     def _closed(self) -> bool:
         return self._putter._closed or self._getter._closed  # noqa: SLF001
@@ -164,13 +167,17 @@ class Queue(Generic[ValueT]):
     async def _aclose(self) -> None:
         """close the stream as async"""
         async with create_task_group() as task_group:
-            task_group.start_soon(self._getter.aclose)
-            task_group.start_soon(self._putter.aclose)
+            if self._close_getter:
+                task_group.start_soon(self._getter.aclose)
+            if self._close_putter:
+                task_group.start_soon(self._putter.aclose)
 
     def _close(self) -> None:
         """close the stream as sync"""
-        self._getter.close()
-        self._putter.close()
+        if self._close_getter:
+            self._getter.close()
+        if self._close_putter:
+            self._putter.close()
 
     def clone(self, *, putter: bool = False, getter: bool = False) -> Queue[ValueT]:
         """create clone of this queue.
@@ -195,7 +202,10 @@ class Queue(Generic[ValueT]):
             raise ValueError("putter and getter are None.")
         _putter = self._putter.clone() if putter else self._putter
         _getter = self._getter.clone() if getter else self._getter
-        return Queue(stream=(_putter, _getter))
+        new = Queue(stream=(_putter, _getter))
+        new._close_putter = putter  # noqa: SLF001
+        new._close_getter = getter  # noqa: SLF001
+        return new
 
     def statistics(self) -> MemoryObjectStreamStatistics:
         """return statstics from stream"""
@@ -210,7 +220,11 @@ class Queue(Generic[ValueT]):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        self.close()
+        try:
+            self.close()
+        finally:
+            self._close_getter = True
+            self._close_putter = True
 
     async def __aenter__(self) -> Self:
         return self
@@ -221,7 +235,11 @@ class Queue(Generic[ValueT]):
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        await self.aclose()
+        try:
+            await self.aclose()
+        finally:
+            self._close_getter = True
+            self._close_putter = True
 
     def __aiter__(self) -> Self:
         return self
