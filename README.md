@@ -1,7 +1,8 @@
 # async-wrapper
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![github action](https://github.com/phi-friday/async-wrapper/actions/workflows/check.yaml/badge.svg?event=push&branch=dev)](#)
+[![github action](https://github.com/phi-friday/async-wrapper/actions/workflows/check.yaml/badge.svg?event=push&branch=main)](#)
+[![codecov](https://codecov.io/gh/phi-friday/async-wrapper/branch/main/graph/badge.svg?token=R1RAQ5F0YD)](https://codecov.io/gh/phi-friday/async-wrapper)
 [![PyPI version](https://badge.fury.io/py/async-wrapper.svg)](https://badge.fury.io/py/async-wrapper)
 [![python version](https://img.shields.io/pypi/pyversions/async_wrapper.svg)](#)
 
