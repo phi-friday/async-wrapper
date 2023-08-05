@@ -103,7 +103,10 @@ class TaskGroupWrapper(_TaskGroup):
         exc_tb: TracebackType | None,
     ) -> bool | None:
         if self._active_self:
-            return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+            try:
+                return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+            finally:
+                self._active_self = False
         return None
 
     def wrap(
