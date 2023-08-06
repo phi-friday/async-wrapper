@@ -1,6 +1,8 @@
 """obtained from anyio.tests"""
 from __future__ import annotations
 
+import random
+from itertools import chain
 from typing import Any
 
 import pytest
@@ -467,3 +469,18 @@ async def test_queue_size_using_len(x: int):
 async def test_queue_length(x: int):
     queue: Queue[Any] = create_queue(x)
     assert queue.maxsize == x
+
+
+@pytest.mark.anyio()
+@pytest.mark.parametrize("x", chain((None,), range(1, 4)))
+async def test_queue_repr(x: int | None):
+    queue: Queue[Any] = create_queue(x)
+    size = random.randint(1, x or 10)  # noqa: S311
+
+    async with create_task_group() as task_group:
+        for i in range(size):
+            task_group.start_soon(queue.aput, i)
+
+    expected_max = x or "inf"
+    expected_repr = f"<Queue: max={expected_max}, size={size}>"
+    assert repr(queue) == expected_repr
