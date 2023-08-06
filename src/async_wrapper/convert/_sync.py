@@ -21,75 +21,76 @@ use_uvloop_var = ContextVar("use_uvloop", default=False)
 def async_to_sync(
     func: Callable[ParamT, Awaitable[ValueT_co]],
 ) -> Callable[ParamT, ValueT_co]:
-    """convert awaitable func to sync func.
+    """Convert an awaitable function to a synchronous function.
 
-    if in asnyc context, try to use same backend.
-    default to asyncio.
+    If used within an asynchronous context, attempts to use the same backend.
+    Defaults to asyncio.
 
     Args:
-        func: awaitable func.
+        func: An awaitable function.
 
     Returns:
-        sync func.
+        A synchronous function.
 
-    how to use:
-    >>> import asyncio
-    >>> import time
-    >>>
-    >>> import anyio
-    >>> import sniffio
-    >>>
-    >>> from async_wrapper import async_to_sync
-    >>>
-    >>>
-    >>> @async_to_sync
-    >>> async def test(x: int) -> int:
-    >>>     backend = sniffio.current_async_library()
-    >>>     if backend == "asyncio":
-    >>>         loop = asyncio.get_running_loop()
-    >>>         print(backend, loop)
-    >>>     else:
-    >>>         print(backend)
-    >>>     await anyio.sleep(1)
-    >>>     return x
-    >>>
-    >>>
-    >>> def main() -> None:
-    >>>     start = time.perf_counter()
-    >>>     result = test(1)
-    >>>     end = time.perf_counter()
-    >>>     assert result == 1
-    >>>     assert end - start < 1.1
-    >>>
-    >>>
-    >>> async def async_main() -> None:
-    >>>     start = time.perf_counter()
-    >>>     result = test(1)
-    >>>     end = time.perf_counter()
-    >>>     assert result == 1
-    >>>     assert end - start < 1.1
-    >>>
-    >>>
-    >>> if __name__ == "__main__":
-    >>>     main()
-    >>>     anyio.run(
-    >>>         async_main,
-    >>>         backend="asyncio",
-    >>>         backend_options={"use_uvloop": True},
-    >>>     )
-    >>>     anyio.run(
-    >>>         async_main,
-    >>>         backend="asyncio",
-    >>>         backend_options={"use_uvloop": True},
-    >>>     )
-    >>>     anyio.run(async_main, backend="trio")
+    Notes:
+        How to use:
+        >>> import asyncio
+        >>> import time
+        >>>
+        >>> import anyio
+        >>> import sniffio
+        >>>
+        >>> from async_wrapper import async_to_sync
+        >>>
+        >>>
+        >>> @async_to_sync
+        >>> async def test(x: int) -> int:
+        >>>     backend = sniffio.current_async_library()
+        >>>     if backend == "asyncio":
+        >>>         loop = asyncio.get_running_loop()
+        >>>         print(backend, loop)
+        >>>     else:
+        >>>         print(backend)
+        >>>     await anyio.sleep(1)
+        >>>     return x
+        >>>
+        >>>
+        >>> def main() -> None:
+        >>>     start = time.perf_counter()
+        >>>     result = test(1)
+        >>>     end = time.perf_counter()
+        >>>     assert result == 1
+        >>>     assert end - start < 1.1
+        >>>
+        >>>
+        >>> async def async_main() -> None:
+        >>>     start = time.perf_counter()
+        >>>     result = test(1)
+        >>>     end = time.perf_counter()
+        >>>     assert result == 1
+        >>>     assert end - start < 1.1
+        >>>
+        >>>
+        >>> if __name__ == "__main__":
+        >>>     main()
+        >>>     anyio.run(
+        >>>         async_main,
+        >>>         backend="asyncio",
+        >>>         backend_options={"use_uvloop": True},
+        >>>     )
+        >>>     anyio.run(
+        >>>         async_main,
+        >>>         backend="asyncio",
+        >>>         backend_options={"use_uvloop": True},
+        >>>     )
+        >>>     anyio.run(async_main, backend="trio")
 
-    stdout:
-    >>> $ poetry run python main.py
-    >>> asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
-    >>> asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
-    >>> asyncio <uvloop.Loop running=True closed=False debug=False>
-    >>> trio
+        stdout:
+        >>> $ poetry run python main.py
+        >>> asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
+        >>> asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
+        >>> asyncio <uvloop.Loop running=True closed=False debug=False>
+        >>> trio
     """
     sync_func = _as_sync(func)
 

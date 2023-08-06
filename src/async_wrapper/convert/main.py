@@ -31,14 +31,14 @@ def toggle_func(
 def toggle_func(
     func: Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]],
 ) -> Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]]:
-    """sync to async, async to sync
+    """Convert between synchronous and asynchronous functions.
 
     Args:
-        func: sync or async func
-        backend: sync or async backend. Defaults to None.
+        func: A function that can be either synchronous or asynchronous.
 
     Returns:
-        async or sync func
+        A function that matches the desired synchronicity,
+        either synchronous or asynchronous.
     """
     if iscoroutinefunction(func):
         return async_to_sync(func)

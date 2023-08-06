@@ -40,37 +40,38 @@ ValueT = TypeVar("ValueT")
 class Queue(Generic[ValueT]):
     """obtained from asyncio.Queue
 
-    how tow use:
-    >>> from __future__ import annotations
-    >>>
-    >>> from typing import Any
-    >>>
-    >>> import anyio
-    >>>
-    >>> from async_wrapper import Queue
-    >>>
-    >>>
-    >>> async def aput(queue: Queue[Any], value: Any) -> None:
-    >>>     async with queue:
-    >>>         await queue.aput(value)
-    >>>
-    >>>
-    >>> async def main() -> None:
-    >>>     queue: Queue[Any] = Queue(10)
-    >>>
-    >>>     async with anyio.create_task_group() as task_group:
-    >>>         async with queue.aputter:
-    >>>             for i in range(10):
-    >>>                 task_group.start_soon(aput, queue.clone(putter=True), i)
-    >>>
-    >>>     async with queue.agetter:
-    >>>         result = {x async for x in queue}
-    >>>
-    >>>     assert result == set(range(10))
-    >>>
-    >>>
-    >>> if __name__ == "__main__":
-    >>>     anyio.run(main)
+    Notes:
+        how to use:
+        >>> from __future__ import annotations
+        >>>
+        >>> from typing import Any
+        >>>
+        >>> import anyio
+        >>>
+        >>> from async_wrapper import Queue
+        >>>
+        >>>
+        >>> async def aput(queue: Queue[Any], value: Any) -> None:
+        >>>     async with queue:
+        >>>         await queue.aput(value)
+        >>>
+        >>>
+        >>> async def main() -> None:
+        >>>     queue: Queue[Any] = Queue(10)
+        >>>
+        >>>     async with anyio.create_task_group() as task_group:
+        >>>         async with queue.aputter:
+        >>>             for i in range(10):
+        >>>                 task_group.start_soon(aput, queue.clone(putter=True), i)
+        >>>
+        >>>     async with queue.agetter:
+        >>>         result = {x async for x in queue}
+        >>>
+        >>>     assert result == set(range(10))
+        >>>
+        >>>
+        >>> if __name__ == "__main__":
+        >>>     anyio.run(main)
     """
 
     __slots__ = ("_putter", "_getter", "_close_putter", "_close_getter")

@@ -27,39 +27,40 @@ Pending = local()
 class Waiter(Event):
     """wait wrapper
 
-    how to use:
-    >>> import anyio
-    >>>
-    >>> from async_wrapper import Waiter
-    >>>
-    >>>
-    >>> async def test() -> None:
-    >>>     print("test: start")
-    >>>     await anyio.sleep(1)
-    >>>     print("test: end")
-    >>>
-    >>>
-    >>> async def test2(event: anyio.Event) -> None:
-    >>>     print("test2: start")
-    >>>     await event.wait()
-    >>>     print("test2: end")
-    >>>
-    >>>
-    >>> async def main() -> None:
-    >>>     async with anyio.create_task_group() as task_group:
-    >>>         event = Waiter(test)(task_group)
-    >>>         task_group.start_soon(test2, event)
-    >>>
-    >>>
-    >>> if __name__ == "__main__":
-    >>>     anyio.run(main)
+    Notes:
+        how to use:
+        >>> import anyio
+        >>>
+        >>> from async_wrapper import Waiter
+        >>>
+        >>>
+        >>> async def test() -> None:
+        >>>     print("test: start")
+        >>>     await anyio.sleep(1)
+        >>>     print("test: end")
+        >>>
+        >>>
+        >>> async def test2(event: anyio.Event) -> None:
+        >>>     print("test2: start")
+        >>>     await event.wait()
+        >>>     print("test2: end")
+        >>>
+        >>>
+        >>> async def main() -> None:
+        >>>     async with anyio.create_task_group() as task_group:
+        >>>         event = Waiter(test)(task_group)
+        >>>         task_group.start_soon(test2, event)
+        >>>
+        >>>
+        >>> if __name__ == "__main__":
+        >>>     anyio.run(main)
 
-    output:
-    >>> $ poetry run python main.py
-    >>> test: start
-    >>> test2: start
-    >>> test: end
-    >>> test2: end
+        output:
+        >>> $ poetry run python main.py
+        >>> test: start
+        >>> test2: start
+        >>> test: end
+        >>> test2: end
     """
 
     __slots__ = ("_event", "_func", "_args", "_kwargs")
@@ -132,51 +133,56 @@ class Waiter(Event):
 class Completed:
     """like asyncio.as_completed
 
-    how to use:
-    >>> from __future__ import annotations
-    >>>
-    >>> import anyio
-    >>>
-    >>> from async_wrapper import Completed
-    >>>
-    >>>
-    >>> async def test(x: int, sleep: float, result: list[int] | None = None) -> int:
-    >>>     print(f"[{x}] test: start")
-    >>>     await anyio.sleep(sleep)
-    >>>     print(f"[{x}] test: end")
-    >>>     if result is not None:
-    >>>         result.append(x)
-    >>>     return x
-    >>>
-    >>>
-    >>> async def main() -> None:
-    >>>     result: list[int] = []
-    >>>     async with anyio.create_task_group() as task_group:
-    >>>         task_group.start_soon(test, 1, 1, result)
-    >>>         async with Completed(task_group) as completed:
-    >>>             completed.start_soon(None, test, 2, 0.2)
-    >>>             completed.start_soon(None, test, 3, 0.1)
-    >>>             completed.start_soon(None, test, 4, 0.3)
-    >>>
-    >>>             result.extend([value async for value in completed])
-    >>>
-    >>>     assert result == [3, 2, 4, 1]
-    >>>
-    >>>     result = []
-    >>>     async with anyio.create_task_group() as task_group:
-    >>>         task_group.start_soon(test, 1, 1, result)
-    >>>         async with Completed() as completed:
-    >>>             completed.start_soon(task_group, test, 2, 0.2)
-    >>>             completed.start_soon(task_group, test, 3, 0.1)
-    >>>             completed.start_soon(task_group, test, 4, 0.3)
-    >>>
-    >>>             result.extend([value async for value in completed])
-    >>>
-    >>>     assert result == [3, 2, 4, 1]
-    >>>
-    >>>
-    >>> if __name__ == "__main__":
-    >>>     anyio.run(main)
+    Notes:
+        how to use:
+        >>> from __future__ import annotations
+        >>>
+        >>> import anyio
+        >>>
+        >>> from async_wrapper import Completed
+        >>>
+        >>>
+        >>> async def test(
+        >>>     x: int,
+        >>>     sleep: float,
+        >>>     result: list[int] | None = None,
+        >>> ) -> int:
+        >>>     print(f"[{x}] test: start")
+        >>>     await anyio.sleep(sleep)
+        >>>     print(f"[{x}] test: end")
+        >>>     if result is not None:
+        >>>         result.append(x)
+        >>>     return x
+        >>>
+        >>>
+        >>> async def main() -> None:
+        >>>     result: list[int] = []
+        >>>     async with anyio.create_task_group() as task_group:
+        >>>         task_group.start_soon(test, 1, 1, result)
+        >>>         async with Completed(task_group) as completed:
+        >>>             completed.start_soon(None, test, 2, 0.2)
+        >>>             completed.start_soon(None, test, 3, 0.1)
+        >>>             completed.start_soon(None, test, 4, 0.3)
+        >>>
+        >>>             result.extend([value async for value in completed])
+        >>>
+        >>>     assert result == [3, 2, 4, 1]
+        >>>
+        >>>     result = []
+        >>>     async with anyio.create_task_group() as task_group:
+        >>>         task_group.start_soon(test, 1, 1, result)
+        >>>         async with Completed() as completed:
+        >>>             completed.start_soon(task_group, test, 2, 0.2)
+        >>>             completed.start_soon(task_group, test, 3, 0.1)
+        >>>             completed.start_soon(task_group, test, 4, 0.3)
+        >>>
+        >>>             result.extend([value async for value in completed])
+        >>>
+        >>>     assert result == [3, 2, 4, 1]
+        >>>
+        >>>
+        >>> if __name__ == "__main__":
+        >>>     anyio.run(main)
     """
 
     __slots__ = ("_events", "__setter", "__getter", "__task_group")
@@ -224,14 +230,15 @@ class Completed:
         *args: Any,
         name: Any = None,
     ) -> None:
-        """like TaskGroup.start_soon
+        """Start a coroutine in a task group, similar to TaskGroup.start_soon.
 
-        if it has already TaskGroup, task_group should be same object.
+        If a task group is already provided,
+        the task_group parameter should be the same object.
 
         Args:
-            task_group: anyio Task Group. defaults to None.
-            func: target func
-            name: using in anyio.TaskGroup.start_soon. Defaults to None.
+            task_group: An anyio Task Group. Defaults to None.
+            func: The target coroutine function.
+            name: The name used in anyio.TaskGroup.start_soon. Defaults to None.
         """
         if not self._is_active:
             raise PendingError("enter first")
@@ -300,49 +307,50 @@ async def wait_for(
     *args: ParamT.args,
     **kwargs: ParamT.kwargs,
 ) -> ValueT_co:
-    """wait func using event.
+    """Wait for an event before executing an awaitable function.
 
     Args:
-        event: anyio event
-        func: awaitable func
+        event: An anyio event or an iterable of events.
+        func: An awaitable function to be executed.
 
     Returns:
-        func result
+        The result of the executed function.
 
-    how to use:
-    >>> import anyio
-    >>>
-    >>> from async_wrapper import wait_for
-    >>>
-    >>>
-    >>> async def test() -> None:
-    >>>     print("test: start")
-    >>>     await anyio.sleep(1)
-    >>>     print("test: end")
-    >>>
-    >>>
-    >>> async def test2(event: anyio.Event) -> None:
-    >>>     print("test2: start")
-    >>>     await event.wait()
-    >>>     print("test2: end")
-    >>>
-    >>>
-    >>> async def main() -> None:
-    >>>     event = anyio.Event()
-    >>>     async with anyio.create_task_group() as task_group:
-    >>>         task_group.start_soon(wait_for, event, test)
-    >>>         task_group.start_soon(test2, event)
-    >>>
-    >>>
-    >>> if __name__ == "__main__":
-    >>>     anyio.run(main)
+    Notes:
+        how to use:
+        >>> import anyio
+        >>>
+        >>> from async_wrapper import wait_for
+        >>>
+        >>>
+        >>> async def test() -> None:
+        >>>     print("test: start")
+        >>>     await anyio.sleep(1)
+        >>>     print("test: end")
+        >>>
+        >>>
+        >>> async def test2(event: anyio.Event) -> None:
+        >>>     print("test2: start")
+        >>>     await event.wait()
+        >>>     print("test2: end")
+        >>>
+        >>>
+        >>> async def main() -> None:
+        >>>     event = anyio.Event()
+        >>>     async with anyio.create_task_group() as task_group:
+        >>>         task_group.start_soon(wait_for, event, test)
+        >>>         task_group.start_soon(test2, event)
+        >>>
+        >>>
+        >>> if __name__ == "__main__":
+        >>>     anyio.run(main)
 
-    output:
-    >>> $ poetry run python main.py
-    >>> test: start
-    >>> test2: start
-    >>> test: end
-    >>> test2: end
+        output:
+        >>> $ poetry run python main.py
+        >>> test: start
+        >>> test2: start
+        >>> test: end
+        >>> test2: end
     """
     event = set(event) if not isinstance(event, Event) else (event,)
     try:

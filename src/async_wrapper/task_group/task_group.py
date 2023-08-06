@@ -26,32 +26,33 @@ __all__ = ["TaskGroupWrapper", "create_task_group_wrapper"]
 class TaskGroupWrapper(_TaskGroup):
     """wrap anyio.TaskGroup
 
-    how to use:
-    >>> import anyio
-    >>>
-    >>> from async_wrapper import TaskGroupWrapper
-    >>>
-    >>>
-    >>> async def test(x: int) -> int:
-    >>>     await anyio.sleep(0.1)
-    >>>     return x
-    >>>
-    >>>
-    >>> async def main() -> None:
-    >>>     async with anyio.create_task_group() as task_group:
-    >>>         async with TaskGroupWrapper(task_group) as tg:
-    >>>             func = tg.wrap(test)
-    >>>             soon_1 = func(1)
-    >>>             soon_2 = func(2)
-    >>>
-    >>>     assert soon_1.is_ready
-    >>>     assert soon_2.is_ready
-    >>>     assert soon_1.value == 1
-    >>>     assert soon_2.value == 2
-    >>>
-    >>>
-    >>> if __name__ == "__main__":
-    >>>     anyio.run(main)
+    Notes:
+        how to use:
+        >>> import anyio
+        >>>
+        >>> from async_wrapper import TaskGroupWrapper
+        >>>
+        >>>
+        >>> async def test(x: int) -> int:
+        >>>     await anyio.sleep(0.1)
+        >>>     return x
+        >>>
+        >>>
+        >>> async def main() -> None:
+        >>>     async with anyio.create_task_group() as task_group:
+        >>>         async with TaskGroupWrapper(task_group) as tg:
+        >>>             func = tg.wrap(test)
+        >>>             soon_1 = func(1)
+        >>>             soon_2 = func(2)
+        >>>
+        >>>     assert soon_1.is_ready
+        >>>     assert soon_2.is_ready
+        >>>     assert soon_1.value == 1
+        >>>     assert soon_2.value == 2
+        >>>
+        >>>
+        >>> if __name__ == "__main__":
+        >>>     anyio.run(main)
     """
 
     __slots__ = ("_task_group", "_active_self")
@@ -121,18 +122,18 @@ class TaskGroupWrapper(_TaskGroup):
         limiter: CapacityLimiter | None = None,
         lock: Lock | None = None,
     ) -> SoonWrapper[ParamT, ValueT_co]:
-        """wrap function to use in wrapper.
+        """Wrap a function to be used within a wrapper.
 
-        func will return soon value.
+        The wrapped function will return a value shortly.
 
         Args:
-            func: target func
-            semaphore: anyio semaphore. Defaults to None.
-            limiter: anyio capacity limiter. defaults to None.
-            lock: anyio lock. defaults to None.
+            func: The target function to be wrapped.
+            semaphore: An anyio semaphore. Defaults to None.
+            limiter: An anyio capacity limiter. Defaults to None.
+            lock: An anyio lock. Defaults to None.
 
         Returns:
-            wrapped func
+            The wrapped function.
         """
         return SoonWrapper(func, self, semaphore=semaphore, limiter=limiter, lock=lock)
 
@@ -207,21 +208,18 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
         limiter: CapacityLimiter | None = None,
         lock: Lock | None = None,
     ) -> Self:
-        """copy self.
+        """Create a copy of this object.
 
         Args:
-            semaphore: anyio semaphore.
-                Defaults to None.
-                if not None, overwrite.
-            limiter: anyio capacity limiter.
-                Defaults to None.
-                if not None, overwrite.
-            lock: anyio lock.
-                Defaults to None.
-                if not None, overwrite.
+            semaphore: An anyio semaphore.
+                If provided, it will overwrite the existing semaphore. Defaults to None.
+            limiter: An anyio capacity limiter.
+                If provided, it will overwrite the existing limiter. Defaults to None.
+            lock: An anyio lock.
+                If provided, it will overwrite the existing lock. Defaults to None.
 
         Returns:
-            self
+            A copy of this object with optional overwritten components.
         """
         if semaphore is None:
             semaphore = self.semaphore
