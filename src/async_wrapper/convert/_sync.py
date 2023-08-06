@@ -32,8 +32,7 @@ def async_to_sync(
     Returns:
         A synchronous function.
 
-    Notes:
-        How to use:
+    Example:
         >>> import asyncio
         >>> import time
         >>>
@@ -84,13 +83,11 @@ def async_to_sync(
         >>>         backend_options={"use_uvloop": True},
         >>>     )
         >>>     anyio.run(async_main, backend="trio")
-
-        stdout:
-        >>> $ poetry run python main.py
-        >>> asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
-        >>> asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
-        >>> asyncio <uvloop.Loop running=True closed=False debug=False>
-        >>> trio
+        $ poetry run python main.py
+        asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
+        asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
+        asyncio <uvloop.Loop running=True closed=False debug=False>
+        trio
     """
     sync_func = _as_sync(func)
 

@@ -27,8 +27,7 @@ Pending = local()
 class Waiter(Event):
     """wait wrapper
 
-    Notes:
-        how to use:
+    Example:
         >>> import anyio
         >>>
         >>> from async_wrapper import Waiter
@@ -54,13 +53,11 @@ class Waiter(Event):
         >>>
         >>> if __name__ == "__main__":
         >>>     anyio.run(main)
-
-        output:
-        >>> $ poetry run python main.py
-        >>> test: start
-        >>> test2: start
-        >>> test: end
-        >>> test2: end
+        $ poetry run python main.py
+        test: start
+        test2: start
+        test: end
+        test2: end
     """
 
     __slots__ = ("_event", "_func", "_args", "_kwargs")
@@ -94,7 +91,7 @@ class Waiter(Event):
         """create new event
 
         Returns:
-            new
+            new :obj:`Waiter`
         """
         if not args:
             args = tuple(self._args)
@@ -131,10 +128,9 @@ class Waiter(Event):
 
 
 class Completed:
-    """like asyncio.as_completed
+    """like :func:`asyncio.as_completed`
 
-    Notes:
-        how to use:
+    Example:
         >>> from __future__ import annotations
         >>>
         >>> import anyio
@@ -230,16 +226,18 @@ class Completed:
         *args: Any,
         name: Any = None,
     ) -> None:
-        """Start a coroutine in a task group, similar to TaskGroup.start_soon.
+        """Start a coroutine in a task group,
+        similar to :meth:`anyio.abc.TaskGroup.start_soon`.
 
         If a task group is already provided,
         the task_group parameter should be the same object.
 
         Args:
-            task_group: An anyio Task Group. Defaults to None.
+            task_group: An :class:`anyio.abc.TaskGroup`. Defaults to None.
             func: The target coroutine function.
-            name: The name used in anyio.TaskGroup.start_soon. Defaults to None.
-        """
+            name: The name used in :meth:`anyio.abc.TaskGroup.start_soon`.
+                Defaults to None.
+        """  # noqa: D205
         if not self._is_active:
             raise PendingError("enter first")
         task_group = self._task_group(task_group)
@@ -309,15 +307,16 @@ async def wait_for(
 ) -> ValueT_co:
     """Wait for an event before executing an awaitable function.
 
+    like :func:`asyncio.wait_for`
+
     Args:
-        event: An anyio event or an iterable of events.
+        event: An :obj:`anyio.Event` or an iterable of events.
         func: An awaitable function to be executed.
 
     Returns:
         The result of the executed function.
 
-    Notes:
-        how to use:
+    Example:
         >>> import anyio
         >>>
         >>> from async_wrapper import wait_for
@@ -344,13 +343,11 @@ async def wait_for(
         >>>
         >>> if __name__ == "__main__":
         >>>     anyio.run(main)
-
-        output:
-        >>> $ poetry run python main.py
-        >>> test: start
-        >>> test2: start
-        >>> test: end
-        >>> test2: end
+        $ poetry run python main.py
+        test: start
+        test2: start
+        test: end
+        test2: end
     """
     event = set(event) if not isinstance(event, Event) else (event,)
     try:

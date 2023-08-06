@@ -7,10 +7,10 @@ Welcome to async_wrapper's documentation!
 =========================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
-
-
+   
+   async_wrapper/index
 
 Indices and tables
 ==================

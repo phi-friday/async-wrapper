@@ -24,10 +24,9 @@ __all__ = ["TaskGroupWrapper", "create_task_group_wrapper"]
 
 
 class TaskGroupWrapper(_TaskGroup):
-    """wrap anyio.TaskGroup
+    """wrap :class:`anyio.abc.TaskGroup`
 
-    Notes:
-        how to use:
+    Example:
         >>> import anyio
         >>>
         >>> from async_wrapper import TaskGroupWrapper
@@ -128,9 +127,9 @@ class TaskGroupWrapper(_TaskGroup):
 
         Args:
             func: The target function to be wrapped.
-            semaphore: An anyio semaphore. Defaults to None.
-            limiter: An anyio capacity limiter. Defaults to None.
-            lock: An anyio lock. Defaults to None.
+            semaphore: An :obj:`anyio.Semaphore`. Defaults to None.
+            limiter: An :obj:`anyio.CapacityLimiter`. Defaults to None.
+            lock: An :obj:`anyio.Lock`. Defaults to None.
 
         Returns:
             The wrapped function.
@@ -139,7 +138,7 @@ class TaskGroupWrapper(_TaskGroup):
 
 
 class SoonWrapper(Generic[ParamT, ValueT_co]):
-    """wrapped func using in TaskGroupWrapper"""
+    """wrapped func using in :class:`TaskGroupWrapper`"""
 
     __slots__ = ("func", "task_group", "semaphore", "limiter", "lock", "_wrapped")
 
@@ -211,11 +210,11 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
         """Create a copy of this object.
 
         Args:
-            semaphore: An anyio semaphore.
+            semaphore: An :obj:`anyio.Semaphore`.
                 If provided, it will overwrite the existing semaphore. Defaults to None.
-            limiter: An anyio capacity limiter.
+            limiter: An :obj:`anyio.CapacityLimiter`.
                 If provided, it will overwrite the existing limiter. Defaults to None.
-            lock: An anyio lock.
+            lock: An :obj:`anyio.Lock`.
                 If provided, it will overwrite the existing lock. Defaults to None.
 
         Returns:
@@ -240,7 +239,7 @@ def create_task_group_wrapper() -> TaskGroupWrapper:
     """create new task group wrapper
 
     Returns:
-        task group wrapper
+        new :obj:`TaskGroupWrapper`
     """
     return TaskGroupWrapper(_create_task_group())
 

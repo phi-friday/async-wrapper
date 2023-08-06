@@ -24,8 +24,7 @@ def sync_to_async(
         An asynchronous function
         that behaves equivalently to the input synchronous function.
 
-    Note:
-        how to use:
+    Example:
         >>> import time
         >>>
         >>> import anyio

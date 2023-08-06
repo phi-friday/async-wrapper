@@ -23,14 +23,31 @@ release = __version__
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["sphinx.ext.todo", "sphinx.ext.viewcode", "sphinx.ext.autodoc"]
+extensions = [
+    "sphinx.ext.todo",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
+]
 
 templates_path = ["_templates"]
 exclude_patterns = []
 
+intersphinx_mapping = {
+    "anyio": ("https://anyio.readthedocs.io/en/3.x/", None),
+}
+autodoc_member_order = "bysource"
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "alabaster"
+html_theme = "sphinx_material"
 html_static_path = ["_static"]
+
+# napoleon
+napoleon_google_docstring = True
+napoleon_include_init_with_doc = True
+napoleon_include_private_with_doc = False
+napoleon_use_ivar = False
+napoleon_use_param = True
+napoleon_use_rtype = True

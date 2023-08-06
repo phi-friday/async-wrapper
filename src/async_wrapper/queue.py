@@ -43,10 +43,9 @@ ValueT = TypeVar("ValueT")
 
 
 class Queue(Generic[ValueT]):
-    """obtained from asyncio.Queue
+    """obtained from :class:`asyncio.Queue`
 
-    Notes:
-        how to use:
+    Example:
         >>> from __future__ import annotations
         >>>
         >>> from typing import Any
@@ -391,12 +390,12 @@ class Queue(Generic[ValueT]):
 
 
 def create_queue(max_size: float | None = None) -> Queue[Any]:
-    """create queue like asyncio.Queue
+    """create queue like :class:`asyncio.Queue`
 
     Args:
         max_size: queue size. Defaults to None.
 
     Returns:
-        queue using anyio stream
+        queue using :class:`anyio.abc.ObjectStream`
     """
     return Queue(max_size)
