@@ -31,7 +31,7 @@ pyyaml = ">=6.0.1"    # cython error
 pytest-cov = "^4.1.0"
 
 
-[tool.poetry.group.doc.dependencies]
+[tool.poetry.group.docs.dependencies]
 sphinx = "^7.1.2"
 readthedocs-sphinx-search = "^0.3.1"
 sphinx-rtd-theme = "^1.2.2"
