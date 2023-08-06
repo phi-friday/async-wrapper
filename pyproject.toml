@@ -30,6 +30,10 @@ trio = "^0.22.2"
 pyyaml = ">=6.0.1"    # cython error
 pytest-cov = "^4.1.0"
 
+
+[tool.poetry.group.doc.dependencies]
+sphinx = "^7.1.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
@@ -109,6 +113,7 @@ ignore = [
     "D102",
     "PLR2004",
 ]
+"./src/docs/conf.py" = ['E402']
 
 [tool.ruff.isort]
 known-local-folder = ["async_wrapper"]
