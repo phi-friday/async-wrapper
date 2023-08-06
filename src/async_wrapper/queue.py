@@ -321,6 +321,14 @@ class Queue(Generic[ValueT]):
         except (EndOfStream, QueueEmptyError, QueueBrokenError) as exc:
             raise StopIteration from exc
 
+    def __len__(self) -> int:
+        return self.qsize()
+
+    def __repr__(self) -> str:
+        max_size = "inf" if self.maxsize == math.inf else self.maxsize
+        size = self.qsize()
+        return f"<Queue: max={max_size}, size={size}>"
+
 
 def create_queue(max_size: float | None = None) -> Queue[Any]:
     """create queue like asyncio.Queue

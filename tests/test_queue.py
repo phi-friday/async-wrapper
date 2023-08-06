@@ -450,6 +450,20 @@ async def test_queue_size(x: int):
 
 @pytest.mark.anyio()
 @pytest.mark.parametrize("x", range(1, 4))
+async def test_queue_size_using_len(x: int):
+    queue: Queue[Any] = create_queue(x)
+
+    async with create_task_group() as task_group:
+        for i in range(x):
+            task_group.start_soon(queue.aput, i)
+
+    assert len(queue) == x
+    await queue.aget()
+    assert len(queue) == x - 1
+
+
+@pytest.mark.anyio()
+@pytest.mark.parametrize("x", range(1, 4))
 async def test_queue_length(x: int):
     queue: Queue[Any] = create_queue(x)
     assert queue.maxsize == x
