@@ -115,6 +115,7 @@ known-local-folder = ["async_wrapper"]
 required-imports = ["from __future__ import annotations"]
 
 [tool.pyright]
+include = ["src", "tests"]
 pythonVersion = '3.8'
 pythonPlatform = 'Linux'
 diagnostic = 'basic'
