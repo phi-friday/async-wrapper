@@ -113,7 +113,9 @@ class Queue(Generic[ValueT]):
 
     @property
     def _closed(self) -> bool:
-        return self._putter._closed or self._getter._closed  # noqa: SLF001
+        return (not self._close_putter or self._putter._closed) and (  # noqa: SLF001
+            not self._close_getter or self._getter._closed  # noqa: SLF001
+        )
 
     def qsize(self) -> int:
         """number of items in the queue."""

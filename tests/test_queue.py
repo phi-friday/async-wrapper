@@ -375,10 +375,13 @@ async def test_queue_async_iterator_putter():
             for i in range(10):
                 task_group.start_soon(put, i, queue.clone(putter=True))
 
-    async with queue:
+    assert not queue._closed  # noqa: SLF001
+
+    async with queue.agetter:
         result = [x async for x in queue]
 
     assert set(result) == set(range(10))
+    assert queue._closed  # noqa: SLF001
 
 
 @pytest.mark.anyio()
@@ -394,7 +397,10 @@ async def test_queue_iterator_putter():
             for i in range(10):
                 task_group.start_soon(put, i, queue.clone(putter=True))
 
-    async with queue:
+    assert not queue._closed  # noqa: SLF001
+
+    with queue.getter:
         result = list(queue)
 
     assert set(result) == set(range(10))
+    assert queue._closed  # noqa: SLF001
