@@ -54,6 +54,8 @@ class TaskGroupWrapper(_TaskGroup):
     >>>     anyio.run(main)
     """
 
+    __slots__ = ("_task_group", "_active_self")
+
     def __init__(self, task_group: _TaskGroup) -> None:
         self._task_group = task_group
         self._active_self = False
@@ -137,6 +139,8 @@ class TaskGroupWrapper(_TaskGroup):
 
 class SoonWrapper(Generic[ParamT, ValueT_co]):
     """wrapped func using in TaskGroupWrapper"""
+
+    __slots__ = ("func", "task_group", "semaphore", "limiter", "lock", "_wrapped")
 
     def __init__(  # noqa: PLR0913
         self,

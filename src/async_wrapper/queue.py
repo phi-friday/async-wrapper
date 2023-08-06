@@ -40,6 +40,8 @@ ValueT = TypeVar("ValueT")
 class Queue(Generic[ValueT]):
     """obtained from asyncio.Queue"""
 
+    __slots__ = ("_putter", "_getter", "_close_putter", "_close_getter")
+
     _putter: MemoryObjectSendStream[ValueT]
     _getter: MemoryObjectReceiveStream[ValueT]
 

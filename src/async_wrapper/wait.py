@@ -62,6 +62,8 @@ class Waiter(Event):
     >>> test2: end
     """
 
+    __slots__ = ("_event", "_func", "_args", "_kwargs")
+
     _event: Event
 
     def __init__(
@@ -176,6 +178,8 @@ class Completed:
     >>> if __name__ == "__main__":
     >>>     anyio.run(main)
     """
+
+    __slots__ = ("_events", "__setter", "__getter", "__task_group")
 
     def __init__(self, task_group: TaskGroup | None = None) -> None:
         self._events: dict[Waiter, MemoryObjectReceiveStream[Any]] = {}

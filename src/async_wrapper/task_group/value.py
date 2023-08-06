@@ -14,6 +14,8 @@ __all__ = ["SoonValue"]
 class SoonValue(Generic[ValueT_co]):
     """will get value soon"""
 
+    __slots__ = ("_value",)
+
     def __init__(self) -> None:
         self._value: ValueT_co | local = Pending
 
