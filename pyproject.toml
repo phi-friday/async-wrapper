@@ -5,7 +5,7 @@ description = "async wrapper"
 authors = ["phi <phi.friday@gmail.com>"]
 readme = "README.md"
 license = "MIT License"
-homepage = "https://github.com/phi-friday/async-wrapper"
+homepage = "https://async-wrapper.readthedocs.io/"
 repository = "https://github.com/phi-friday/async-wrapper"
 packages = [{ include = "async_wrapper", from = 'src' }]
 
