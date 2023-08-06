@@ -1,9 +1,11 @@
-async_wrapper documentation
+.. mdinclude:: ../../README.md
+
+
+Contents
 =========================================
 
 .. toctree::
    :maxdepth: 3
-   :caption: Contents:
    
    async_wrapper/index
 

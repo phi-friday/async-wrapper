@@ -32,6 +32,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx_search.extension",
     "sphinx_rtd_theme",
+    "sphinx_mdinclude",
 ]
 
 templates_path = ["_templates"]
