@@ -84,26 +84,36 @@ class Queue(Generic[ValueT]):
     _putter: MemoryObjectSendStream[ValueT]
     _getter: MemoryObjectReceiveStream[ValueT]
 
-    def __init__(
-        self,
-        max_size: float | None = None,
-        stream: tuple[MemoryObjectSendStream[ValueT], MemoryObjectReceiveStream[ValueT]]
-        | None = None,
-    ) -> None:
-        if stream is None:
-            self._putter, self._getter = create_memory_object_stream(
-                max_buffer_size=max_size or math.inf,
-            )
-        else:
-            putter, getter = stream
-            if putter._closed or getter._closed:  # noqa: SLF001
-                raise QueueBrokenError("putter or getter is closed")
-            if putter._state.buffer is not getter._state.buffer:  # noqa: SLF001
-                raise QueueBrokenError("putter and getter has diff buffer.")
-            self._putter, self._getter = stream
+    if TYPE_CHECKING:
 
-        self._close_putter: bool = True
-        self._close_getter: bool = True
+        def __init__(self, max_size: float | None = None) -> None:
+            ...
+
+    else:
+
+        def __init__(
+            self,
+            max_size: float | None = None,
+            stream: tuple[
+                MemoryObjectSendStream[ValueT],
+                MemoryObjectReceiveStream[ValueT],
+            ]
+            | None = None,
+        ) -> None:
+            if stream is None:
+                self._putter, self._getter = create_memory_object_stream(
+                    max_buffer_size=max_size or math.inf,
+                )
+            else:
+                putter, getter = stream
+                if putter._closed or getter._closed:  # noqa: SLF001
+                    raise QueueBrokenError("putter or getter is closed")
+                if putter._state.buffer is not getter._state.buffer:  # noqa: SLF001
+                    raise QueueBrokenError("putter and getter has diff buffer.")
+                self._putter, self._getter = stream
+
+            self._close_putter: bool = True
+            self._close_getter: bool = True
 
     @property
     def aputter(self) -> AsyncContextManager[Self]:
@@ -303,7 +313,7 @@ class Queue(Generic[ValueT]):
             raise RuntimeError("putter and getter are None.")
         _putter = self._putter.clone() if putter else self._putter
         _getter = self._getter.clone() if getter else self._getter
-        new = Queue(stream=(_putter, _getter))
+        new = Queue(stream=(_putter, _getter))  # type: ignore
         new._close_putter = putter  # noqa: SLF001
         new._close_getter = getter  # noqa: SLF001
         return new
