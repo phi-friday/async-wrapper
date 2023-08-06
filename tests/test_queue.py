@@ -404,3 +404,52 @@ async def test_queue_iterator():
 
     assert set(result) == set(range(10))
     assert queue._closed  # noqa: SLF001
+
+
+@pytest.mark.anyio()
+@pytest.mark.parametrize("x", range(1, 4))
+async def test_queue_empty(x: int):
+    queue: Queue[Any] = create_queue(x)
+
+    assert queue.empty()
+    await queue.aput(1)
+    assert not queue.empty()
+    await queue.aget()
+    assert queue.empty()
+
+
+@pytest.mark.anyio()
+@pytest.mark.parametrize("x", range(1, 4))
+async def test_queue_full(x: int):
+    queue: Queue[Any] = create_queue(x)
+
+    async with create_task_group() as task_group:
+        for i in range(x):
+            task_group.start_soon(queue.aput, i)
+
+    assert queue.full()
+    await queue.aget()
+    assert not queue.full()
+    await queue.aput(1)
+    assert queue.full()
+
+
+@pytest.mark.anyio()
+@pytest.mark.parametrize("x", range(1, 4))
+async def test_queue_size(x: int):
+    queue: Queue[Any] = create_queue(x)
+
+    async with create_task_group() as task_group:
+        for i in range(x):
+            task_group.start_soon(queue.aput, i)
+
+    assert queue.qsize() == x
+    await queue.aget()
+    assert queue.qsize() == x - 1
+
+
+@pytest.mark.anyio()
+@pytest.mark.parametrize("x", range(1, 4))
+async def test_queue_length(x: int):
+    queue: Queue[Any] = create_queue(x)
+    assert queue.maxsize == x
