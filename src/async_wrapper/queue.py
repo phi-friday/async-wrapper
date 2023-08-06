@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import math
 import sys
-from typing import TYPE_CHECKING, Generic, TypeVar
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING, AsyncContextManager, AsyncGenerator, Generic, TypeVar
 
 from anyio import WouldBlock, create_memory_object_stream, create_task_group, fail_after
 from anyio.streams.memory import BrokenResourceError, ClosedResourceError, EndOfStream
@@ -53,6 +54,30 @@ class Queue(Generic[ValueT]):
 
         self._close_putter: bool = True
         self._close_getter: bool = True
+
+    @property
+    def putter(self) -> AsyncContextManager[Self]:
+        """close putter only"""
+        return self._as_putter()
+
+    @property
+    def getter(self) -> AsyncContextManager[Self]:
+        """close getter only"""
+        return self._as_getter()
+
+    @asynccontextmanager
+    async def _as_putter(self) -> AsyncGenerator[Self, None]:
+        try:
+            yield self
+        finally:
+            await self._putter.aclose()
+
+    @asynccontextmanager
+    async def _as_getter(self) -> AsyncGenerator[Self, None]:
+        try:
+            yield self
+        finally:
+            await self._getter.aclose()
 
     @property
     def _closed(self) -> bool:

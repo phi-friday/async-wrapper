@@ -322,3 +322,41 @@ def test_queue_clone_uset():
     queue: Queue[Any] = Queue(1)
     with pytest.raises(ValueError, match="putter and getter are None."):
         queue.clone()
+
+
+@pytest.mark.anyio()
+async def test_queue_async_iterator():
+    queue: Queue[Any] = Queue(10)
+
+    async def put(value: Any, queue: Queue[Any]) -> None:
+        async with queue:
+            await queue.aput(value)
+
+    async with create_task_group() as task_group:
+        async with queue.putter:
+            for i in range(10):
+                task_group.start_soon(put, i, queue.clone(putter=True))
+
+    async with queue:
+        result = [x async for x in queue]
+
+    assert set(result) == set(range(10))
+
+
+@pytest.mark.anyio()
+async def test_queue_iterator():
+    queue: Queue[Any] = Queue(10)
+
+    async def put(value: Any, queue: Queue[Any]) -> None:
+        async with queue:
+            await queue.aput(value)
+
+    async with create_task_group() as task_group:
+        async with queue.putter:
+            for i in range(10):
+                task_group.start_soon(put, i, queue.clone(putter=True))
+
+    async with queue:
+        result = list(queue)
+
+    assert set(result) == set(range(10))
