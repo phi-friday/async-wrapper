@@ -28,6 +28,8 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
+    "sphinx_search.extension",
+    "sphinx_rtd_theme",
 ]
 
 templates_path = ["_templates"]
@@ -41,7 +43,7 @@ autodoc_member_order = "bysource"
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_material"
+html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 
 # napoleon

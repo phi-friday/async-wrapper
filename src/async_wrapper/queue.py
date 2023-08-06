@@ -396,6 +396,6 @@ def create_queue(max_size: float | None = None) -> Queue[Any]:
         max_size: queue size. Defaults to None.
 
     Returns:
-        queue using :class:`anyio.abc.ObjectStream`
+        new :obj:`Queue` using :class:`anyio.abc.ObjectStream`
     """
     return Queue(max_size)
