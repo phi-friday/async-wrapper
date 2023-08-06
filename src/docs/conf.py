@@ -8,7 +8,9 @@ import sys
 from pathlib import Path
 
 root_dir = Path(__file__).resolve().parent.parent.parent
+src_dir = root_dir / "src"
 sys.path.insert(0, root_dir.as_posix())
+sys.path.insert(0, src_dir.as_posix())
 
 from async_wrapper import __version__
 
