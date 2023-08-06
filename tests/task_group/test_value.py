@@ -64,7 +64,6 @@ def test_value_repr():
     assert repr(value) == expected
 
 
-@pytest.mark.parametrize("x", range(4))
 def test_value_repr_pending():
     value = SoonValue()
     assert not value.is_ready
