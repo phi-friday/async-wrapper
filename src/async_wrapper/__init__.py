@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ._version import __version__  # noqa: F401
 from .convert import async_to_sync, sync_to_async, toggle_func
-from .queue import Queue
+from .queue import Queue, create_queue
 from .task_group import TaskGroupWrapper, create_task_group_wrapper
 from .wait import Completed, Waiter, wait_for
 
@@ -15,5 +15,6 @@ __all__ = [
     "async_to_sync",
     "sync_to_async",
     "create_task_group_wrapper",
+    "create_queue",
     "wait_for",
 ]

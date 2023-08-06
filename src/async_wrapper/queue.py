@@ -5,6 +5,7 @@ import sys
 from contextlib import asynccontextmanager, contextmanager
 from typing import (
     TYPE_CHECKING,
+    Any,
     AsyncContextManager,
     AsyncGenerator,
     ContextManager,
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
     )
     from typing_extensions import Self
 
-__all__ = ["Queue"]
+__all__ = ["Queue", "create_queue"]
 
 ValueT = TypeVar("ValueT")
 
@@ -317,3 +318,15 @@ class Queue(Generic[ValueT]):
             return self.get()
         except (EndOfStream, QueueEmptyError, QueueBrokenError) as exc:
             raise StopIteration from exc
+
+
+def create_queue(max_size: float | None = None) -> Queue[Any]:
+    """create queue like asyncio.Queue
+
+    Args:
+        max_size: queue size. Defaults to None.
+
+    Returns:
+        queue using anyio stream
+    """
+    return Queue(max_size)
