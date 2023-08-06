@@ -2,8 +2,16 @@ from __future__ import annotations
 
 import math
 import sys
-from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, AsyncContextManager, AsyncGenerator, Generic, TypeVar
+from contextlib import asynccontextmanager, contextmanager
+from typing import (
+    TYPE_CHECKING,
+    AsyncContextManager,
+    AsyncGenerator,
+    ContextManager,
+    Generator,
+    Generic,
+    TypeVar,
+)
 
 from anyio import WouldBlock, create_memory_object_stream, create_task_group, fail_after
 from anyio.streams.memory import BrokenResourceError, ClosedResourceError, EndOfStream
@@ -56,28 +64,52 @@ class Queue(Generic[ValueT]):
         self._close_getter: bool = True
 
     @property
-    def putter(self) -> AsyncContextManager[Self]:
+    def aputter(self) -> AsyncContextManager[Self]:
+        """aclose putter only"""
+        return self._as_aputter()
+
+    @property
+    def agetter(self) -> AsyncContextManager[Self]:
+        """aclose getter only"""
+        return self._as_agetter()
+
+    @property
+    def putter(self) -> ContextManager[Self]:
         """close putter only"""
         return self._as_putter()
 
     @property
-    def getter(self) -> AsyncContextManager[Self]:
+    def getter(self) -> ContextManager[Self]:
         """close getter only"""
         return self._as_getter()
 
     @asynccontextmanager
-    async def _as_putter(self) -> AsyncGenerator[Self, None]:
+    async def _as_aputter(self) -> AsyncGenerator[Self, None]:
         try:
             yield self
         finally:
             await self._putter.aclose()
 
     @asynccontextmanager
-    async def _as_getter(self) -> AsyncGenerator[Self, None]:
+    async def _as_agetter(self) -> AsyncGenerator[Self, None]:
         try:
             yield self
         finally:
             await self._getter.aclose()
+
+    @contextmanager
+    def _as_putter(self) -> Generator[Self, None, None]:
+        try:
+            yield self
+        finally:
+            self._putter.close()
+
+    @contextmanager
+    def _as_getter(self) -> Generator[Self, None, None]:
+        try:
+            yield self
+        finally:
+            self._getter.close()
 
     @property
     def _closed(self) -> bool:

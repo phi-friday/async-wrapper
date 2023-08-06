@@ -325,7 +325,7 @@ def test_queue_clone_uset():
 
 
 @pytest.mark.anyio()
-async def test_queue_async_iterator():
+async def test_queue_async_iterator_aputter():
     queue: Queue[Any] = Queue(10)
 
     async def put(value: Any, queue: Queue[Any]) -> None:
@@ -333,7 +333,7 @@ async def test_queue_async_iterator():
             await queue.aput(value)
 
     async with create_task_group() as task_group:
-        async with queue.putter:
+        async with queue.aputter:
             for i in range(10):
                 task_group.start_soon(put, i, queue.clone(putter=True))
 
@@ -344,7 +344,7 @@ async def test_queue_async_iterator():
 
 
 @pytest.mark.anyio()
-async def test_queue_iterator():
+async def test_queue_iterator_aputter():
     queue: Queue[Any] = Queue(10)
 
     async def put(value: Any, queue: Queue[Any]) -> None:
@@ -352,7 +352,45 @@ async def test_queue_iterator():
             await queue.aput(value)
 
     async with create_task_group() as task_group:
-        async with queue.putter:
+        async with queue.aputter:
+            for i in range(10):
+                task_group.start_soon(put, i, queue.clone(putter=True))
+
+    async with queue:
+        result = list(queue)
+
+    assert set(result) == set(range(10))
+
+
+@pytest.mark.anyio()
+async def test_queue_async_iterator_putter():
+    queue: Queue[Any] = Queue(10)
+
+    async def put(value: Any, queue: Queue[Any]) -> None:
+        async with queue:
+            await queue.aput(value)
+
+    async with create_task_group() as task_group:
+        with queue.putter:
+            for i in range(10):
+                task_group.start_soon(put, i, queue.clone(putter=True))
+
+    async with queue:
+        result = [x async for x in queue]
+
+    assert set(result) == set(range(10))
+
+
+@pytest.mark.anyio()
+async def test_queue_iterator_putter():
+    queue: Queue[Any] = Queue(10)
+
+    async def put(value: Any, queue: Queue[Any]) -> None:
+        async with queue:
+            await queue.aput(value)
+
+    async with create_task_group() as task_group:
+        with queue.putter:
             for i in range(10):
                 task_group.start_soon(put, i, queue.clone(putter=True))
 
