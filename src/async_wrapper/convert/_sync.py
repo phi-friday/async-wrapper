@@ -56,13 +56,10 @@ def _run(
 ) -> ValueT_co:
     backend = _get_current_backend()
     new_func = partial(func, *args, **kwargs)
-    if backend == "asyncio" and _check_uvloop:
-        return anyio.run(
-            new_func,
-            backend=backend,
-            backend_options={"use_uvloop": True},
-        )
-    return anyio.run(new_func, backend=backend)
+    backend_options = {}
+    if backend == "asyncio":
+        backend_options["use_uvloop"] = _check_uvloop()
+    return anyio.run(new_func, backend=backend, backend_options=backend_options)
 
 
 def _check_uvloop() -> bool:
