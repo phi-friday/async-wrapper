@@ -30,7 +30,7 @@ class Waiter(Event):
     how to use:
     >>> import anyio
     >>>
-    >>> from async_wrapper.utils.wait import Waiter
+    >>> from async_wrapper import Waiter
     >>>
     >>>
     >>> async def test() -> None:
@@ -137,7 +137,7 @@ class Completed:
     >>>
     >>> import anyio
     >>>
-    >>> from async_wrapper.wait import Completed
+    >>> from async_wrapper import Completed
     >>>
     >>>
     >>> async def test(x: int, sleep: float, result: list[int] | None = None) -> int:
@@ -312,7 +312,7 @@ async def wait_for(
     how to use:
     >>> import anyio
     >>>
-    >>> from async_wrapper.utils.wait import wait_for
+    >>> from async_wrapper import wait_for
     >>>
     >>>
     >>> async def test() -> None:
