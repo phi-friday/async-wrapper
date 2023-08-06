@@ -9,7 +9,7 @@ import pytest
 from anyio import CancelScope, create_task_group, fail_after, wait_all_tasks_blocked
 
 from async_wrapper import Queue, create_queue
-from async_wrapper.exception import QueueBrokenError
+from async_wrapper.exception import QueueBrokenError, QueueClosedError
 
 
 def test_invalid_max_buffer() -> None:
@@ -146,7 +146,7 @@ async def test_clone() -> None:
 async def test_clone_closed() -> None:
     queue: Queue[str] = create_queue(1)
     await queue.aclose()
-    pytest.raises(QueueBrokenError, queue.clone)
+    pytest.raises(QueueClosedError, queue.clone)
 
 
 @pytest.mark.anyio()
@@ -322,7 +322,7 @@ async def test_clone_each():
 @pytest.mark.anyio()
 def test_queue_clone_uset():
     queue: Queue[Any] = create_queue(1)
-    with pytest.raises(ValueError, match="putter and getter are None."):
+    with pytest.raises(RuntimeError, match="putter and getter are None."):
         queue.clone()
 
 

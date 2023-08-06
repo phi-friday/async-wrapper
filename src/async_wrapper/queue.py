@@ -17,7 +17,12 @@ from typing import (
 from anyio import WouldBlock, create_memory_object_stream, create_task_group, fail_after
 from anyio.streams.memory import BrokenResourceError, ClosedResourceError, EndOfStream
 
-from async_wrapper.exception import QueueBrokenError, QueueEmptyError, QueueFullError
+from async_wrapper.exception import (
+    QueueBrokenError,
+    QueueClosedError,
+    QueueEmptyError,
+    QueueFullError,
+)
 
 if sys.version_info < (3, 11):  # pragma: no cover
     from exceptiongroup import ExceptionGroup  # type: ignore
@@ -293,9 +298,9 @@ class Queue(Generic[ValueT]):
     def _clone(self, *, putter: bool, getter: bool) -> Queue[ValueT]:
         """create clone of this queue"""
         if self._closed:
-            raise QueueBrokenError("the queue is already closed")
+            raise QueueClosedError("the queue is already closed")
         if not putter and not getter:
-            raise ValueError("putter and getter are None.")
+            raise RuntimeError("putter and getter are None.")
         _putter = self._putter.clone() if putter else self._putter
         _getter = self._getter.clone() if getter else self._getter
         new = Queue(stream=(_putter, _getter))
@@ -343,7 +348,12 @@ class Queue(Generic[ValueT]):
     async def __anext__(self) -> ValueT:
         try:
             return await self.aget()
-        except (EndOfStream, QueueEmptyError, QueueBrokenError) as exc:
+        except (
+            EndOfStream,
+            QueueEmptyError,
+            QueueBrokenError,
+            QueueClosedError,
+        ) as exc:
             raise StopAsyncIteration from exc
 
     def __iter__(self) -> Self:
@@ -352,7 +362,12 @@ class Queue(Generic[ValueT]):
     def __next__(self) -> ValueT:
         try:
             return self.get()
-        except (EndOfStream, QueueEmptyError, QueueBrokenError) as exc:
+        except (
+            EndOfStream,
+            QueueEmptyError,
+            QueueBrokenError,
+            QueueClosedError,
+        ) as exc:
             raise StopIteration from exc
 
     def __len__(self) -> int:

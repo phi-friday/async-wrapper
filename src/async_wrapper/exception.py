@@ -5,6 +5,7 @@ __all__ = [
     "QueueError",
     "QueueEmptyError",
     "QueueFullError",
+    "QueueClosedError",
     "QueueBrokenError",
 ]
 
@@ -39,8 +40,21 @@ class QueueFullError(QueueError):
     """
 
 
-class QueueBrokenError(QueueError):
-    """Exception raised when attempting to operate on a closed queue.
+class QueueClosedError(QueueError):
+    """Error that occurs when attempting to get from or put into a closed queue.
 
-    This exception is raised when trying to get or put an item into a closed queue.
+    This error is different from QueueBrokenError.
+        :exc:`QueueBrokenError` is an unintended error.
+
+        :exc:`QueueClosedError` is an error deliberately raised.
+    """
+
+
+class QueueBrokenError(QueueError):
+    """Error that occurs when trying to get from or put into a closed queue.
+
+    This error is different from QueueClosedError.
+        :exc:`QueueClosedError` is an error deliberately raised.
+
+        :exc:`QueueBrokenError` is an unintended error.
     """
