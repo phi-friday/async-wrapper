@@ -31,6 +31,7 @@ extensions = [
     "sphinx_search.extension",
     "sphinx_rtd_theme",
     "sphinx_mdinclude",
+    "sphinx.ext.viewcode",
 ]
 
 templates_path = ["_templates"]
