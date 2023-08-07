@@ -11,6 +11,7 @@ from typing import (
     ContextManager,
     Generator,
     Generic,
+    Literal,
     TypeVar,
 )
 
@@ -70,7 +71,7 @@ class Queue(Generic[ValueT]):
         >>>     async with anyio.create_task_group() as task_group:
         >>>         async with queue.aputter:
         >>>             for i in range(10):
-        >>>                 task_group.start_soon(aput, queue.clone(putter=True), i)
+        >>>                 task_group.start_soon(aput, queue.cloning.putter, i)
         >>>
         >>>     async with queue.agetter:
         >>>         result = {x async for x in queue}
@@ -414,8 +415,8 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
 
     def __init__(self, queue: Queue[ValueT], *, putter: bool, getter: bool) -> None:
         self._queue = queue
-        if not getter and not putter:
-            raise QueueRestrictedError("putter and getter are all False")
+        if getter is putter:
+            raise QueueRestrictedError("putter and getter are the same")
         self._do_putter = putter
         self._do_getter = getter
 
@@ -443,7 +444,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
             return self._close_getter
         if self._do_putter:
             return self._close_putter
-        raise RuntimeError("never")
+        raise RuntimeError("never")  # pragma: no cover
 
     @property
     def _stream(
@@ -453,12 +454,12 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
             return self._getter
         if self._do_putter:
             return self._putter
-        raise RuntimeError("never")
+        raise RuntimeError("never")  # pragma: no cover
 
     @property
     @override
     def _closed(self) -> bool:
-        return not self._close_stream and self._stream._closed  # noqa: SLF001
+        return not self._close_stream or self._stream._closed  # noqa: SLF001
 
     @override
     def qsize(self) -> int:
@@ -529,7 +530,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
         elif self._do_putter:
             where = "putter"
         else:
-            raise RuntimeError("never")
+            raise RuntimeError("never")  # pragma: no cover
         return _render("RestrictedQueue", max=max_size, size=size, where=where)
 
 
@@ -537,7 +538,16 @@ class _Cloning(Generic[ValueT]):
     __slots__ = ("_queue",)
 
     def __init__(self, queue: Queue[ValueT]) -> None:
+        if queue._closed:  # noqa: SLF001
+            raise QueueClosedError("queue is already closed")
         self._queue = queue
+
+    def create(self, where: Literal["putter", "getter"]) -> _RestrictedQueue[ValueT]:
+        if where == "putter":
+            return self.putter
+        if where == "getter":
+            return self.getter
+        raise RuntimeError("never")  # pragma: no cover
 
     @property
     def putter(self) -> _RestrictedQueue[ValueT]:
