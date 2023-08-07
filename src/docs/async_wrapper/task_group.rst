@@ -5,4 +5,4 @@ async\_wrapper.task\_group module
    :members:
    :undoc-members:
    :show-inheritance:
-   :exclude-members: SoonValue, spawn, start
+   :exclude-members: spawn, start
