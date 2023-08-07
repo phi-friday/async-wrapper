@@ -567,7 +567,22 @@ async def test_queue_repr(x: int | None):
 
 @pytest.mark.anyio()
 @pytest.mark.parametrize("x", chain((None,), range(1, 4)))
-async def test_queue_getter_repr_using_cloning(x: int | None):
+async def test_cloning_repr(x: int | None):
+    queue: Queue[Any] = create_queue(x)
+    size = random.randint(1, x or 10)  # noqa: S311
+
+    async with create_task_group() as task_group:
+        for i in range(size):
+            task_group.start_soon(queue.aput, i)
+
+    expected_max = x or "inf"
+    expected_repr = f"<Cloning: max={expected_max}, size={size}>"
+    assert repr(queue.cloning) == expected_repr
+
+
+@pytest.mark.anyio()
+@pytest.mark.parametrize("x", chain((None,), range(1, 4)))
+async def test_restricted_queue_repr(x: int | None):
     queue: Queue[Any] = create_queue(x)
     size = random.randint(1, x or 10)  # noqa: S311
 

@@ -565,6 +565,11 @@ class _Cloning(Generic[ValueT]):
         if self._queue._closed:  # noqa: SLF001
             raise QueueClosedError("queue is already closed")
 
+    def __repr__(self) -> str:
+        max_size = "inf" if self._queue.maxsize == math.inf else self._queue.maxsize
+        size = self._queue.qsize()
+        return _render("Cloning", max=max_size, size=size)
+
 
 def create_queue(max_size: float | None = None) -> Queue[Any]:
     """
