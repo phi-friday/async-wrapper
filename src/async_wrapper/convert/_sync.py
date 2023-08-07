@@ -21,7 +21,8 @@ use_uvloop_var = ContextVar("use_uvloop", default=False)
 def async_to_sync(
     func: Callable[ParamT, Awaitable[ValueT_co]],
 ) -> Callable[ParamT, ValueT_co]:
-    """Convert an awaitable function to a synchronous function.
+    """
+    Convert an awaitable function to a synchronous function.
 
     If used within an asynchronous context, attempts to use the same backend.
     Defaults to asyncio.

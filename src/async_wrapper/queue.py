@@ -43,7 +43,8 @@ ValueT = TypeVar("ValueT")
 
 
 class Queue(Generic[ValueT]):
-    """obtained from :class:`asyncio.Queue`
+    """
+    obtained from :class:`asyncio.Queue`
 
     Example:
         >>> from __future__ import annotations
@@ -189,7 +190,8 @@ class Queue(Generic[ValueT]):
         return self.qsize() >= self.maxsize
 
     async def aget(self, *, timeout: float | None = None) -> ValueT:
-        """remove and return an item from the queue.
+        """
+        remove and return an item from the queue.
 
         Args:
             timeout: error occurs when over timeout. Defaults to None.
@@ -201,7 +203,8 @@ class Queue(Generic[ValueT]):
             return await self._aget()
 
     async def aput(self, value: ValueT, *, timeout: float | None = None) -> None:
-        """put an item into the queue.
+        """
+        put an item into the queue.
 
         Args:
             value: item
@@ -291,7 +294,8 @@ class Queue(Generic[ValueT]):
             self._putter.close()
 
     def clone(self, *, putter: bool = False, getter: bool = False) -> Queue[ValueT]:
-        """create clone of this queue.
+        """
+        create clone of this queue.
 
         Args:
             putter: if true, clone putter. Defaults to False.
@@ -390,7 +394,8 @@ class Queue(Generic[ValueT]):
 
 
 def create_queue(max_size: float | None = None) -> Queue[Any]:
-    """create queue like :class:`asyncio.Queue`
+    """
+    create queue like :class:`asyncio.Queue`
 
     Args:
         max_size: queue size. Defaults to None.

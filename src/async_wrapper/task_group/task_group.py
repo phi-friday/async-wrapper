@@ -24,7 +24,8 @@ __all__ = ["TaskGroupWrapper", "create_task_group_wrapper"]
 
 
 class TaskGroupWrapper(_TaskGroup):
-    """wrap :class:`anyio.abc.TaskGroup`
+    """
+    wrap :class:`anyio.abc.TaskGroup`
 
     Example:
         >>> import anyio
@@ -121,7 +122,8 @@ class TaskGroupWrapper(_TaskGroup):
         limiter: CapacityLimiter | None = None,
         lock: Lock | None = None,
     ) -> SoonWrapper[ParamT, ValueT_co]:
-        """Wrap a function to be used within a wrapper.
+        """
+        Wrap a function to be used within a wrapper.
 
         The wrapped function will return a value shortly.
 
@@ -207,7 +209,8 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
         limiter: CapacityLimiter | None = None,
         lock: Lock | None = None,
     ) -> Self:
-        """Create a copy of this object.
+        """
+        Create a copy of this object.
 
         Args:
             semaphore: An :obj:`anyio.Semaphore`.
@@ -236,7 +239,8 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
 
 
 def create_task_group_wrapper() -> TaskGroupWrapper:
-    """create new task group wrapper
+    """
+    create new task group wrapper
 
     Returns:
         new :obj:`TaskGroupWrapper`

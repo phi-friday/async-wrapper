@@ -31,7 +31,8 @@ def toggle_func(
 def toggle_func(
     func: Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]],
 ) -> Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]]:
-    """Convert between synchronous and asynchronous functions.
+    """
+    Convert between synchronous and asynchronous functions.
 
     Args:
         func: A function that can be either synchronous or asynchronous.

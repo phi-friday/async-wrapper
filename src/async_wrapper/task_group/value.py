@@ -25,7 +25,8 @@ class SoonValue(Generic[ValueT_co]):
 
     @property
     def value(self) -> ValueT_co:
-        """Gets the soon-to-be available value.
+        """
+        Gets the soon-to-be available value.
 
         Raises:
             PendingError: Raised if the value is not yet available.
@@ -39,7 +40,8 @@ class SoonValue(Generic[ValueT_co]):
 
     @property
     def is_ready(self) -> bool:
-        """Checks if the value is ready.
+        """
+        Checks if the value is ready.
 
         Returns:
             True if the value is not pending, False otherwise.

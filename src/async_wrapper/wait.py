@@ -25,7 +25,8 @@ Pending = local()
 
 
 class Waiter(Event):
-    """wait wrapper
+    """
+    wait wrapper
 
     Example:
         >>> import anyio
@@ -88,7 +89,8 @@ class Waiter(Event):
         return self.copy()
 
     def copy(self, *args: Any, **kwargs: Any) -> Self:
-        """create new event
+        """
+        create new event
 
         Returns:
             new :obj:`Waiter`
@@ -128,7 +130,8 @@ class Waiter(Event):
 
 
 class Completed:
-    """like :func:`asyncio.as_completed`
+    """
+    like :func:`asyncio.as_completed`
 
     Example:
         >>> from __future__ import annotations
@@ -226,7 +229,8 @@ class Completed:
         *args: Any,
         name: Any = None,
     ) -> None:
-        """Start a coroutine in a task group,
+        """
+        Start a coroutine in a task group,
         similar to :meth:`anyio.abc.TaskGroup.start_soon`.
 
         If a task group is already provided,
@@ -305,7 +309,8 @@ async def wait_for(
     *args: ParamT.args,
     **kwargs: ParamT.kwargs,
 ) -> ValueT_co:
-    """Wait for an event before executing an awaitable function.
+    """
+    Wait for an event before executing an awaitable function.
 
     like :func:`asyncio.wait_for`
 
