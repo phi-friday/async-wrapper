@@ -304,6 +304,8 @@ class Queue(Generic[ValueT]):
 
         Returns:
             A queue factory.
+
+        .. versionadded:: 0.5.2
         """
         return _Cloning(self)
 
