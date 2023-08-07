@@ -7,6 +7,7 @@ __all__ = [
     "QueueFullError",
     "QueueClosedError",
     "QueueBrokenError",
+    "QueueRestrictedError",
 ]
 
 
@@ -64,3 +65,7 @@ class QueueBrokenError(QueueError):
 
         :exc:`QueueBrokenError` is an unintended error.
     """
+
+
+class QueueRestrictedError(QueueError):
+    """queue is restricted but used"""

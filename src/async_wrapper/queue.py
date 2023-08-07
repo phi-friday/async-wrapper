@@ -16,12 +16,14 @@ from typing import (
 
 from anyio import WouldBlock, create_memory_object_stream, create_task_group, fail_after
 from anyio.streams.memory import BrokenResourceError, ClosedResourceError, EndOfStream
+from typing_extensions import override
 
 from async_wrapper.exception import (
     QueueBrokenError,
     QueueClosedError,
     QueueEmptyError,
     QueueFullError,
+    QueueRestrictedError,
 )
 
 if sys.version_info < (3, 11):  # pragma: no cover
@@ -40,6 +42,7 @@ if TYPE_CHECKING:
 __all__ = ["Queue", "create_queue"]
 
 ValueT = TypeVar("ValueT")
+QueueT_co = TypeVar("QueueT_co", covariant=True, bound="Queue")
 
 
 class Queue(Generic[ValueT]):
@@ -293,16 +296,29 @@ class Queue(Generic[ValueT]):
         if self._close_putter:
             self._putter.close()
 
-    def clone(self, *, putter: bool = False, getter: bool = False) -> Queue[ValueT]:
+    @property
+    def cloning(self) -> _Cloning[ValueT]:
         """
-        create clone of this queue.
-
-        Args:
-            putter: if true, clone putter. Defaults to False.
-            getter: if true, clone getter. Defaults to False.
+        Create a queue factory for generating RestrictedQueue instances.
 
         Returns:
-            clone
+            A queue factory.
+        """
+        return _Cloning(self)
+
+    def clone(self, *, putter: bool = False, getter: bool = False) -> Queue[ValueT]:
+        """
+        Create a clone of this queue.
+
+        It is not recommended to use this method directly.
+        Instead, it is recommended to use the property :attr:`Queue.cloning`.
+
+        Args:
+            putter: If True, clone the putter. Defaults to False.
+            getter: If True, clone the getter. Defaults to False.
+
+        Returns:
+            A cloned queue.
         """
         try:
             return self._clone(putter=putter, getter=getter)
@@ -390,7 +406,154 @@ class Queue(Generic[ValueT]):
     def __repr__(self) -> str:
         max_size = "inf" if self.maxsize == math.inf else self.maxsize
         size = self.qsize()
-        return f"<Queue: max={max_size}, size={size}>"
+        return _render("Queue", max=max_size, size=size)
+
+
+class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
+    __slots__ = ("_queue", "_do_putter", "_do_getter")
+
+    def __init__(self, queue: Queue[ValueT], *, putter: bool, getter: bool) -> None:
+        self._queue = queue
+        if not getter and not putter:
+            raise QueueRestrictedError("putter and getter are all False")
+        self._do_putter = putter
+        self._do_getter = getter
+
+    @property
+    def _putter(self) -> MemoryObjectSendStream[ValueT]:
+        self._raise_restricted(putter=True)
+        return self._queue._putter  # noqa: SLF001
+
+    @property
+    def _getter(self) -> MemoryObjectReceiveStream[ValueT]:
+        self._raise_restricted(getter=True)
+        return self._queue._getter  # noqa: SLF001
+
+    @property
+    def _close_getter(self) -> bool:
+        return self._queue._close_getter  # noqa: SLF001
+
+    @property
+    def _close_putter(self) -> bool:
+        return self._queue._close_putter  # noqa: SLF001
+
+    @property
+    def _close_stream(self) -> bool:
+        if self._do_getter:
+            return self._close_getter
+        if self._do_putter:
+            return self._close_putter
+        raise RuntimeError("never")
+
+    @property
+    def _stream(
+        self,
+    ) -> MemoryObjectSendStream[ValueT] | MemoryObjectReceiveStream[ValueT]:
+        if self._do_getter:
+            return self._getter
+        if self._do_putter:
+            return self._putter
+        raise RuntimeError("never")
+
+    @property
+    @override
+    def _closed(self) -> bool:
+        return not self._close_stream and self._stream._closed  # noqa: SLF001
+
+    @override
+    def qsize(self) -> int:
+        return len(self._stream._state.buffer)  # noqa: SLF001
+
+    @property
+    def maxsize(self) -> float:
+        return self._stream._state.max_buffer_size  # noqa: SLF001
+
+    @override
+    async def _aclose(self) -> None:
+        await self._stream.aclose()
+
+    @override
+    def _close(self) -> None:
+        self._stream.close()
+
+    @property
+    @override
+    def cloning(self) -> _Cloning[Self]:
+        raise TypeError("do not clone restricted queue")
+
+    @override
+    def _clone(self, *, putter: bool, getter: bool) -> Queue[ValueT]:
+        raise TypeError("do not clone restricted queue")
+
+    @override
+    def statistics(self) -> MemoryObjectStreamStatistics:
+        return self._stream.statistics()
+
+    def _raise_restricted(self, *, getter: bool = False, putter: bool = False) -> None:
+        if getter and not self._do_getter:
+            raise QueueRestrictedError("getter is restricted")
+        if putter and not self._do_putter:
+            raise QueueRestrictedError("putter is restricted")
+
+    @override
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        try:
+            self.close()
+        finally:
+            self._queue._close_getter = True  # noqa: SLF001
+            self._queue._close_putter = True  # noqa: SLF001
+
+    @override
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        try:
+            await self.aclose()
+        finally:
+            self._queue._close_getter = True  # noqa: SLF001
+            self._queue._close_putter = True  # noqa: SLF001
+
+    def __repr__(self) -> str:
+        max_size = "inf" if self.maxsize == math.inf else self.maxsize
+        size = self.qsize()
+        if self._do_getter:
+            where = "getter"
+        elif self._do_putter:
+            where = "putter"
+        else:
+            raise RuntimeError("never")
+        return _render("RestrictedQueue", max=max_size, size=size, where=where)
+
+
+class _Cloning(Generic[ValueT]):
+    __slots__ = ("_queue",)
+
+    def __init__(self, queue: Queue[ValueT]) -> None:
+        self._queue = queue
+
+    @property
+    def putter(self) -> _RestrictedQueue[ValueT]:
+        self._raise_if_closed()
+        new = self._queue.clone(putter=True)
+        return _RestrictedQueue(new, putter=True, getter=False)
+
+    @property
+    def getter(self) -> _RestrictedQueue[ValueT]:
+        self._raise_if_closed()
+        new = self._queue.clone(getter=True)
+        return _RestrictedQueue(new, putter=False, getter=True)
+
+    def _raise_if_closed(self) -> None:
+        if self._queue._closed:  # noqa: SLF001
+            raise QueueClosedError("queue is already closed")
 
 
 def create_queue(max_size: float | None = None) -> Queue[Any]:
@@ -404,3 +567,10 @@ def create_queue(max_size: float | None = None) -> Queue[Any]:
         new :obj:`Queue` using :class:`anyio.abc.ObjectStream`
     """
     return Queue(max_size)
+
+
+def _render(name: str, **kwargs: Any) -> str:
+    if kwargs:
+        status = ", ".join(f"{key}={value}" for key, value in kwargs.items())
+        return f"<{name}: {status}>"
+    return f"<{name}>"
