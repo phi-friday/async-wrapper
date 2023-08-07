@@ -12,7 +12,7 @@ __all__ = ["SoonValue"]
 
 
 class SoonValue(Generic[ValueT_co]):
-    """will get value soon"""
+    """A class representing a value that will be available soon."""
 
     __slots__ = ("_value",)
 
@@ -25,12 +25,23 @@ class SoonValue(Generic[ValueT_co]):
 
     @property
     def value(self) -> ValueT_co:
-        """soon value"""
+        """Gets the soon-to-be available value.
+
+        Raises:
+            PendingError: Raised if the value is not yet available.
+
+        Returns:
+            The soon-to-be available value.
+        """
         if self._value is Pending:
             raise PendingError
         return self._value  # type: ignore
 
     @property
     def is_ready(self) -> bool:
-        """value status"""
+        """Checks if the value is ready.
+
+        Returns:
+            True if the value is not pending, False otherwise.
+        """
         return self._value is not Pending
