@@ -103,27 +103,7 @@ async def test_put_then_get() -> None:
 async def test_iterate() -> None:
     queue: Queue[str] = create_queue()
     result: list[str] = []
-    clone = queue.clone(getter=True)
-
-    async def getter() -> None:
-        async with clone:
-            async for item in clone:
-                result.append(item)  # noqa: PERF402
-
-    async with create_task_group() as task_group:
-        task_group.start_soon(getter)
-        await queue.aput("hello")
-        await queue.aput("anyio")
-        await queue.aclose()
-
-    assert result == ["hello", "anyio"]
-
-
-@pytest.mark.anyio()
-async def test_iterate_using_cloning() -> None:
-    queue: Queue[str] = create_queue()
-    result: list[str] = []
-    getter_queue = queue.cloning.getter
+    getter_queue = queue.clone.getter
 
     async def getter() -> None:
         async with getter_queue:
@@ -160,18 +140,8 @@ async def test_aget_aput_closed_queue() -> None:
 @pytest.mark.anyio()
 async def test_clone() -> None:
     queue: Queue[str] = create_queue(1)
-    queue2 = queue.clone(putter=True, getter=True)
-
-    await queue.aclose()
-    queue2.put("hello")
-    assert queue2.get() == "hello"
-
-
-@pytest.mark.anyio()
-async def test_clone_using_cloning() -> None:
-    queue: Queue[str] = create_queue(1)
-    putter = queue.cloning.putter
-    getter = queue.cloning.getter
+    putter = queue.clone.putter
+    getter = queue.clone.getter
 
     await queue.aclose()
     putter.put("hello")
@@ -182,7 +152,12 @@ async def test_clone_using_cloning() -> None:
 async def test_clone_closed() -> None:
     queue: Queue[str] = create_queue(1)
     await queue.aclose()
-    pytest.raises(QueueClosedError, queue.clone)
+
+    with pytest.raises(QueueClosedError):
+        _ = queue.clone.getter
+
+    with pytest.raises(QueueClosedError):
+        _ = queue.clone.putter
 
 
 @pytest.mark.anyio()
@@ -190,13 +165,13 @@ async def test_clone_closed_using_cloning() -> None:
     queue: Queue[str] = create_queue(1)
     await queue.aclose()
     with pytest.raises(QueueClosedError, match="queue is already closed"):
-        _ = queue.cloning
+        _ = queue.clone
 
 
 @pytest.mark.anyio()
 async def test_clone_closed_using_cloning_after_create() -> None:
     queue: Queue[str] = create_queue(1)
-    clone = queue.cloning
+    clone = queue.clone
     await queue.aclose()
     with pytest.raises(QueueClosedError, match="queue is already closed"):
         _ = clone.getter
@@ -359,10 +334,10 @@ async def test_clone_each():
             await q.aget()
 
     async with create_task_group() as task_group:
-        task_group.start_soon(test_put, queue.clone(putter=True))
-        task_group.start_soon(test_put, queue.clone(putter=True))
-        task_group.start_soon(test_get, queue.clone(getter=True))
-        task_group.start_soon(test_get, queue.clone(getter=True))
+        task_group.start_soon(test_put, queue.clone.putter)
+        task_group.start_soon(test_put, queue.clone.putter)
+        task_group.start_soon(test_get, queue.clone.getter)
+        task_group.start_soon(test_get, queue.clone.getter)
 
     assert not queue._closed  # noqa: SLF001
     assert queue.empty()
@@ -370,39 +345,6 @@ async def test_clone_each():
     status = queue.statistics()
     assert status.open_receive_streams == 1
     assert status.open_send_streams == 1
-
-
-@pytest.mark.anyio()
-async def test_clone_each_using_cloning():
-    queue: Queue[Any] = create_queue(1)
-
-    async def test_put(q: Queue[Any]) -> None:
-        async with q:
-            await q.aput(1)
-
-    async def test_get(q: Queue[Any]) -> None:
-        async with q:
-            await q.aget()
-
-    async with create_task_group() as task_group:
-        task_group.start_soon(test_put, queue.cloning.putter)
-        task_group.start_soon(test_put, queue.cloning.putter)
-        task_group.start_soon(test_get, queue.cloning.getter)
-        task_group.start_soon(test_get, queue.cloning.getter)
-
-    assert not queue._closed  # noqa: SLF001
-    assert queue.empty()
-
-    status = queue.statistics()
-    assert status.open_receive_streams == 1
-    assert status.open_send_streams == 1
-
-
-@pytest.mark.anyio()
-def test_queue_clone_uset():
-    queue: Queue[Any] = create_queue(1)
-    with pytest.raises(RuntimeError, match="putter and getter are None."):
-        queue.clone()
 
 
 @pytest.mark.anyio()
@@ -416,7 +358,7 @@ async def test_queue_async_iterator_aputter():
     async with create_task_group() as task_group:
         async with queue.aputter:
             for i in range(10):
-                task_group.start_soon(put, i, queue.clone(putter=True))
+                task_group.start_soon(put, i, queue.clone.putter)
 
     async with queue:
         result = [x async for x in queue]
@@ -435,7 +377,7 @@ async def test_queue_iterator_aputter():
     async with create_task_group() as task_group:
         async with queue.aputter:
             for i in range(10):
-                task_group.start_soon(put, i, queue.clone(putter=True))
+                task_group.start_soon(put, i, queue.clone.putter)
 
     async with queue:
         result = list(queue)
@@ -454,7 +396,7 @@ async def test_queue_async_iterator():
     async with create_task_group() as task_group:
         with queue.putter:
             for i in range(10):
-                task_group.start_soon(put, i, queue.clone(putter=True))
+                task_group.start_soon(put, i, queue.clone.putter)
 
     assert not queue._closed  # noqa: SLF001
 
@@ -476,7 +418,7 @@ async def test_queue_iterator():
     async with create_task_group() as task_group:
         with queue.putter:
             for i in range(10):
-                task_group.start_soon(put, i, queue.clone(putter=True))
+                task_group.start_soon(put, i, queue.clone.putter)
 
     assert not queue._closed  # noqa: SLF001
 
@@ -576,8 +518,8 @@ async def test_cloning_repr(x: int | None):
             task_group.start_soon(queue.aput, i)
 
     expected_max = x or "inf"
-    expected_repr = f"<Cloning: max={expected_max}, size={size}>"
-    assert repr(queue.cloning) == expected_repr
+    expected_repr = f"<Clone: max={expected_max}, size={size}>"
+    assert repr(queue.clone) == expected_repr
 
 
 @pytest.mark.anyio()
@@ -593,14 +535,14 @@ async def test_restricted_queue_repr(x: int | None):
     expected_max = x or "inf"
     expected_repr = f"<RestrictedQueue: max={expected_max}, size={size}, where={{}}>"
     for where in ("getter", "putter"):
-        clone = queue.cloning.create(where)
+        clone = queue.clone.create(where)
         assert repr(clone) == expected_repr.format(where)
 
 
 @pytest.mark.anyio()
 async def test_restricted_queue_error():
     queue = create_queue()
-    clone = queue.cloning
+    clone = queue.clone
     getter = clone.getter
     putter = clone.putter
 
@@ -615,9 +557,9 @@ async def test_restricted_queue_error():
         await putter.aget()
 
     with pytest.raises(TypeError, match="do not clone restricted queue"):
-        _ = getter.cloning
+        _ = getter.clone
     with pytest.raises(TypeError, match="do not clone restricted queue"):
-        _ = putter.cloning
+        _ = putter.clone
 
 
 @pytest.mark.anyio()
@@ -637,8 +579,8 @@ async def test_restricted_queue_eixt():
         assert queue._closed  # noqa: SLF001
 
     async with create_task_group() as task_group:
-        task_group.start_soon(aget, queue.cloning.getter)
-        put(queue.cloning.putter)
+        task_group.start_soon(aget, queue.clone.getter)
+        put(queue.clone.putter)
 
     assert result == [1]
 
@@ -655,7 +597,7 @@ def test_create_restricted_queue_error():
 
 def test_restricted_queue_stats():
     queue = create_queue()
-    getter, putter = queue.cloning.getter, queue.cloning.putter
+    getter, putter = queue.clone.getter, queue.clone.putter
 
     assert getter.statistics() == queue.statistics()
     assert putter.statistics() == queue.statistics()

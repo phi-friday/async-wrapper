@@ -71,7 +71,7 @@ class Queue(Generic[ValueT]):
         >>>     async with anyio.create_task_group() as task_group:
         >>>         async with queue.aputter:
         >>>             for i in range(10):
-        >>>                 task_group.start_soon(aput, queue.cloning.putter, i)
+        >>>                 task_group.start_soon(aput, queue.clone.putter, i)
         >>>
         >>>     async with queue.agetter:
         >>>         result = {x async for x in queue}
@@ -298,7 +298,7 @@ class Queue(Generic[ValueT]):
             self._putter.close()
 
     @property
-    def cloning(self) -> _Cloning[ValueT]:
+    def clone(self) -> _Clone[ValueT]:
         """
         Create a queue factory for generating RestrictedQueue instances.
 
@@ -307,26 +307,7 @@ class Queue(Generic[ValueT]):
 
         .. versionadded:: 0.5.2
         """
-        return _Cloning(self)
-
-    def clone(self, *, putter: bool = False, getter: bool = False) -> Queue[ValueT]:
-        """
-        Create a clone of this queue.
-
-        It is not recommended to use this method directly.
-        Instead, it is recommended to use the property :attr:`Queue.cloning`.
-
-        Args:
-            putter: If True, clone the putter. Defaults to False.
-            getter: If True, clone the getter. Defaults to False.
-
-        Returns:
-            A cloned queue.
-        """
-        try:
-            return self._clone(putter=putter, getter=getter)
-        except (ClosedResourceError, BrokenResourceError) as exc:
-            raise QueueBrokenError from exc
+        return _Clone(self)
 
     def _clone(self, *, putter: bool, getter: bool) -> Queue[ValueT]:
         """create clone of this queue"""
@@ -334,8 +315,13 @@ class Queue(Generic[ValueT]):
             raise QueueClosedError("the queue is already closed")
         if not putter and not getter:
             raise RuntimeError("putter and getter are None.")
-        _putter = self._putter.clone() if putter else self._putter
-        _getter = self._getter.clone() if getter else self._getter
+
+        try:
+            _putter = self._putter.clone() if putter else self._putter
+            _getter = self._getter.clone() if getter else self._getter
+        except (ClosedResourceError, BrokenResourceError) as exc:
+            raise QueueBrokenError from exc
+
         new = Queue(_stream=(_putter, _getter))  # type: ignore
         new._close_putter = putter  # noqa: SLF001
         new._close_getter = getter  # noqa: SLF001
@@ -481,7 +467,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
 
     @property
     @override
-    def cloning(self) -> _Cloning[Self]:
+    def clone(self) -> _Clone[Self]:
         raise TypeError("do not clone restricted queue")
 
     @override
@@ -536,7 +522,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
         return _render("RestrictedQueue", max=max_size, size=size, where=where)
 
 
-class _Cloning(Generic[ValueT]):
+class _Clone(Generic[ValueT]):
     __slots__ = ("_queue",)
 
     def __init__(self, queue: Queue[ValueT]) -> None:
@@ -554,13 +540,13 @@ class _Cloning(Generic[ValueT]):
     @property
     def putter(self) -> _RestrictedQueue[ValueT]:
         self._raise_if_closed()
-        new = self._queue.clone(putter=True)
+        new = self._queue._clone(putter=True, getter=False)  # noqa: SLF001
         return _RestrictedQueue(new, putter=True, getter=False)
 
     @property
     def getter(self) -> _RestrictedQueue[ValueT]:
         self._raise_if_closed()
-        new = self._queue.clone(getter=True)
+        new = self._queue._clone(getter=True, putter=False)  # noqa: SLF001
         return _RestrictedQueue(new, putter=False, getter=True)
 
     def _raise_if_closed(self) -> None:
@@ -570,7 +556,7 @@ class _Cloning(Generic[ValueT]):
     def __repr__(self) -> str:
         max_size = "inf" if self._queue.maxsize == math.inf else self._queue.maxsize
         size = self._queue.qsize()
-        return _render("Cloning", max=max_size, size=size)
+        return _render("Clone", max=max_size, size=size)
 
 
 def create_queue(max_size: float | None = None) -> Queue[Any]:
