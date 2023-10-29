@@ -78,10 +78,7 @@ class Waiter(Event):
     def __call__(self, task_group: TaskGroup, *, name: Any = None) -> Self:
         """start soon in task group"""
         task_group.start_soon(
-            wait_for,
-            self,
-            partial(self._func, *self._args, **self._kwargs),
-            name=name,
+            wait_for, self, partial(self._func, *self._args, **self._kwargs), name=name
         )
         return self
 
@@ -264,10 +261,7 @@ class Completed:
         async with create_task_group() as task_group:
             for event in self._events:
                 task_group.start_soon(
-                    _wait_waiter,
-                    event,
-                    task_group.cancel_scope,
-                    self,
+                    _wait_waiter, event, task_group.cancel_scope, self
                 )
 
         event = await self._getter.receive()
@@ -363,9 +357,7 @@ async def wait_for(
 
 
 async def _wait_waiter(
-    waiter: Waiter,
-    scope: CancelScope,
-    completed: Completed,
+    waiter: Waiter, scope: CancelScope, completed: Completed
 ) -> None:
     await waiter.wait()
     completed._setter.send_nowait(waiter)  # noqa: SLF001
@@ -385,8 +377,7 @@ async def _intercept_value(
 
 
 def _create_waiter(
-    func: Callable[..., Awaitable[Any]],
-    *args: Any,
+    func: Callable[..., Awaitable[Any]], *args: Any
 ) -> tuple[Waiter, MemoryObjectReceiveStream[Any]]:
     setter, getter = create_memory_object_stream(1)
     waiter = Waiter(_intercept_value, setter, getter, func, *args)

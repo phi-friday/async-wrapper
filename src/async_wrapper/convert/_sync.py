@@ -19,7 +19,7 @@ use_uvloop_var = ContextVar("use_uvloop", default=False)
 
 
 def async_to_sync(
-    func: Callable[ParamT, Awaitable[ValueT_co]],
+    func: Callable[ParamT, Awaitable[ValueT_co]]
 ) -> Callable[ParamT, ValueT_co]:
     """
     Convert an awaitable function to a synchronous function.
@@ -97,9 +97,7 @@ def async_to_sync(
         backend = _get_current_backend()
         use_uvloop = _check_uvloop()
         with ThreadPoolExecutor(
-            1,
-            initializer=_init,
-            initargs=(backend, use_uvloop),
+            1, initializer=_init, initargs=(backend, use_uvloop)
         ) as pool:
             future = pool.submit(sync_func, *args, **kwargs)
             wait([future])
@@ -109,7 +107,7 @@ def async_to_sync(
 
 
 def _as_sync(
-    func: Callable[ParamT, Awaitable[ValueT_co]],
+    func: Callable[ParamT, Awaitable[ValueT_co]]
 ) -> Callable[ParamT, ValueT_co]:
     @wraps(func)
     def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT_co:

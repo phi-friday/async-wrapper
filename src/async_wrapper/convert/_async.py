@@ -13,7 +13,7 @@ __all__ = ["sync_to_async"]
 
 
 def sync_to_async(
-    func: Callable[ParamT, ValueT_co],
+    func: Callable[ParamT, ValueT_co]
 ) -> Callable[ParamT, Coroutine[Any, Any, ValueT_co]]:
     """
     Convert a synchronous function to an asynchronous function.

@@ -37,9 +37,7 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = []
 
-intersphinx_mapping = {
-    "anyio": ("https://anyio.readthedocs.io/en/3.x/", None),
-}
+intersphinx_mapping = {"anyio": ("https://anyio.readthedocs.io/en/3.x/", None)}
 autodoc_member_order = "bysource"
 
 # -- Options for HTML output -------------------------------------------------

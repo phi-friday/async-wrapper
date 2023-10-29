@@ -177,11 +177,7 @@ async def sample_func(value: Any = None, soon: SoonValue[Any] | None = None) -> 
         soon._value = value  # noqa: SLF001
 
 
-async def sample_func2(
-    value: int,
-    sleep: int,
-    result: list[int] | None = None,
-) -> int:
+async def sample_func2(value: int, sleep: int, result: list[int] | None = None) -> int:
     await anyio.sleep(TIC * sleep)
     if result is not None:
         result.append(value)

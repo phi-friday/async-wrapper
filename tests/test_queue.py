@@ -19,8 +19,7 @@ from async_wrapper.queue import _RestrictedQueue
 
 def test_invalid_max_buffer() -> None:
     with pytest.raises(
-        ValueError,
-        match="max_buffer_size must be either an integer or math.inf",
+        ValueError, match="max_buffer_size must be either an integer or math.inf"
     ):
         Queue(1.0)
 
@@ -108,7 +107,7 @@ async def test_iterate() -> None:
     async def getter() -> None:
         async with getter_queue:
             async for item in getter_queue:
-                result.append(item)  # noqa: PERF402
+                result.append(item)
 
     async with create_task_group() as task_group:
         task_group.start_soon(getter)

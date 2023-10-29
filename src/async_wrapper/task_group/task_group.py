@@ -68,28 +68,19 @@ class TaskGroupWrapper(_TaskGroup):
 
     @override
     async def spawn(
-        self,
-        func: Callable[..., Awaitable[Any]],
-        *args: Any,
-        name: Any = None,
+        self, func: Callable[..., Awaitable[Any]], *args: Any, name: Any = None
     ) -> None:
         raise NotImplementedError
 
     @override
     def start_soon(
-        self,
-        func: Callable[..., Awaitable[Any]],
-        *args: Any,
-        name: Any = None,
+        self, func: Callable[..., Awaitable[Any]], *args: Any, name: Any = None
     ) -> None:
         return self._task_group.start_soon(func, *args, name=name)
 
     @override
     async def start(
-        self,
-        func: Callable[..., Awaitable[Any]],
-        *args: Any,
-        name: Any = None,
+        self, func: Callable[..., Awaitable[Any]], *args: Any, name: Any = None
     ) -> Any:
         raise NotImplementedError
 
@@ -161,9 +152,7 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
         self._wrapped = None
 
     def __call__(
-        self,
-        *args: ParamT.args,
-        **kwargs: ParamT.kwargs,
+        self, *args: ParamT.args, **kwargs: ParamT.kwargs
     ) -> SoonValue[ValueT_co]:
         value: SoonValue[ValueT_co] = SoonValue()
         wrapped = partial(self.wrapped, value, *args, **kwargs)
@@ -172,10 +161,9 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
 
     @property
     def wrapped(
-        self,
+        self
     ) -> Callable[
-        Concatenate[SoonValue[ValueT_co], ParamT],
-        Coroutine[Any, Any, ValueT_co],
+        Concatenate[SoonValue[ValueT_co], ParamT], Coroutine[Any, Any, ValueT_co]
     ]:
         """wrapped func using semaphore"""
         if self._wrapped is not None:
@@ -183,9 +171,7 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
 
         @wraps(self.func)
         async def wrapped(
-            value: SoonValue[ValueT_co],
-            *args: ParamT.args,
-            **kwargs: ParamT.kwargs,
+            value: SoonValue[ValueT_co], *args: ParamT.args, **kwargs: ParamT.kwargs
         ) -> ValueT_co:
             async with AsyncExitStack() as stack:
                 if self.semaphore is not None:
@@ -230,11 +216,7 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
         if lock is None:
             lock = self.lock
         return SoonWrapper(
-            self.func,
-            self.task_group,
-            semaphore=semaphore,
-            limiter=limiter,
-            lock=lock,
+            self.func, self.task_group, semaphore=semaphore, limiter=limiter, lock=lock
         )
 
 

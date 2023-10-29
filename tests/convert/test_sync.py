@@ -43,11 +43,7 @@ async def sample_async_func(x: int, epsilon: float) -> None:
 
 
 async def check_current_backend(
-    x: int,
-    epsilon: float,
-    backend: str,
-    *,
-    use_uvloop: bool,
+    x: int, epsilon: float, backend: str, *, use_uvloop: bool
 ) -> None:
     await anyio.sleep(epsilon * x)
     maybe = current_async_library()

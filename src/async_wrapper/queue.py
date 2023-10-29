@@ -90,8 +90,7 @@ class Queue(Generic[ValueT]):
 
     if TYPE_CHECKING:
 
-        def __init__(self, max_size: float | None = None) -> None:
-            ...
+        def __init__(self, max_size: float | None = None) -> None: ...
 
     else:
 
@@ -100,14 +99,13 @@ class Queue(Generic[ValueT]):
             max_size: float | None = None,
             *,
             _stream: tuple[
-                MemoryObjectSendStream[ValueT],
-                MemoryObjectReceiveStream[ValueT],
+                MemoryObjectSendStream[ValueT], MemoryObjectReceiveStream[ValueT]
             ]
             | None = None,
         ) -> None:
             if _stream is None:
                 self._putter, self._getter = create_memory_object_stream(
-                    max_buffer_size=max_size or math.inf,
+                    max_buffer_size=max_size or math.inf
                 )
             else:
                 putter, getter = _stream
@@ -436,7 +434,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
 
     @property
     def _stream(
-        self,
+        self
     ) -> MemoryObjectSendStream[ValueT] | MemoryObjectReceiveStream[ValueT]:
         if self._do_getter:
             return self._getter

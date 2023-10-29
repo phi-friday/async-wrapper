@@ -16,20 +16,18 @@ __all__ = ["toggle_func", "async_to_sync", "sync_to_async"]
 
 @overload
 def toggle_func(
-    func: Callable[ParamT, Coroutine[Any, Any, ValueT]],
-) -> Callable[ParamT, ValueT]:
-    ...  # pragma: no cover
+    func: Callable[ParamT, Coroutine[Any, Any, ValueT]]
+) -> Callable[ParamT, ValueT]: ...  # pragma: no cover
 
 
 @overload
 def toggle_func(
-    func: Callable[ParamT, ValueT],
-) -> Callable[ParamT, Coroutine[Any, Any, ValueT]]:
-    ...  # pragma: no cover
+    func: Callable[ParamT, ValueT]
+) -> Callable[ParamT, Coroutine[Any, Any, ValueT]]: ...  # pragma: no cover
 
 
 def toggle_func(
-    func: Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]],
+    func: Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]]
 ) -> Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]]:
     """
     Convert between synchronous and asynchronous functions.
