@@ -1,4 +1,5 @@
 """obtained from anyio.tests"""
+
 from __future__ import annotations
 
 import random
@@ -107,7 +108,7 @@ async def test_iterate() -> None:
     async def getter() -> None:
         async with getter_queue:
             async for item in getter_queue:
-                result.append(item)
+                result.append(item)  # noqa: PERF402
 
     async with create_task_group() as task_group:
         task_group.start_soon(getter)

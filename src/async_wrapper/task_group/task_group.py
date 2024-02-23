@@ -63,14 +63,8 @@ class TaskGroupWrapper(_TaskGroup):
 
     @property
     @override
-    def cancel_scope(self) -> CancelScope:
+    def cancel_scope(self) -> CancelScope:  # pyright: ignore[reportIncompatibleVariableOverride]
         return self._task_group.cancel_scope
-
-    @override
-    async def spawn(
-        self, func: Callable[..., Awaitable[Any]], *args: Any, name: Any = None
-    ) -> None:
-        raise NotImplementedError
 
     @override
     def start_soon(
@@ -161,7 +155,7 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
 
     @property
     def wrapped(
-        self
+        self,
     ) -> Callable[
         Concatenate[SoonValue[ValueT_co], ParamT], Coroutine[Any, Any, ValueT_co]
     ]:
@@ -215,7 +209,7 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
             limiter = self.limiter
         if lock is None:
             lock = self.lock
-        return SoonWrapper(
+        return SoonWrapper(  # type: ignore
             self.func, self.task_group, semaphore=semaphore, limiter=limiter, lock=lock
         )
 

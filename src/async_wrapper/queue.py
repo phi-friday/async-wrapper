@@ -12,6 +12,7 @@ from typing import (
     Generator,
     Generic,
     Literal,
+    NoReturn,
     TypeVar,
 )
 
@@ -85,12 +86,14 @@ class Queue(Generic[ValueT]):
 
     __slots__ = ("_putter", "_getter", "_close_putter", "_close_getter")
 
-    _putter: MemoryObjectSendStream[ValueT]
-    _getter: MemoryObjectReceiveStream[ValueT]
-
     if TYPE_CHECKING:
 
         def __init__(self, max_size: float | None = None) -> None: ...
+        @property
+        def _putter(self) -> MemoryObjectSendStream[ValueT]: ...
+
+        @property
+        def _getter(self) -> MemoryObjectReceiveStream[ValueT]: ...
 
     else:
 
@@ -407,11 +410,13 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
         self._do_getter = getter
 
     @property
+    @override
     def _putter(self) -> MemoryObjectSendStream[ValueT]:
         self._raise_restricted(putter=True)
         return self._queue._putter  # noqa: SLF001
 
     @property
+    @override
     def _getter(self) -> MemoryObjectReceiveStream[ValueT]:
         self._raise_restricted(getter=True)
         return self._queue._getter  # noqa: SLF001
@@ -434,7 +439,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
 
     @property
     def _stream(
-        self
+        self,
     ) -> MemoryObjectSendStream[ValueT] | MemoryObjectReceiveStream[ValueT]:
         if self._do_getter:
             return self._getter
@@ -465,7 +470,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
 
     @property
     @override
-    def clone(self) -> _Clone[Self]:
+    def clone(self) -> NoReturn:
         raise TypeError("do not clone restricted queue")
 
     @override

@@ -110,7 +110,7 @@ class Waiter(Event):
         return new
 
     @override
-    def set(self) -> Awaitable[Any]:
+    def set(self) -> None:
         return self._event.set()
 
     @override

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import partial
 from typing import Any
 
 import anyio
@@ -65,7 +66,7 @@ async def test_wait_for():
     event = anyio.Event()
     soon = SoonValue()
     async with anyio.create_task_group() as task_group:
-        task_group.start_soon(wait_for, event, sample_func, 1, soon)
+        task_group.start_soon(wait_for, event, partial(sample_func, 1, soon))
         task_group.start_soon(sample_wait, event, 2, soon)
 
     assert event.is_set()
@@ -78,7 +79,7 @@ async def test_wait_many():
     events = [anyio.Event() for _ in range(10)]
     soon = SoonValue()
     async with anyio.create_task_group() as task_group:
-        task_group.start_soon(wait_for, events, sample_func, 1, soon)
+        task_group.start_soon(wait_for, events, partial(sample_func, 1, soon))
         for event in events:
             task_group.start_soon(sample_wait, event, 2, soon)
 
