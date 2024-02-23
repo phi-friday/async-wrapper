@@ -8,6 +8,19 @@ license = "MIT License"
 homepage = "https://async-wrapper.readthedocs.io/"
 repository = "https://github.com/phi-friday/async-wrapper"
 packages = [{ include = "async_wrapper", from = 'src' }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Framework :: AnyIO",
+    "Framework :: AsyncIO",
+    "Framework :: Trio"
+]
 
 [tool.poetry.dependencies]
 python = "~=3.8"
