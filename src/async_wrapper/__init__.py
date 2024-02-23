@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from ._version import __version__  # noqa: F401
+from typing import Any
+
 from .convert import async_to_sync, sync_to_async, toggle_func
 from .queue import Queue, create_queue
 from .task_group import TaskGroupWrapper, create_task_group_wrapper
@@ -18,3 +19,15 @@ __all__ = [
     "create_queue",
     "wait_for",
 ]
+
+__version__: str
+
+
+def __getattr__(name: str) -> Any:  # pragma: no cover
+    from importlib.metadata import version
+
+    if name == "__version__":
+        return version("async_wrapper")
+
+    error_msg = f"The attribute named {name!r} is undefined."
+    raise AttributeError(error_msg)
