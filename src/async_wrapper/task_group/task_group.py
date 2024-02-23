@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from contextlib import AsyncExitStack
 from functools import partial, wraps
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Generic
 
 from anyio import create_task_group as _create_task_group
 from anyio.abc import TaskGroup as _TaskGroup
-from typing_extensions import Concatenate, ParamSpec, Self, override
+from typing_extensions import Concatenate, ParamSpec, Self, TypeVar, override
 
 from async_wrapper.task_group.value import SoonValue
 
@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
     from anyio.abc import CancelScope, CapacityLimiter, Lock, Semaphore
 
-ValueT_co = TypeVar("ValueT_co", covariant=True)
-OtherValueT_co = TypeVar("OtherValueT_co", covariant=True)
+ValueT = TypeVar("ValueT", infer_variance=True)
+OtherValueT = TypeVar("OtherValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
 OtherParamT = ParamSpec("OtherParamT")
 
@@ -102,11 +102,11 @@ class TaskGroupWrapper(_TaskGroup):
 
     def wrap(
         self,
-        func: Callable[ParamT, Awaitable[ValueT_co]],
+        func: Callable[ParamT, Awaitable[ValueT]],
         semaphore: Semaphore | None = None,
         limiter: CapacityLimiter | None = None,
         lock: Lock | None = None,
-    ) -> SoonWrapper[ParamT, ValueT_co]:
+    ) -> SoonWrapper[ParamT, ValueT]:
         """
         Wrap a function to be used within a wrapper.
 
@@ -124,14 +124,14 @@ class TaskGroupWrapper(_TaskGroup):
         return SoonWrapper(func, self, semaphore=semaphore, limiter=limiter, lock=lock)
 
 
-class SoonWrapper(Generic[ParamT, ValueT_co]):
+class SoonWrapper(Generic[ParamT, ValueT]):
     """wrapped func using in :class:`TaskGroupWrapper`"""
 
     __slots__ = ("func", "task_group", "semaphore", "limiter", "lock", "_wrapped")
 
     def __init__(  # noqa: PLR0913
         self,
-        func: Callable[ParamT, Awaitable[ValueT_co]],
+        func: Callable[ParamT, Awaitable[ValueT]],
         task_group: _TaskGroup,
         semaphore: Semaphore | None = None,
         limiter: CapacityLimiter | None = None,
@@ -147,8 +147,8 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
 
     def __call__(
         self, *args: ParamT.args, **kwargs: ParamT.kwargs
-    ) -> SoonValue[ValueT_co]:
-        value: SoonValue[ValueT_co] = SoonValue()
+    ) -> SoonValue[ValueT]:
+        value: SoonValue[ValueT] = SoonValue()
         wrapped = partial(self.wrapped, value, *args, **kwargs)
         self.task_group.start_soon(wrapped)
         return value
@@ -156,17 +156,15 @@ class SoonWrapper(Generic[ParamT, ValueT_co]):
     @property
     def wrapped(
         self,
-    ) -> Callable[
-        Concatenate[SoonValue[ValueT_co], ParamT], Coroutine[Any, Any, ValueT_co]
-    ]:
+    ) -> Callable[Concatenate[SoonValue[ValueT], ParamT], Coroutine[Any, Any, ValueT]]:
         """wrapped func using semaphore"""
         if self._wrapped is not None:
             return self._wrapped
 
         @wraps(self.func)
         async def wrapped(
-            value: SoonValue[ValueT_co], *args: ParamT.args, **kwargs: ParamT.kwargs
-        ) -> ValueT_co:
+            value: SoonValue[ValueT], *args: ParamT.args, **kwargs: ParamT.kwargs
+        ) -> ValueT:
             async with AsyncExitStack() as stack:
                 if self.semaphore is not None:
                     await stack.enter_async_context(self.semaphore)

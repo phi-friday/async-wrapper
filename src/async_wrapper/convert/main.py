@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from inspect import iscoroutinefunction
-from typing import Any, Callable, Coroutine, TypeVar, overload
+from typing import Any, Callable, Coroutine, overload
 
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, TypeVar
 
 from ._async import sync_to_async
 from ._sync import async_to_sync
 
-ValueT = TypeVar("ValueT")
+ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
 
 __all__ = ["toggle_func", "async_to_sync", "sync_to_async"]

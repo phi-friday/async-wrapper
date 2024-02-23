@@ -1,20 +1,20 @@
 from __future__ import annotations
 
 from functools import partial, wraps
-from typing import Any, Callable, Coroutine, TypeVar
+from typing import Any, Callable, Coroutine
 
 from anyio import to_thread
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, TypeVar
 
-ValueT_co = TypeVar("ValueT_co", covariant=True)
+ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
 
 __all__ = ["sync_to_async"]
 
 
 def sync_to_async(
-    func: Callable[ParamT, ValueT_co],
-) -> Callable[ParamT, Coroutine[Any, Any, ValueT_co]]:
+    func: Callable[ParamT, ValueT],
+) -> Callable[ParamT, Coroutine[Any, Any, ValueT]]:
     """
     Convert a synchronous function to an asynchronous function.
 
@@ -55,7 +55,7 @@ def sync_to_async(
     """
 
     @wraps(func)
-    async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT_co:
+    async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
         return await to_thread.run_sync(partial(func, *args, **kwargs))
 
     return inner

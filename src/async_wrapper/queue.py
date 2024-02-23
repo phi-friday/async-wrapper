@@ -13,12 +13,11 @@ from typing import (
     Generic,
     Literal,
     NoReturn,
-    TypeVar,
 )
 
 from anyio import WouldBlock, create_memory_object_stream, create_task_group, fail_after
 from anyio.streams.memory import BrokenResourceError, ClosedResourceError, EndOfStream
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 from async_wrapper.exception import (
     QueueBrokenError,
@@ -43,8 +42,8 @@ if TYPE_CHECKING:
 
 __all__ = ["Queue", "create_queue"]
 
-ValueT = TypeVar("ValueT")
-QueueT_co = TypeVar("QueueT_co", covariant=True, bound="Queue")
+ValueT = TypeVar("ValueT", infer_variance=True)
+QueueT = TypeVar("QueueT", infer_variance=True, bound="Queue")
 
 
 class Queue(Generic[ValueT]):

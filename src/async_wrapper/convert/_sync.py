@@ -3,13 +3,13 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, wait
 from contextvars import ContextVar
 from functools import partial, wraps
-from typing import Awaitable, Callable, TypeVar
+from typing import Awaitable, Callable
 
 import anyio
 from sniffio import AsyncLibraryNotFoundError, current_async_library
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, TypeVar
 
-ValueT_co = TypeVar("ValueT_co", covariant=True)
+ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
 
 __all__ = ["async_to_sync"]
@@ -19,8 +19,8 @@ use_uvloop_var = ContextVar("use_uvloop", default=False)
 
 
 def async_to_sync(
-    func: Callable[ParamT, Awaitable[ValueT_co]],
-) -> Callable[ParamT, ValueT_co]:
+    func: Callable[ParamT, Awaitable[ValueT]],
+) -> Callable[ParamT, ValueT]:
     """
     Convert an awaitable function to a synchronous function.
 
@@ -93,7 +93,7 @@ def async_to_sync(
     sync_func = _as_sync(func)
 
     @wraps(func)
-    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT_co:
+    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
         backend = _get_current_backend()
         use_uvloop = _check_uvloop()
         with ThreadPoolExecutor(
@@ -106,21 +106,19 @@ def async_to_sync(
     return inner
 
 
-def _as_sync(
-    func: Callable[ParamT, Awaitable[ValueT_co]],
-) -> Callable[ParamT, ValueT_co]:
+def _as_sync(func: Callable[ParamT, Awaitable[ValueT]]) -> Callable[ParamT, ValueT]:
     @wraps(func)
-    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT_co:
+    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
         return _run(func, *args, **kwargs)
 
     return inner
 
 
 def _run(
-    func: Callable[ParamT, Awaitable[ValueT_co]],
+    func: Callable[ParamT, Awaitable[ValueT]],
     *args: ParamT.args,
     **kwargs: ParamT.kwargs,
-) -> ValueT_co:
+) -> ValueT:
     backend = _get_current_backend()
     new_func = partial(func, *args, **kwargs)
     backend_options = {}

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from functools import partial
 from threading import local
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Iterable, TypeVar
+from typing import TYPE_CHECKING, Any, Awaitable, Callable, Iterable
 
 from anyio import EndOfStream, Event, create_memory_object_stream, create_task_group
-from typing_extensions import ParamSpec, Self, override
+from typing_extensions import ParamSpec, Self, TypeVar, override
 
 from async_wrapper.exception import PendingError
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 __all__ = ["Waiter", "Completed", "wait_for"]
 
-ValueT_co = TypeVar("ValueT_co", covariant=True)
+ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
 Pending = local()
 
@@ -299,10 +299,10 @@ class Completed:
 
 async def wait_for(
     event: Event | Iterable[Event],
-    func: Callable[ParamT, Awaitable[ValueT_co]],
+    func: Callable[ParamT, Awaitable[ValueT]],
     *args: ParamT.args,
     **kwargs: ParamT.kwargs,
-) -> ValueT_co:
+) -> ValueT:
     """
     Wait for an event before executing an awaitable function.
 
