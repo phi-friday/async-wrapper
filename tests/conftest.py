@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 
@@ -12,5 +14,5 @@ import pytest
         ),
     ]
 )
-def anyio_backend(request):
+def anyio_backend(request) -> tuple[str, dict[str, Any]]:
     return request.param
