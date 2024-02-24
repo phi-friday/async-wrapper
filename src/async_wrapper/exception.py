@@ -8,6 +8,8 @@ __all__ = [
     "QueueClosedError",
     "QueueBrokenError",
     "QueueRestrictedError",
+    "PipeError",
+    "PipeAlreadyDisposedError",
 ]
 
 
@@ -69,3 +71,9 @@ class QueueBrokenError(QueueError):
 
 class QueueRestrictedError(QueueError):
     """queue is restricted but used"""
+
+
+class PipeError(Exception): ...
+
+
+class PipeAlreadyDisposedError(PipeError): ...
