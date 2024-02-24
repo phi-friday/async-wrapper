@@ -113,8 +113,12 @@ def _async_func_to_sync(
 
     @wraps(func)
     def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
+        if not _running_in_async_context():
+            return _run(func, *args, **kwargs)
+
         backend = _get_current_backend()
         use_uvloop = _check_uvloop()
+
         with ThreadPoolExecutor(
             1, initializer=_init, initargs=(backend, use_uvloop)
         ) as pool:
@@ -158,6 +162,14 @@ def _check_uvloop() -> bool:
 
     policy = asyncio.get_event_loop_policy()
     return isinstance(policy, uvloop.EventLoopPolicy)
+
+
+def _running_in_async_context() -> bool:
+    try:
+        current_async_library()
+    except AsyncLibraryNotFoundError:
+        return False
+    return True
 
 
 def _get_current_backend() -> str:
