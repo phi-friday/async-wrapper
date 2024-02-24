@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import inspect
+from typing import Any, Coroutine, Generator, Generic
 
 import anyio
 import pytest
 from sniffio import current_async_library
+from typing_extensions import TypeVar
 
 from ..base import Timer  # noqa: TID252
 from .base import BaseTest
 from async_wrapper.convert._sync import _check_uvloop
+
+ValueT = TypeVar("ValueT", infer_variance=True)
 
 
 class TestSync(BaseTest):
@@ -18,6 +22,26 @@ class TestSync(BaseTest):
         with Timer() as timer:
             sample(x, self.epsilon)
         assert self.epsilon * x < timer.term < self.epsilon * x + self.epsilon
+
+    @pytest.mark.parametrize("x", range(1, 4))
+    def test_awaitable_to_sync(self, x: int):
+        sample_awaitable = AwaitableObject(x)
+        sample = self.async_to_sync()(sample_awaitable)
+
+        y = sample()
+
+        assert isinstance(y, type(x))
+        assert y == x
+
+    @pytest.mark.parametrize("x", range(1, 4))
+    def test_coroutine_to_sync(self, x: int):
+        sample_coro = sample_coroutine(x)
+        sample = self.async_to_sync()(sample_coro)
+
+        y = sample()
+
+        assert isinstance(y, type(x))
+        assert y == x
 
     @pytest.mark.parametrize("x", range(2, 5))
     def test_toggle(self, x: int):
@@ -36,6 +60,23 @@ class TestSync(BaseTest):
         with Timer() as timer:
             sample(x, self.epsilon, backend, use_uvloop=use_uvloop)
         assert self.epsilon * x < timer.term < self.epsilon * x + self.epsilon
+
+
+class AwaitableObject(Generic[ValueT]):
+    def __init__(self, value: ValueT) -> None:
+        self.value = value
+
+    def __await__(self) -> Generator[Any, None, ValueT]:
+        yield
+        return self.value
+
+
+def sample_coroutine(value: ValueT) -> Coroutine[Any, Any, ValueT]:
+    async def inner() -> ValueT:
+        await anyio.sleep(0)
+        return value
+
+    return inner()
 
 
 async def sample_async_func(x: int, epsilon: float) -> None:
