@@ -52,7 +52,7 @@ class Disposable(Protocol[InputT, OutputT]):
         Returns:
             The output value.
         """
-        ...
+        ...  # pragma: no cover
 
     async def dispose(self) -> Any:
         """Disposes the resource and releases any associated resources."""
