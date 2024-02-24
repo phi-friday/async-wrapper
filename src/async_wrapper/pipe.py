@@ -34,11 +34,44 @@ OutputT = TypeVar("OutputT", infer_variance=True)
 
 @runtime_checkable
 class Disposable(Protocol[InputT, OutputT]):
-    async def next(self, value: InputT) -> OutputT: ...
-    async def dispose(self) -> Any: ...
+    """
+    Defines the interface for a disposable resource.
+
+    Type Parameters:
+        InputT: The type of input data.
+        OutputT: The type of output data.
+    """
+
+    async def next(self, value: InputT) -> OutputT:
+        """
+        Processes the next input value and produces an output value.
+
+        Args:
+            value: The input value.
+
+        Returns:
+            The output value.
+        """
+        ...
+
+    async def dispose(self) -> Any:
+        """Disposes the resource and releases any associated resources."""
 
 
 class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
+    """
+    Implements a pipe that can be used to communicate data between coroutines.
+
+    Type Parameters:
+        InputT: The type of input data.
+        OutputT: The type of output data.
+
+    Args:
+        listener: The function that will be called to process each input value.
+        context: An optional synchronization context to use.
+        dispose: An optional function that will be called to dispose the pipe.
+    """
+
     _context: Synchronization
     _listener: Callable[[InputT], Awaitable[OutputT]]
     _listeners: deque[tuple[Disposable[OutputT, Any], bool]]
@@ -104,6 +137,13 @@ class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
         *,
         dispose: bool = True,
     ) -> None:
+        """
+        Subscribes a listener to the pipe.
+
+        Args:
+            listener: The listener to subscribe.
+            dispose: Whether to dispose the listener when the pipe is disposed.
+        """
         if self._is_disposed:
             raise PipeAlreadyDisposedError("pipe already disposed")
 

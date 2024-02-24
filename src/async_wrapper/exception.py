@@ -73,7 +73,13 @@ class QueueRestrictedError(QueueError):
     """queue is restricted but used"""
 
 
-class PipeError(Exception): ...
+class PipeError(Exception):
+    """
+    Base exception for pipe-related errors.
+
+    This exception serves as the base class for various pipe-related exceptions.
+    """
 
 
-class PipeAlreadyDisposedError(PipeError): ...
+class PipeAlreadyDisposedError(PipeError):
+    """Indicates that an attempt was made to use a pipe that has already been disposed of."""  # noqa: E501
