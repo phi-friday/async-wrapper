@@ -26,8 +26,8 @@ def async_to_sync(
 def async_to_sync(func_or_awaitable: Awaitable[ValueT]) -> Callable[[], ValueT]: ...
 @overload
 def async_to_sync(
-    func_or_awaitable: Callable[ParamT, Awaitable[ValueT]] | Awaitable[ValueT],
-) -> Callable[ParamT, ValueT] | Callable[[], ValueT]: ...
+    func_or_awaitable: Callable[..., Awaitable[ValueT]] | Awaitable[ValueT],
+) -> Callable[..., ValueT]: ...
 def async_to_sync(
     func_or_awaitable: Callable[ParamT, Awaitable[ValueT]] | Awaitable[ValueT],
 ) -> Callable[ParamT, ValueT] | Callable[[], ValueT]:
