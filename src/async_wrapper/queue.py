@@ -105,20 +105,31 @@ class Queue(Generic[ValueT]):
             ]
             | None = None,
         ) -> None:
-            if _stream is None:
-                self._putter, self._getter = create_memory_object_stream(
-                    max_buffer_size=max_size or math.inf
-                )
-            else:
-                putter, getter = _stream
-                if putter._closed or getter._closed:  # noqa: SLF001
-                    raise QueueBrokenError("putter or getter is closed")
-                if putter._state.buffer is not getter._state.buffer:  # noqa: SLF001
-                    raise QueueBrokenError("putter and getter has diff buffer.")
-                self._putter, self._getter = _stream
+            self._init(max_size, _stream=_stream)
 
-            self._close_putter: bool = True
-            self._close_getter: bool = True
+    def _init(
+        self,
+        max_size: float | None = None,
+        *,
+        _stream: tuple[
+            MemoryObjectSendStream[ValueT], MemoryObjectReceiveStream[ValueT]
+        ]
+        | None = None,
+    ) -> None:
+        if _stream is None:
+            self._putter, self._getter = create_memory_object_stream(  # pyright: ignore[reportAttributeAccessIssue]
+                max_buffer_size=max_size or math.inf
+            )
+        else:
+            putter, getter = _stream
+            if putter._closed or getter._closed:  # noqa: SLF001
+                raise QueueBrokenError("putter or getter is closed")
+            if putter._state.buffer is not getter._state.buffer:  # noqa: SLF001
+                raise QueueBrokenError("putter and getter has diff buffer.")
+            self._putter, self._getter = _stream  # pyright: ignore[reportAttributeAccessIssue]
+
+        self._close_putter: bool = True
+        self._close_getter: bool = True
 
     @property
     def aputter(self) -> AsyncContextManager[Self]:
@@ -421,11 +432,11 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
         return self._queue._getter  # noqa: SLF001
 
     @property
-    def _close_getter(self) -> bool:
+    def _close_getter(self) -> bool:  # pyright: ignore[reportIncompatibleVariableOverride]
         return self._queue._close_getter  # noqa: SLF001
 
     @property
-    def _close_putter(self) -> bool:
+    def _close_putter(self) -> bool:  # pyright: ignore[reportIncompatibleVariableOverride]
         return self._queue._close_putter  # noqa: SLF001
 
     @property
