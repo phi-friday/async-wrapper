@@ -114,9 +114,9 @@ class TaskGroupWrapper(_TaskGroup):
 
         Args:
             func: The target function to be wrapped.
-            semaphore: An :obj:`anyio.Semaphore`. Defaults to None.
-            limiter: An :obj:`anyio.CapacityLimiter`. Defaults to None.
-            lock: An :obj:`anyio.Lock`. Defaults to None.
+            semaphore: An :obj:`anyio.abc.Semaphore`. Defaults to None.
+            limiter: An :obj:`anyio.abc.CapacityLimiter`. Defaults to None.
+            lock: An :obj:`anyio.abc.Lock`. Defaults to None.
 
         Returns:
             The wrapped function.
@@ -191,11 +191,11 @@ class SoonWrapper(Generic[ParamT, ValueT]):
         Create a copy of this object.
 
         Args:
-            semaphore: An :obj:`anyio.Semaphore`.
+            semaphore: An :obj:`anyio.abc.Semaphore`.
                 If provided, it will overwrite the existing semaphore. Defaults to None.
-            limiter: An :obj:`anyio.CapacityLimiter`.
+            limiter: An :obj:`anyio.abc.CapacityLimiter`.
                 If provided, it will overwrite the existing limiter. Defaults to None.
-            lock: An :obj:`anyio.Lock`.
+            lock: An :obj:`anyio.abc.Lock`.
                 If provided, it will overwrite the existing lock. Defaults to None.
 
         Returns:
