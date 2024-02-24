@@ -38,8 +38,8 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
-          pip install dunamai
-          VERSION=$(dunamai from any --no-metadata --style pep440)
+          poetry run pip install dunamai
+          VERSION=$(poetry run dunamai from any --no-metadata --style pep440)
           poetry version $VERSION
           poetry install --no-interaction --with=docs
 
