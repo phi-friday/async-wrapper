@@ -3,7 +3,7 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, wait
 from contextvars import ContextVar
 from functools import partial, wraps
-from typing import Awaitable, Callable
+from typing import Any, Awaitable, Callable, Coroutine, overload
 
 import anyio
 from sniffio import AsyncLibraryNotFoundError, current_async_library
@@ -18,17 +18,27 @@ current_async_lib_var = ContextVar("current_async_lib", default="asyncio")
 use_uvloop_var = ContextVar("use_uvloop", default=False)
 
 
+@overload
 def async_to_sync(
-    func: Callable[ParamT, Awaitable[ValueT]],
-) -> Callable[ParamT, ValueT]:
+    func_or_awaitable: Callable[ParamT, Awaitable[ValueT]],
+) -> Callable[ParamT, ValueT]: ...
+@overload
+def async_to_sync(func_or_awaitable: Awaitable[ValueT]) -> Callable[[], ValueT]: ...
+@overload
+def async_to_sync(
+    func_or_awaitable: Callable[ParamT, Awaitable[ValueT]] | Awaitable[ValueT],
+) -> Callable[ParamT, ValueT] | Callable[[], ValueT]: ...
+def async_to_sync(
+    func_or_awaitable: Callable[ParamT, Awaitable[ValueT]] | Awaitable[ValueT],
+) -> Callable[ParamT, ValueT] | Callable[[], ValueT]:
     """
-    Convert an awaitable function to a synchronous function.
+    Convert an awaitable function or awaitable object to a synchronous function.
 
     If used within an asynchronous context, attempts to use the same backend.
     Defaults to asyncio.
 
     Args:
-        func: An awaitable function.
+        func: An awaitable function or awaitable object.
 
     Returns:
         A synchronous function.
@@ -90,6 +100,15 @@ def async_to_sync(
         asyncio <uvloop.Loop running=True closed=False debug=False>
         trio
     """
+    if callable(func_or_awaitable):
+        return _async_func_to_sync(func_or_awaitable)
+    awaitable_func = _awaitable_to_function(func_or_awaitable)
+    return _async_func_to_sync(awaitable_func)
+
+
+def _async_func_to_sync(
+    func: Callable[ParamT, Awaitable[ValueT]],
+) -> Callable[ParamT, ValueT]:
     sync_func = _as_sync(func)
 
     @wraps(func)
@@ -151,3 +170,12 @@ def _get_current_backend() -> str:
 def _init(backend: str, use_uvloop: bool) -> None:  # noqa: FBT001
     current_async_lib_var.set(backend)
     use_uvloop_var.set(use_uvloop)
+
+
+def _awaitable_to_function(
+    value: Awaitable[ValueT],
+) -> Callable[[], Coroutine[Any, Any, ValueT]]:
+    async def awaitable() -> ValueT:
+        return await value
+
+    return awaitable
