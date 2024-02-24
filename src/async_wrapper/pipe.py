@@ -101,6 +101,11 @@ class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
         self._is_disposed = False
         self._dispose_lock = anyio.Lock()
 
+    @property
+    def is_disposed(self) -> bool:
+        """is disposed"""
+        return self._is_disposed
+
     @override
     async def next(self, value: InputT) -> OutputT:
         if self._is_disposed:
