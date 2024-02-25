@@ -9,3 +9,4 @@ async\_wrapper package
    exception
    queue
    wait
+   pipe
