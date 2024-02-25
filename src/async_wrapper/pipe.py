@@ -26,7 +26,14 @@ if TYPE_CHECKING:
         limiter: CapacityLimiter
 
 
-__all__ = ["Disposable", "SimpleDisposable", "Pipe", "create_disposable"]
+__all__ = [
+    "Disposable",
+    "DisposableWithCallback",
+    "Subscribable",
+    "SimpleDisposable",
+    "Pipe",
+    "create_disposable",
+]
 
 InputT = TypeVar("InputT", infer_variance=True)
 OutputT = TypeVar("OutputT", infer_variance=True)
@@ -52,10 +59,37 @@ class Disposable(Protocol[InputT, OutputT]):
         """Disposes the resource and releases any associated resources."""
 
 
-class SimpleDisposable(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
+@runtime_checkable
+class DisposableWithCallback(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
+    def dispose_callback(self, subscribable: Subscribable) -> Any: ...
+
+
+@runtime_checkable
+class Subscribable(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
+    def subscribe(
+        self,
+        listener: Disposable[OutputT, Any] | Callable[[OutputT], Awaitable[Any]],
+        *,
+        dispose: bool = True,
+    ) -> Any:
+        """
+        Subscribes a disposable
+
+        Args:
+            listener: The listener to subscribe.
+            dispose: Whether to dispose the listener when the pipe is disposed.
+        """
+
+    def unsubscribe(self, dispoable: Disposable[Any, Any]) -> None: ...
+
+
+class SimpleDisposable(
+    DisposableWithCallback[InputT, OutputT], Generic[InputT, OutputT]
+):
     """simple disposable impl."""
 
-    __slots__ = ("_func", "_dispose", "_is_disposed")
+    _journals: deque[Subscribable]
+    __slots__ = ("_func", "_dispose", "_is_disposed", "_journals")
 
     def __init__(
         self, func: Callable[[InputT], Awaitable[OutputT]], *, dispose: bool = True
@@ -63,6 +97,7 @@ class SimpleDisposable(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
         self._func = func
         self._dispose = dispose
         self._is_disposed = False
+        self._journals = deque()
 
     @property
     def is_disposed(self) -> bool:
@@ -77,10 +112,16 @@ class SimpleDisposable(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
 
     @override
     async def dispose(self) -> Any:
+        for journal in self._journals:
+            journal.unsubscribe(self)
         self._is_disposed = True
 
+    @override
+    def dispose_callback(self, subscribable: Subscribable) -> Any:
+        self._journals.append(subscribable)
 
-class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
+
+class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
     """
     Implements a pipe that can be used to communicate data between coroutines.
 
@@ -92,7 +133,7 @@ class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
 
     _context: Synchronization
     _listener: Callable[[InputT], Awaitable[OutputT]]
-    _listeners: deque[tuple[Disposable[OutputT, Any], bool]]
+    _listeners: dict[Disposable[OutputT, Any], bool]
     _dispose: Callable[[], Awaitable[Any]] | None
     _is_disposed: bool
     _dispose_lock: Lock
@@ -114,7 +155,7 @@ class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
     ) -> None:
         self._listener = listener
         self._context = context or {}
-        self._listeners = deque()
+        self._listeners = {}
         self._dispose = dispose
         self._is_disposed = False
         self._dispose_lock = anyio.Lock()
@@ -132,7 +173,7 @@ class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
         output = await self._listener(value)
 
         async with anyio.create_task_group() as task_group:
-            for listener, _ in self._listeners:
+            for listener in self._listeners:
                 task_group.start_soon(_call_next, self._context, listener, output)
 
         return output
@@ -147,32 +188,32 @@ class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
                 if self._dispose is not None:
                     task_group.start_soon(_call_dispose, self._context, self._dispose)
 
-                for listener, do_dispose in self._listeners:
+                for listener, do_dispose in self._listeners.items():
                     if not do_dispose:
                         continue
                     task_group.start_soon(_call_dispose, self._context, listener)
 
             self._is_disposed = True
 
+    @override
     def subscribe(
         self,
         listener: Disposable[OutputT, Any] | Callable[[OutputT], Awaitable[Any]],
         *,
         dispose: bool = True,
     ) -> None:
-        """
-        Subscribes a listener to the pipe.
-
-        Args:
-            listener: The listener to subscribe.
-            dispose: Whether to dispose the listener when the pipe is disposed.
-        """
         if self._is_disposed:
             raise AlreadyDisposedError("pipe already disposed")
 
         if not isinstance(listener, Disposable):
             listener = SimpleDisposable(listener)
-        self._listeners.append((listener, dispose))
+        self._listeners[listener] = dispose
+        if isinstance(listener, DisposableWithCallback):
+            listener.dispose_callback(self)
+
+    @override
+    def unsubscribe(self, dispoable: Disposable[Any, Any]) -> None:
+        self._listeners.pop(dispoable, None)
 
 
 def create_disposable(
