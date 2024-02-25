@@ -61,14 +61,23 @@ class Disposable(Protocol[InputT, OutputT]):
 
 @runtime_checkable
 class DisposableWithCallback(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
-    def dispose_callback(self, subscribable: Subscribable) -> Any: ...
+    """disposable & callback"""
+
+    def prepare_callback(self, subscribable: Subscribable) -> Any:
+        """Prepare a callback to use when dispose is executed.
+
+        Args:
+            subscribable: subscribable object
+        """
 
 
 @runtime_checkable
 class Subscribable(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
+    """subscribable & disposable"""
+
     def subscribe(
         self,
-        listener: Disposable[OutputT, Any] | Callable[[OutputT], Awaitable[Any]],
+        disposable: Disposable[OutputT, Any] | Callable[[OutputT], Awaitable[Any]],
         *,
         dispose: bool = True,
     ) -> Any:
@@ -76,11 +85,17 @@ class Subscribable(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
         Subscribes a disposable
 
         Args:
-            listener: The listener to subscribe.
-            dispose: Whether to dispose the listener when the pipe is disposed.
+            disposable: The disposable to subscribe.
+            dispose: Whether to dispose the disposable when the pipe is disposed.
         """
 
-    def unsubscribe(self, dispoable: Disposable[Any, Any]) -> None: ...
+    def unsubscribe(self, dispoable: Disposable[Any, Any]) -> None:
+        """
+        Unsubscribes a disposable
+
+        Args:
+            disposable: The disposable to unsubscribe.
+        """
 
 
 class SimpleDisposable(
@@ -117,7 +132,7 @@ class SimpleDisposable(
         self._is_disposed = True
 
     @override
-    def dispose_callback(self, subscribable: Subscribable) -> Any:
+    def prepare_callback(self, subscribable: Subscribable) -> Any:
         self._journals.append(subscribable)
 
 
@@ -198,18 +213,18 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
     @override
     def subscribe(
         self,
-        listener: Disposable[OutputT, Any] | Callable[[OutputT], Awaitable[Any]],
+        disposable: Disposable[OutputT, Any] | Callable[[OutputT], Awaitable[Any]],
         *,
         dispose: bool = True,
     ) -> None:
         if self._is_disposed:
             raise AlreadyDisposedError("pipe already disposed")
 
-        if not isinstance(listener, Disposable):
-            listener = SimpleDisposable(listener)
-        self._listeners[listener] = dispose
-        if isinstance(listener, DisposableWithCallback):
-            listener.dispose_callback(self)
+        if not isinstance(disposable, Disposable):
+            disposable = SimpleDisposable(disposable)
+        self._listeners[disposable] = dispose
+        if isinstance(disposable, DisposableWithCallback):
+            disposable.prepare_callback(self)
 
     @override
     def unsubscribe(self, dispoable: Disposable[Any, Any]) -> None:
