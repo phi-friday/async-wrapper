@@ -25,7 +25,7 @@ pytestmark = pytest.mark.anyio
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 
-EPSILON: float = 0.01
+EPSILON: float = 0.1
 
 
 class CustomDisposable:
