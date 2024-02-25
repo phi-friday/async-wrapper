@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .convert import async_to_sync, sync_to_async, toggle_func
-from .pipe import Pipe
+from .pipe import Pipe, SimpleDisposable, create_disposable
 from .queue import Queue, create_queue
 from .task_group import TaskGroupWrapper, create_task_group_wrapper
 from .wait import Completed, Waiter, wait_for
@@ -14,12 +14,14 @@ __all__ = [
     "Waiter",
     "Completed",
     "Pipe",
+    "SimpleDisposable",
     "toggle_func",
     "async_to_sync",
     "sync_to_async",
     "create_task_group_wrapper",
     "create_queue",
     "wait_for",
+    "create_disposable",
 ]
 
 __version__: str

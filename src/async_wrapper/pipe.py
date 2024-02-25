@@ -15,7 +15,7 @@ from typing import (
 import anyio
 from typing_extensions import TypedDict, TypeVar, override
 
-from async_wrapper.exception import PipeAlreadyDisposedError
+from async_wrapper.exception import AlreadyDisposedError
 
 if TYPE_CHECKING:
     from anyio.abc import CapacityLimiter, Lock, Semaphore
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
         limiter: CapacityLimiter
 
 
-__all__ = ["Disposable", "Pipe"]
+__all__ = ["Disposable", "SimpleDisposable", "Pipe", "create_disposable"]
 
 InputT = TypeVar("InputT", infer_variance=True)
 OutputT = TypeVar("OutputT", infer_variance=True)
@@ -56,6 +56,34 @@ class Disposable(Protocol[InputT, OutputT]):
 
     async def dispose(self) -> Any:
         """Disposes the resource and releases any associated resources."""
+
+
+class SimpleDisposable(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
+    """simple disposable impl."""
+
+    __slots__ = ("_func", "_dispose", "_is_disposed")
+
+    def __init__(
+        self, func: Callable[[InputT], Awaitable[OutputT]], *, dispose: bool = True
+    ) -> None:
+        self._func = func
+        self._dispose = dispose
+        self._is_disposed = False
+
+    @property
+    def is_disposed(self) -> bool:
+        """is disposed"""
+        return self._is_disposed
+
+    @override
+    async def next(self, value: InputT) -> OutputT:
+        if self._is_disposed:
+            raise AlreadyDisposedError("disposable already disposed")
+        return await self._func(value)
+
+    @override
+    async def dispose(self) -> Any:
+        self._is_disposed = True
 
 
 class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
@@ -109,7 +137,7 @@ class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
     @override
     async def next(self, value: InputT) -> OutputT:
         if self._is_disposed:
-            raise PipeAlreadyDisposedError("pipe already disposed")
+            raise AlreadyDisposedError("pipe already disposed")
 
         output = await self._listener(value)
 
@@ -150,11 +178,26 @@ class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
             dispose: Whether to dispose the listener when the pipe is disposed.
         """
         if self._is_disposed:
-            raise PipeAlreadyDisposedError("pipe already disposed")
+            raise AlreadyDisposedError("pipe already disposed")
 
         if not isinstance(listener, Disposable):
-            listener = Pipe(listener)
+            listener = SimpleDisposable(listener)
         self._listeners.append((listener, dispose))
+
+
+def create_disposable(
+    func: Callable[[InputT], Awaitable[OutputT]], *, dispose: bool = True
+) -> SimpleDisposable[InputT, OutputT]:
+    """SimpleDisposable shortcut
+
+    Args:
+        func: awaitable function.
+        dispose: dispose flag. Defaults to True.
+
+    Returns:
+        SimpleDisposable object
+    """
+    return SimpleDisposable(func, dispose=dispose)
 
 
 async def _enter_context(stack: AsyncExitStack, context: Synchronization) -> None:
@@ -176,7 +219,7 @@ async def _call_next(
 ) -> None:
     async with AsyncExitStack() as stack:
         await _enter_context(stack, context)
-        with suppress(PipeAlreadyDisposedError):
+        with suppress(AlreadyDisposedError):
             await disposable.next(value)
 
 

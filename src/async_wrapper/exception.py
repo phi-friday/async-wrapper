@@ -8,8 +8,8 @@ __all__ = [
     "QueueClosedError",
     "QueueBrokenError",
     "QueueRestrictedError",
-    "PipeError",
-    "PipeAlreadyDisposedError",
+    "DisposableError",
+    "AlreadyDisposedError",
 ]
 
 
@@ -73,13 +73,13 @@ class QueueRestrictedError(QueueError):
     """queue is restricted but used"""
 
 
-class PipeError(Exception):
+class DisposableError(Exception):
     """
-    Base exception for pipe-related errors.
+    Base exception for disposable-related errors.
 
-    This exception serves as the base class for various pipe-related exceptions.
+    This exception serves as the base class for various disposable-related exceptions.
     """
 
 
-class PipeAlreadyDisposedError(PipeError):
-    """Indicates that an attempt was made to use a pipe that has already been disposed of."""  # noqa: E501
+class AlreadyDisposedError(DisposableError):
+    """Indicates that an attempt was made to use a disposable that has already been disposed of."""  # noqa: E501

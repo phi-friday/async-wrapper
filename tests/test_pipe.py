@@ -10,8 +10,8 @@ import pytest
 from typing_extensions import TypeVar
 
 from .base import Timer
-from async_wrapper.exception import PipeAlreadyDisposedError
-from async_wrapper.pipe import Pipe
+from async_wrapper.exception import AlreadyDisposedError
+from async_wrapper.pipe import Disposable, Pipe, SimpleDisposable, create_disposable
 
 pytestmark = pytest.mark.anyio
 
@@ -329,7 +329,7 @@ async def test_next_after_disposed():
     await pipe.dispose()
     assert pipe.is_disposed is True
 
-    with pytest.raises(PipeAlreadyDisposedError, match="pipe already disposed"):
+    with pytest.raises(AlreadyDisposedError, match="pipe already disposed"):
         await pipe.next(1)
 
 
@@ -337,5 +337,29 @@ async def test_subscribe_after_disposed():
     pipe = Pipe(return_self)
     await pipe.dispose()
     _, setter = use_value()
-    with pytest.raises(PipeAlreadyDisposedError, match="pipe already disposed"):
+    with pytest.raises(AlreadyDisposedError, match="pipe already disposed"):
         pipe.subscribe(setter)
+
+
+async def test_simple_disposable():
+    disposable = SimpleDisposable(return_self)
+    assert isinstance(disposable, Disposable)
+
+
+async def test_construct_disposable():
+    disposable = create_disposable(return_self)
+    assert isinstance(disposable, Disposable)
+
+
+async def test_simple_dispose():
+    disposable = create_disposable(return_self)
+    assert disposable.is_disposed is False
+    await disposable.dispose()
+    assert disposable.is_disposed is True
+
+
+async def test_simple_next_after_disposed():
+    disposable: SimpleDisposable[Any, Any] = create_disposable(return_self)
+    await disposable.dispose()
+    with pytest.raises(AlreadyDisposedError, match="disposable already disposed"):
+        await disposable.next(1)
