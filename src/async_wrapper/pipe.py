@@ -34,13 +34,7 @@ OutputT = TypeVar("OutputT", infer_variance=True)
 
 @runtime_checkable
 class Disposable(Protocol[InputT, OutputT]):
-    """
-    Defines the interface for a disposable resource.
-
-    Type Parameters:
-        InputT: The type of input data.
-        OutputT: The type of output data.
-    """
+    """Defines the interface for a disposable resource."""
 
     async def next(self, value: InputT) -> OutputT:
         """
@@ -89,10 +83,6 @@ class SimpleDisposable(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
 class Pipe(Disposable[InputT, OutputT], Generic[InputT, OutputT]):
     """
     Implements a pipe that can be used to communicate data between coroutines.
-
-    Type Parameters:
-        InputT: The type of input data.
-        OutputT: The type of output data.
 
     Args:
         listener: The function that will be called to process each input value.
