@@ -43,6 +43,11 @@ OutputT = TypeVar("OutputT", infer_variance=True)
 class Disposable(Protocol[InputT, OutputT]):
     """Defines the interface for a disposable resource."""
 
+    @property
+    def is_disposed(self) -> bool:
+        """Check if disposed"""
+        ...  # pragma: no cover
+
     async def next(self, value: InputT) -> OutputT:
         """
         Processes the next input value and produces an output value.
@@ -75,6 +80,11 @@ class DisposableWithCallback(Disposable[InputT, OutputT], Protocol[InputT, Outpu
 class Subscribable(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
     """subscribable & disposable"""
 
+    @property
+    def size(self) -> int:
+        """listener size"""
+        ...  # pragma: no cover
+
     def subscribe(
         self,
         disposable: Disposable[OutputT, Any] | Callable[[OutputT], Awaitable[Any]],
@@ -89,7 +99,7 @@ class Subscribable(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
             dispose: Whether to dispose the disposable when the pipe is disposed.
         """
 
-    def unsubscribe(self, dispoable: Disposable[Any, Any]) -> None:
+    def unsubscribe(self, disposable: Disposable[Any, Any]) -> None:
         """
         Unsubscribes a disposable
 
@@ -115,8 +125,8 @@ class SimpleDisposable(
         self._journals = deque()
 
     @property
+    @override
     def is_disposed(self) -> bool:
-        """is disposed"""
         return self._is_disposed
 
     @override
@@ -176,9 +186,14 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
         self._dispose_lock = anyio.Lock()
 
     @property
+    @override
     def is_disposed(self) -> bool:
-        """is disposed"""
         return self._is_disposed
+
+    @property
+    @override
+    def size(self) -> int:
+        return len(self._listeners)
 
     @override
     async def next(self, value: InputT) -> OutputT:
@@ -227,8 +242,8 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
             disposable.prepare_callback(self)
 
     @override
-    def unsubscribe(self, dispoable: Disposable[Any, Any]) -> None:
-        self._listeners.pop(dispoable, None)
+    def unsubscribe(self, disposable: Disposable[Any, Any]) -> None:
+        self._listeners.pop(disposable, None)
 
 
 def create_disposable(
