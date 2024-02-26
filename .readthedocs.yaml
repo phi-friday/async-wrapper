@@ -9,6 +9,8 @@ build:
       - pip install poetry
       - pip install poetry-plugin-export
       - poetry export --with docs -f requirements.txt --output requirements.txt --without-hashes
+    post_install:
+      - pip install -e .
 
 python:
   install:
