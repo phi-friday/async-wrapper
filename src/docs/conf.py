@@ -5,12 +5,15 @@
 from __future__ import annotations
 
 import sys
+from os import environ
 from pathlib import Path
 
 src_dir = Path(__file__).resolve().parent.parent.parent / "src"
 sys.path.insert(0, src_dir.as_posix())
 
-from async_wrapper import __version__
+__version__ = environ.get("READTHEDOCS_GIT_IDENTIFIER", "")
+if not __version__:
+    from async_wrapper import __version__
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
