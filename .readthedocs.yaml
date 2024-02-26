@@ -7,9 +7,12 @@ build:
   jobs:
     post_create_environment:
       - pip install poetry
-      - poetry config virtualenvs.create false
-    post_install:
-      - poetry install --with docs
+      - pip install poetry-plugin-export
+      - poetry export --extras docs -f requirements.txt --output requirements.txt --without-hashes
+
+python:
+  install:
+    - requirements: requirements.txt
 
 sphinx:
   configuration: src/docs/conf.py
