@@ -21,9 +21,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install uv
-        run: |
-          pip install uv
+      - name: Install rye
+        uses: eifinger/setup-rye@v1
 
       - name: Load cached venv
         id: cached-venv-dependencies
@@ -35,8 +34,8 @@ jobs:
       - name: Install dependencies
         if: steps.cached-venv-dependencies.outputs.cache-hit != 'true'
         run: |
-          uv pip compile --extra uvloop pyproject.toml -o requirements.txt
-          pip install -r requirements.txt
+          rye config --set-bool behavior.global-python=true
+          rye sync --features uvloop
 
       - name: Load cached pre-commit
         id: cached-pre-commit-dependencies
@@ -47,11 +46,11 @@ jobs:
 
       - name: Code checks
         run: |
-          pre-commit run --all-files --show-diff-on-failure
+          rye run pre-commit run --all-files --show-diff-on-failure
 
       - name: Test with pytest
         run: |
-          pytest
+          rye run pytest
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4

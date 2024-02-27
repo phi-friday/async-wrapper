@@ -38,5 +38,5 @@ jobs:
 
       - name: Release to PyPI
         run: |
-          rye publish --token ${{ secrets.PYPI_API_TOKEN }} || \
+          rye publish --token ${{ secrets.PYPI_API_TOKEN }} --yes || \
             echo 'Version exists'
