@@ -16,11 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: Install rye
         uses: eifinger/setup-rye@v1
 
@@ -34,7 +29,7 @@ jobs:
       - name: Install dependencies
         if: steps.cached-venv-dependencies.outputs.cache-hit != 'true'
         run: |
-          rye config --set-bool behavior.global-python=true
+          rye pin cpython@${{ matrix.python-version }}
           rye sync --features uvloop
 
       - name: Load cached pre-commit
