@@ -164,3 +164,7 @@ cython_debug/
 .tool-versions
 # extra
 .DS_Store
+
+# rye
+requirements.lock
+requirements-dev.lock
