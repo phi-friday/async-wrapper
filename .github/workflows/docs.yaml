@@ -21,28 +21,24 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+      - name: Install rye
+        uses: eifinger/setup-rye@v1
 
       - name: Load cached venv
-        id: cached-poetry-dependencies
+        id: cached-venv-dependencies
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-doc-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-doc-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
 
       - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        if: steps.cached-venv-dependencies.outputs.cache-hit != 'true'
         run: |
-          poetry run pip install dunamai
-          VERSION=$(poetry run dunamai from any --no-metadata --style pep440)
-          poetry version $VERSION
-          poetry install --no-interaction --with=docs
+          pip install dunamai
+          VERSION=$(dunamai from any --no-metadata --style pep440)
+          rye version $VERSION
+          rye sync --no-dev --features docs
 
       - name: Create docs
         run: |
-          poetry run make html
+          rye run html

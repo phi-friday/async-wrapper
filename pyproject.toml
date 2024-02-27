@@ -2,9 +2,7 @@
 name = "async-wrapper"
 version = "0.0.0"
 description = "async wrapper"
-authors = [
-    { name = "phi", email = "phi.friday@gmail.com" }
-]
+authors = [{ name = "phi", email = "phi.friday@gmail.com" }]
 readme = "README.md"
 license = "MIT"
 classifiers = [
@@ -18,7 +16,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Framework :: AnyIO",
     "Framework :: AsyncIO",
-    "Framework :: Trio"
+    "Framework :: Trio",
 ]
 
 requires-python = ">= 3.8"
@@ -30,9 +28,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-uvloop = [
-    "uvloop>=0.19.0; platform_system != 'Windows'",
-]
+uvloop = ["uvloop>=0.19.0; platform_system != 'Windows'"]
 docs = [
     "sphinx>=7.1.0",
     "readthedocs-sphinx-search>=0.3.2",
@@ -51,6 +47,9 @@ dev-dependencies = [
     "pyyaml>=6.0.1",
     "pytest-cov>=4.1.0",
 ]
+
+[tool.rye.scripts]
+html = { cmd = "make html" }
 
 [build-system]
 requires = ["hatchling"]
