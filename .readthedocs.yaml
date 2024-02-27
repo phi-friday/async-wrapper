@@ -7,7 +7,7 @@ build:
   jobs:
     post_create_environment:
       - pip install uv
-      - uv pip compile pyproject.toml -o requirements.txt
+      - uv pip compile --extra docs pyproject.toml -o requirements.txt
     post_install:
       - pip install -e .
 
