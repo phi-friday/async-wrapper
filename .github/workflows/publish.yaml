@@ -31,11 +31,18 @@ jobs:
           curl -sSf https://rye-up.com/get | bash
           echo "$HOME/.rye/shims" >> $GITHUB_PATH
 
-      - name: Install dependencies
-        run: pip install dunamai
+      - name: set python version
+        id: set-python
+        run: |
+          rye config --set-bool behavior.use-uv=true
+          rye pin cpython@${{ matrix.python-version }}
+          cat .python-version
+          VERSION=$(cat .python-version)
+          echo "python_version=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: Build package
         run: |
+          rye install dunamai
           VERSION=$(dunamai from any --no-metadata --style pep440)
           rye version $VERSION
           rye build
