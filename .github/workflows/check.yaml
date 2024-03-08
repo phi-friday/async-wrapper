@@ -5,10 +5,12 @@ on:
     branches: [dev]
     paths:
       - "**.py"
+      - ".github/workflows/check.yaml"
   pull_request:
     branches: [dev, main]
     paths:
       - "**.py"
+      - ".github/workflows/check.yaml"
 
 jobs:
   build:
