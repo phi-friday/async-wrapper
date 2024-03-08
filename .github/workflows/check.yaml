@@ -34,7 +34,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ steps.install-rye.outputs.python_version }}-${{ hashFiles('**/pyproject.toml') }}
+          key: venv-${{ runner.os }}-${{ steps.install-rye.outputs.python-version }}-${{ hashFiles('**/pyproject.toml') }}
 
       - name: Install dependencies
         if: steps.cached-venv-dependencies.outputs.cache-hit != 'true'
@@ -46,7 +46,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
-          key: precommit-${{ runner.os }}-${{ steps.install-rye.outputs.python_version }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          key: precommit-${{ runner.os }}-${{ steps.install-rye.outputs.python-version }}-${{ hashFiles('.pre-commit-config.yaml') }}
 
       - name: Code checks
         run: |
