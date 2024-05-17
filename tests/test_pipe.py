@@ -24,6 +24,7 @@ from async_wrapper.pipe import (
 pytestmark = pytest.mark.anyio
 
 ValueT = TypeVar("ValueT", infer_variance=True)
+SubscribableT = TypeVar("SubscribableT", bound=Subscribable)
 
 EPSILON: float = 0.1
 
@@ -175,7 +176,7 @@ def test_custom_subscribable():
 
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_subscribe(x: int, subscribable_type: type[Subscribable]):
-    pipe: Subscribable[int, Any] = subscribable_type(as_tuple)
+    pipe: Subscribable[int, Any] = _construct_subcribable(subscribable_type, as_tuple)
     getter, setter = use_value()
     pipe.subscribe(setter)
 
@@ -186,7 +187,9 @@ async def test_subscribe(x: int, subscribable_type: type[Subscribable]):
 
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_subscribe_interface(x: int, subscribable_type: type[Subscribable]):
-    pipe: Subscribable[int, int] = subscribable_type(return_self)
+    pipe: Subscribable[int, int] = _construct_subcribable(
+        subscribable_type, return_self
+    )
     disposable = CustomDisposable()
     pipe.subscribe(disposable)
 
@@ -207,7 +210,7 @@ async def test_subscribe_many(x: int, subscribable_type: type[Subscribable]):
         await anyio.sleep(0)
         check[index] = value
 
-    pipe: Subscribable[int, tuple] = subscribable_type(as_tuple)
+    pipe: Subscribable[int, tuple] = _construct_subcribable(subscribable_type, as_tuple)
     for index in range(size):
         pipe.subscribe(partial(hit, index=index))
 
@@ -220,9 +223,15 @@ async def test_subscribe_many(x: int, subscribable_type: type[Subscribable]):
 
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_subscribe_chain(x: int, subscribable_type: type[Subscribable]):
-    pipe1: Subscribable[int, int] = subscribable_type(return_self)
-    pipe2: Subscribable[int, tuple[int]] = subscribable_type(as_tuple)
-    pipe3: Subscribable[Any, tuple] = subscribable_type(as_tuple)
+    pipe1: Subscribable[int, int] = _construct_subcribable(
+        subscribable_type, return_self
+    )
+    pipe2: Subscribable[int, tuple[int]] = _construct_subcribable(
+        subscribable_type, as_tuple
+    )
+    pipe3: Subscribable[Any, tuple] = _construct_subcribable(
+        subscribable_type, as_tuple
+    )
 
     getter, setter = use_value()
     pipe1.subscribe(pipe2)
@@ -241,7 +250,9 @@ async def test_subscribe_chain(x: int, subscribable_type: type[Subscribable]):
 
 
 async def test_unsubscribe(subscribable_type: type[Subscribable]):
-    pipe: Subscribable[Any, Any] = subscribable_type(return_self)
+    pipe: Subscribable[Any, Any] = _construct_subcribable(
+        subscribable_type, return_self
+    )
     getter, setter = use_value()
     disposable = create_disposable(setter)
     pipe.subscribe(disposable)
@@ -257,7 +268,9 @@ async def test_unsubscribe(subscribable_type: type[Subscribable]):
 
 
 async def test_prepare_callback(subscribable_type: type[Subscribable]):
-    pipe: Subscribable[Any, Any] = subscribable_type(return_self)
+    pipe: Subscribable[Any, Any] = _construct_subcribable(
+        subscribable_type, return_self
+    )
     disposable = CustomDisposableWithCallback()
 
     pipe.subscribe(disposable)
@@ -267,7 +280,9 @@ async def test_prepare_callback(subscribable_type: type[Subscribable]):
 
 
 async def test_empty_dispose(subscribable_type: type[Subscribable]):
-    pipe: Subscribable[Any, Any] = subscribable_type(return_self)
+    pipe: Subscribable[Any, Any] = _construct_subcribable(
+        subscribable_type, return_self
+    )
     disposable = CustomDisposable()
     pipe.subscribe(disposable)
 
@@ -286,9 +301,9 @@ async def test_dispose(subscribable_type: type[Subscribable]):
 
     pipe: Subscribable[Any, Any]
     if subscribable_type is Pipe:
-        pipe = subscribable_type(return_self, dispose=hit)
+        pipe = _construct_subcribable(subscribable_type, return_self, dispose=hit)
     else:
-        pipe = subscribable_type(dispose=hit)
+        pipe = _construct_subcribable(subscribable_type, dispose=hit)
 
     disposable = CustomDisposable()
     pipe.subscribe(disposable)
@@ -309,7 +324,9 @@ async def test_dispose_many(subscribable_type: type[Subscribable]):
         await anyio.sleep(0)
         check[index] = True
 
-    pipe: Subscribable[Any, Any] = subscribable_type(return_self)
+    pipe: Subscribable[Any, Any] = _construct_subcribable(
+        subscribable_type, return_self
+    )
     for index in range(size):
         disposable = CustomDisposable(dispose=partial(hit, index=index))
         pipe.subscribe(disposable)
@@ -320,8 +337,10 @@ async def test_dispose_many(subscribable_type: type[Subscribable]):
 
 
 async def test_dispose_chain(subscribable_type: type[Subscribable]):
-    pipe: Subscribable[Any, Any] = subscribable_type(return_self)
-    disposable1 = subscribable_type(return_self)
+    pipe: Subscribable[Any, Any] = _construct_subcribable(
+        subscribable_type, return_self
+    )
+    disposable1 = _construct_subcribable(subscribable_type, return_self)
     disposable2 = CustomDisposable()
 
     pipe.subscribe(disposable1)
@@ -360,7 +379,9 @@ async def test_do_not_dispose(subscribable_type: type[Subscribable]):
         await anyio.sleep(0)
         flag = True
 
-    pipe: Subscribable[int, int] = subscribable_type(return_self)
+    pipe: Subscribable[int, int] = _construct_subcribable(
+        subscribable_type, return_self
+    )
     disposable = CustomDisposable(dispose=hit)
     pipe.subscribe(disposable, dispose=False)
 
@@ -479,3 +500,9 @@ async def test_simple_next_after_disposed():
     await disposable.dispose()
     with pytest.raises(AlreadyDisposedError, match="disposable already disposed"):
         await disposable.next(1)
+
+
+def _construct_subcribable(
+    subscribable_type: type[SubscribableT], *args: Any, **kwargs: Any
+) -> SubscribableT:
+    return subscribable_type(*args, **kwargs)

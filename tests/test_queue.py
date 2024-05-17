@@ -108,7 +108,7 @@ async def test_iterate() -> None:
     async def getter() -> None:
         async with getter_queue:
             async for item in getter_queue:
-                result.append(item)  # noqa: PERF402
+                result.append(item)  # noqa: PERF401
 
     async with create_task_group() as task_group:
         task_group.start_soon(getter)
