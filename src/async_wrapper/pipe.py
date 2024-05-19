@@ -68,7 +68,7 @@ class Disposable(Protocol[InputT, OutputT]):
 class DisposableWithCallback(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
     """disposable & callback"""
 
-    def prepare_callback(self, subscribable: Subscribable) -> Any:
+    def prepare_callback(self, subscribable: Subscribable[InputT, OutputT]) -> Any:
         """Prepare a callback to use when dispose is executed.
 
         Args:
@@ -113,7 +113,7 @@ class SimpleDisposable(
 ):
     """simple disposable impl."""
 
-    _journals: deque[Subscribable]
+    _journals: deque[Subscribable[InputT, OutputT]]
     __slots__ = ("_func", "_dispose", "_is_disposed", "_journals")
 
     def __init__(
@@ -142,7 +142,7 @@ class SimpleDisposable(
         self._is_disposed = True
 
     @override
-    def prepare_callback(self, subscribable: Subscribable) -> Any:
+    def prepare_callback(self, subscribable: Subscribable[InputT, OutputT]) -> Any:
         self._journals.append(subscribable)
 
 
@@ -239,7 +239,7 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
             disposable = SimpleDisposable(disposable)
         self._listeners[disposable] = dispose
         if isinstance(disposable, DisposableWithCallback):
-            disposable.prepare_callback(self)
+            disposable.prepare_callback(self)  # pyright: ignore[reportUnknownMemberType]
 
     @override
     def unsubscribe(self, disposable: Disposable[Any, Any]) -> None:

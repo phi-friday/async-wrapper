@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 __all__ = ["Queue", "create_queue"]
 
 ValueT = TypeVar("ValueT", infer_variance=True)
-QueueT = TypeVar("QueueT", infer_variance=True, bound="Queue")
+QueueT = TypeVar("QueueT", infer_variance=True, bound="Queue[Any]")
 
 
 class Queue(Generic[ValueT]):
@@ -274,16 +274,17 @@ class Queue(Generic[ValueT]):
 
     async def aclose(self) -> None:
         """close the stream as async"""
+        exc_group: ExceptionGroup[Any]
         try:
             await self._aclose()
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
-        except ExceptionGroup as exc:
+        except ExceptionGroup as exc_group:
             if all(
                 isinstance(error, (ClosedResourceError, BrokenResourceError))
-                for error in exc.exceptions
+                for error in exc_group.exceptions
             ):
-                raise QueueBrokenError from exc
+                raise QueueBrokenError from exc_group
             raise
 
     def close(self) -> None:
@@ -333,6 +334,7 @@ class Queue(Generic[ValueT]):
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
+        new: Queue[ValueT]
         new = Queue(_stream=(_putter, _getter))  # type: ignore
         new._close_putter = putter  # noqa: SLF001
         new._close_getter = getter  # noqa: SLF001

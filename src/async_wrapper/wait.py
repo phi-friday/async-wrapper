@@ -379,6 +379,8 @@ async def _intercept_value(
 def _create_waiter(
     func: Callable[..., Awaitable[Any]], *args: Any
 ) -> tuple[Waiter, MemoryObjectReceiveStream[Any]]:
+    setter: MemoryObjectSendStream[Any]
+    getter: MemoryObjectReceiveStream[Any]
     setter, getter = create_memory_object_stream(1)
     waiter = Waiter(_intercept_value, setter, getter, func, *args)
 
