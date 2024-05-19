@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from anyio import Event, create_task_group
 from anyio.lowlevel import checkpoint
@@ -10,7 +12,7 @@ from async_wrapper.task_group.value import Pending
 
 
 def test_value_pending():
-    value = SoonValue()
+    value: SoonValue[Any] = SoonValue()
     assert not value.is_ready
     assert value._value is Pending  # noqa: SLF001
     with pytest.raises(PendingError, match=""):
@@ -19,7 +21,7 @@ def test_value_pending():
 
 @pytest.mark.parametrize("x", range(4))
 def test_value_setattr(x: int):
-    value = SoonValue()
+    value: SoonValue[Any] = SoonValue()
     assert not value.is_ready
     assert value._value is Pending  # noqa: SLF001
 
@@ -31,7 +33,7 @@ def test_value_setattr(x: int):
 @pytest.mark.anyio()
 @pytest.mark.parametrize("x", range(4))
 async def test_value_setattr_async(x: int):
-    value = SoonValue()
+    value: SoonValue[Any] = SoonValue()
     assert not value.is_ready
 
     event = Event()
@@ -57,7 +59,7 @@ async def test_value_setattr_async(x: int):
 
 
 def test_value_repr():
-    value = SoonValue()
+    value: SoonValue[Any] = SoonValue()
     value._value = 1  # noqa: SLF001
     assert value.is_ready
     expected = "<SoonValue: status=done>"
@@ -65,7 +67,7 @@ def test_value_repr():
 
 
 def test_value_repr_pending():
-    value = SoonValue()
+    value: SoonValue[Any] = SoonValue()
     assert not value.is_ready
     expected = "<SoonValue: status=pending>"
     assert repr(value) == expected

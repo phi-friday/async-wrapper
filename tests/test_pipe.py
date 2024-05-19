@@ -24,7 +24,7 @@ from async_wrapper.pipe import (
 pytestmark = pytest.mark.anyio
 
 ValueT = TypeVar("ValueT", infer_variance=True)
-SubscribableT = TypeVar("SubscribableT", bound=Subscribable)
+SubscribableT = TypeVar("SubscribableT", bound=Subscribable[Any, Any])
 
 EPSILON: float = 0.1
 
@@ -57,14 +57,14 @@ class CustomDisposable:
 class CustomDisposableWithCallback(CustomDisposable):
     def __init__(self, dispose: Callable[[], Any] | None = None) -> None:
         super().__init__(dispose)
-        self._subscribables: deque[Subscribable] = deque()
+        self._subscribables: deque[Subscribable[Any, Any]] = deque()
 
     async def dispose(self) -> Any:
         await super().dispose()
         for subscribable in self._subscribables:
             subscribable.unsubscribe(self)
 
-    def prepare_callback(self, subscribable: Subscribable) -> Any:
+    def prepare_callback(self, subscribable: Subscribable[Any, Any]) -> Any:
         self._subscribables.append(subscribable)
 
 
@@ -100,7 +100,7 @@ class CustomSubscribable(CustomDisposable):
             disposable = create_disposable(disposable)
         self._listeners[disposable] = dispose
         if isinstance(disposable, DisposableWithCallback):
-            disposable.prepare_callback(self)
+            disposable.prepare_callback(self)  # pyright: ignore[reportUnknownMemberType]
 
     def unsubscribe(self, disposable: Disposable[Any, Any]) -> None:
         self._listeners.pop(disposable, None)
@@ -112,7 +112,7 @@ class CustomSubscribable(CustomDisposable):
         pytest.param(Pipe, id="pipe"),
     ]
 )
-def subscribable_type(request) -> type[Subscribable]:
+def subscribable_type(request: pytest.FixtureRequest) -> type[Subscribable[Any, Any]]:
     return request.param
 
 
@@ -175,7 +175,7 @@ def test_custom_subscribable():
 
 
 @pytest.mark.parametrize("x", range(1, 4))
-async def test_subscribe(x: int, subscribable_type: type[Subscribable]):
+async def test_subscribe(x: int, subscribable_type: type[Subscribable[Any, Any]]):
     pipe: Subscribable[int, Any] = _construct_subcribable(subscribable_type, as_tuple)
     getter, setter = use_value()
     pipe.subscribe(setter)
@@ -186,7 +186,9 @@ async def test_subscribe(x: int, subscribable_type: type[Subscribable]):
 
 
 @pytest.mark.parametrize("x", range(1, 4))
-async def test_subscribe_interface(x: int, subscribable_type: type[Subscribable]):
+async def test_subscribe_interface(
+    x: int, subscribable_type: type[Subscribable[Any, Any]]
+):
     pipe: Subscribable[int, int] = _construct_subcribable(
         subscribable_type, return_self
     )
@@ -201,7 +203,7 @@ async def test_subscribe_interface(x: int, subscribable_type: type[Subscribable]
 
 
 @pytest.mark.parametrize("x", range(1, 4))
-async def test_subscribe_many(x: int, subscribable_type: type[Subscribable]):
+async def test_subscribe_many(x: int, subscribable_type: type[Subscribable[Any, Any]]):
     size = 10
     check: list[Any] = [False] * size
 
@@ -210,7 +212,9 @@ async def test_subscribe_many(x: int, subscribable_type: type[Subscribable]):
         await anyio.sleep(0)
         check[index] = value
 
-    pipe: Subscribable[int, tuple] = _construct_subcribable(subscribable_type, as_tuple)
+    pipe: Subscribable[int, tuple[Any, ...]] = _construct_subcribable(
+        subscribable_type, as_tuple
+    )
     for index in range(size):
         pipe.subscribe(partial(hit, index=index))
 
@@ -222,14 +226,14 @@ async def test_subscribe_many(x: int, subscribable_type: type[Subscribable]):
 
 
 @pytest.mark.parametrize("x", range(1, 4))
-async def test_subscribe_chain(x: int, subscribable_type: type[Subscribable]):
+async def test_subscribe_chain(x: int, subscribable_type: type[Subscribable[Any, Any]]):
     pipe1: Subscribable[int, int] = _construct_subcribable(
         subscribable_type, return_self
     )
     pipe2: Subscribable[int, tuple[int]] = _construct_subcribable(
         subscribable_type, as_tuple
     )
-    pipe3: Subscribable[Any, tuple] = _construct_subcribable(
+    pipe3: Subscribable[Any, tuple[Any, ...]] = _construct_subcribable(
         subscribable_type, as_tuple
     )
 
@@ -249,7 +253,7 @@ async def test_subscribe_chain(x: int, subscribable_type: type[Subscribable]):
         assert result == ((x,),)
 
 
-async def test_unsubscribe(subscribable_type: type[Subscribable]):
+async def test_unsubscribe(subscribable_type: type[Subscribable[Any, Any]]):
     pipe: Subscribable[Any, Any] = _construct_subcribable(
         subscribable_type, return_self
     )
@@ -267,7 +271,7 @@ async def test_unsubscribe(subscribable_type: type[Subscribable]):
     assert result != 1
 
 
-async def test_prepare_callback(subscribable_type: type[Subscribable]):
+async def test_prepare_callback(subscribable_type: type[Subscribable[Any, Any]]):
     pipe: Subscribable[Any, Any] = _construct_subcribable(
         subscribable_type, return_self
     )
@@ -279,7 +283,7 @@ async def test_prepare_callback(subscribable_type: type[Subscribable]):
     assert pipe.size == 0
 
 
-async def test_empty_dispose(subscribable_type: type[Subscribable]):
+async def test_empty_dispose(subscribable_type: type[Subscribable[Any, Any]]):
     pipe: Subscribable[Any, Any] = _construct_subcribable(
         subscribable_type, return_self
     )
@@ -291,7 +295,7 @@ async def test_empty_dispose(subscribable_type: type[Subscribable]):
     assert disposable.disposed is True
 
 
-async def test_dispose(subscribable_type: type[Subscribable]):
+async def test_dispose(subscribable_type: type[Subscribable[Any, Any]]):
     flag: bool = False
 
     async def hit() -> None:
@@ -315,7 +319,7 @@ async def test_dispose(subscribable_type: type[Subscribable]):
     assert flag is True
 
 
-async def test_dispose_many(subscribable_type: type[Subscribable]):
+async def test_dispose_many(subscribable_type: type[Subscribable[Any, Any]]):
     size = 10
     check: list[Any] = [False] * size
 
@@ -336,7 +340,7 @@ async def test_dispose_many(subscribable_type: type[Subscribable]):
     assert all(x is True for x in check)
 
 
-async def test_dispose_chain(subscribable_type: type[Subscribable]):
+async def test_dispose_chain(subscribable_type: type[Subscribable[Any, Any]]):
     pipe: Subscribable[Any, Any] = _construct_subcribable(
         subscribable_type, return_self
     )
@@ -371,7 +375,7 @@ async def test_pipe_dispose_only_once():
     assert count == 1
 
 
-async def test_do_not_dispose(subscribable_type: type[Subscribable]):
+async def test_do_not_dispose(subscribable_type: type[Subscribable[Any, Any]]):
     flag: bool = False
 
     async def hit() -> None:
@@ -401,7 +405,7 @@ async def test_pipe_semaphore():
 
     sema_value = 2
     sema = anyio.Semaphore(sema_value)
-    pipe: Pipe[int, tuple] = Pipe(as_tuple, context={"semaphore": sema})
+    pipe: Pipe[int, tuple[Any, ...]] = Pipe(as_tuple, context={"semaphore": sema})
     for index in range(size):
         pipe.subscribe(partial(hit, index=index))
 
@@ -423,7 +427,7 @@ async def test_pipe_limit():
 
     limit_value = 2
     limit = anyio.CapacityLimiter(limit_value)
-    pipe: Pipe[int, tuple] = Pipe(as_tuple, context={"limiter": limit})
+    pipe: Pipe[int, tuple[Any, ...]] = Pipe(as_tuple, context={"limiter": limit})
     for index in range(size):
         pipe.subscribe(partial(hit, index=index))
 
@@ -444,7 +448,7 @@ async def test_pipe_lock():
         check[index] = value
 
     lock = anyio.Lock()
-    pipe: Pipe[int, tuple] = Pipe(as_tuple, context={"lock": lock})
+    pipe: Pipe[int, tuple[Any, ...]] = Pipe(as_tuple, context={"lock": lock})
     for index in range(size):
         pipe.subscribe(partial(hit, index=index))
 

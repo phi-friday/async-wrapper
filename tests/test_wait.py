@@ -16,7 +16,7 @@ TIC = 0.01
 
 @pytest.mark.anyio()
 async def test_waiter():
-    soon = SoonValue()
+    soon: SoonValue[Any] = SoonValue()
 
     async with anyio.create_task_group() as task_group:
         event = Waiter(sample_func, 1, soon)(task_group)
@@ -29,8 +29,8 @@ async def test_waiter():
 
 @pytest.mark.anyio()
 async def test_waiter_reuse():
-    soon = SoonValue()
-    new_soon = SoonValue()
+    soon: SoonValue[Any] = SoonValue()
+    new_soon: SoonValue[Any] = SoonValue()
 
     async with anyio.create_task_group() as task_group:
         event = Waiter(sample_func)(task_group)
@@ -48,7 +48,7 @@ async def test_waiter_reuse():
 
 @pytest.mark.anyio()
 async def test_waiter_reuse_overwrite():
-    soon = SoonValue()
+    soon: SoonValue[Any] = SoonValue()
 
     async with anyio.create_task_group() as task_group:
         event = Waiter(sample_func)
@@ -64,7 +64,7 @@ async def test_waiter_reuse_overwrite():
 @pytest.mark.anyio()
 async def test_wait_for():
     event = anyio.Event()
-    soon = SoonValue()
+    soon: SoonValue[Any] = SoonValue()
     async with anyio.create_task_group() as task_group:
         task_group.start_soon(wait_for, event, partial(sample_func, 1, soon))
         task_group.start_soon(sample_wait, event, 2, soon)
@@ -77,7 +77,7 @@ async def test_wait_for():
 @pytest.mark.anyio()
 async def test_wait_many():
     events = [anyio.Event() for _ in range(10)]
-    soon = SoonValue()
+    soon: SoonValue[Any] = SoonValue()
     async with anyio.create_task_group() as task_group:
         task_group.start_soon(wait_for, events, partial(sample_func, 1, soon))
         for event in events:

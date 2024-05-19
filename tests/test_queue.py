@@ -565,7 +565,7 @@ async def test_restricted_queue_error():
 @pytest.mark.anyio()
 async def test_restricted_queue_eixt():
     queue = create_queue()
-    result = []
+    result: list[Any] = []
 
     async def aget(queue: Queue[Any]) -> None:
         with queue:
