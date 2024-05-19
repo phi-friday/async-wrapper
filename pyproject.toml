@@ -68,7 +68,8 @@ packages = ["src/async_wrapper"]
 include = ["src", "tests"]
 pythonVersion = '3.8'
 pythonPlatform = 'Linux'
-diagnostic = 'basic'
+diagnostic = 'strict'
+reportPrivateUsage = false
 
 [tool.pytest.ini_options]
 addopts = "--cov=src/async_wrapper --cov-report html --cov-report=xml"
