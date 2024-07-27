@@ -28,7 +28,7 @@ from async_wrapper.exception import (
 )
 
 if sys.version_info < (3, 11):  # pragma: no cover
-    from exceptiongroup import ExceptionGroup  # pyright: ignore[reportMissingImports]
+    from exceptiongroup import ExceptionGroup
 
 if TYPE_CHECKING:
     from types import TracebackType

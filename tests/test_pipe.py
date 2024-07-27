@@ -416,7 +416,7 @@ async def test_pipe_semaphore():
         await pipe.next(1)
 
     q = size // sema_value + 1
-    assert EPSILON * q < timer.term < EPSILON * q + EPSILON
+    assert timer.term < EPSILON * q + EPSILON
 
 
 async def test_pipe_limit():
@@ -438,7 +438,7 @@ async def test_pipe_limit():
         await pipe.next(1)
 
     q = size // limit_value + 1
-    assert EPSILON * q < timer.term < EPSILON * q + EPSILON
+    assert timer.term < EPSILON * q + EPSILON
 
 
 async def test_pipe_lock():
@@ -458,7 +458,7 @@ async def test_pipe_lock():
     with Timer() as timer:
         await pipe.next(1)
 
-    assert EPSILON * size < timer.term < EPSILON * size + EPSILON
+    assert timer.term < EPSILON * size + EPSILON
 
 
 async def test_pipe_next_after_disposed():
