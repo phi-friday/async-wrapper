@@ -39,7 +39,7 @@ def async_to_sync(
     Defaults to asyncio.
 
     Args:
-        func: An awaitable function or awaitable object.
+        func_or_awaitable: An awaitable function or awaitable object.
 
     Returns:
         A synchronous function.

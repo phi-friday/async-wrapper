@@ -236,6 +236,7 @@ class Completed:
         Args:
             task_group: An :class:`anyio.abc.TaskGroup`. Defaults to None.
             func: The target coroutine function.
+            *args: The arguments to pass to the coroutine function.
             name: The name used in :meth:`anyio.abc.TaskGroup.start_soon`.
                 Defaults to None.
         """  # noqa: D205
@@ -311,6 +312,8 @@ async def wait_for(
     Args:
         event: An :obj:`anyio.Event` or an iterable of events.
         func: An awaitable function to be executed.
+        *args: The arguments to pass to the awaitable function.
+        **kwargs: The keyword arguments to pass to the awaitable function.
 
     Returns:
         The result of the executed function.

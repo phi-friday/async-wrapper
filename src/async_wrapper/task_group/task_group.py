@@ -129,7 +129,7 @@ class SoonWrapper(Generic[ParamT, ValueT]):
 
     __slots__ = ("func", "task_group", "semaphore", "limiter", "lock", "_wrapped")
 
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         func: Callable[ParamT, Awaitable[ValueT]],
         task_group: _TaskGroup,
