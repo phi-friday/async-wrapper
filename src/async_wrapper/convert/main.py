@@ -5,8 +5,8 @@ from typing import Any, Callable, Coroutine, overload
 
 from typing_extensions import ParamSpec, TypeVar
 
-from ._async import sync_to_async
-from ._sync import async_to_sync
+from async_wrapper.convert._async import sync_to_async
+from async_wrapper.convert._sync import async_to_sync
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")

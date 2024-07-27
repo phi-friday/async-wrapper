@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from .convert import async_to_sync, sync_to_async, toggle_func
-from .pipe import Pipe, SimpleDisposable, create_disposable
-from .queue import Queue, create_queue
-from .task_group import TaskGroupWrapper, create_task_group_wrapper
-from .wait import Completed, Waiter, wait_for
+from async_wrapper.convert import async_to_sync, sync_to_async, toggle_func
+from async_wrapper.pipe import Pipe, SimpleDisposable, create_disposable
+from async_wrapper.queue import Queue, create_queue
+from async_wrapper.task_group import TaskGroupWrapper, create_task_group_wrapper
+from async_wrapper.wait import Completed, Waiter, wait_for
 
 __all__ = [
     "TaskGroupWrapper",
