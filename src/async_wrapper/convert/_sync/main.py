@@ -166,7 +166,7 @@ def _check_uvloop() -> bool:
 
     try:
         import uvloop
-    except ImportError:
+    except ImportError:  # pragma: no cover
         return False
     import asyncio
 

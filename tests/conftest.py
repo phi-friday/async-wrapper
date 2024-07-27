@@ -12,7 +12,8 @@ import pytest
         pytest.param(
             ("trio", {"restrict_keyboard_interrupt_to_checkpoints": True}), id="trio"
         ),
-    ]
+    ],
+    scope="session",
 )
 def anyio_backend(request: pytest.FixtureRequest) -> tuple[str, dict[str, Any]]:
     return request.param
