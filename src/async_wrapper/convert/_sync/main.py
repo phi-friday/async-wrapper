@@ -165,7 +165,7 @@ def _check_uvloop() -> bool:
         return True
 
     try:
-        import uvloop  # type: ignore
+        import uvloop
     except ImportError:
         return False
     import asyncio

@@ -405,6 +405,7 @@ class Queue(Generic[ValueT]):
     def __len__(self) -> int:
         return self.qsize()
 
+    @override
     def __repr__(self) -> str:
         max_size = "inf" if self.maxsize == math.inf else self.maxsize
         size = self.qsize()
@@ -434,10 +435,12 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
         return self._queue._getter  # noqa: SLF001
 
     @property
+    @override
     def _close_getter(self) -> bool:  # pyright: ignore[reportIncompatibleVariableOverride]
         return self._queue._close_getter  # noqa: SLF001
 
     @property
+    @override
     def _close_putter(self) -> bool:  # pyright: ignore[reportIncompatibleVariableOverride]
         return self._queue._close_putter  # noqa: SLF001
 
@@ -469,6 +472,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
         return len(self._stream._state.buffer)  # noqa: SLF001
 
     @property
+    @override
     def maxsize(self) -> float:
         return self._stream._state.max_buffer_size  # noqa: SLF001
 
@@ -525,6 +529,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
             self._queue._close_getter = True  # noqa: SLF001
             self._queue._close_putter = True  # noqa: SLF001
 
+    @override
     def __repr__(self) -> str:
         max_size = "inf" if self.maxsize == math.inf else self.maxsize
         size = self.qsize()
@@ -568,6 +573,7 @@ class _Clone(Generic[ValueT]):
         if self._queue._closed:  # noqa: SLF001
             raise QueueClosedError("queue is already closed")
 
+    @override
     def __repr__(self) -> str:
         max_size = "inf" if self._queue.maxsize == math.inf else self._queue.maxsize
         size = self._queue.qsize()

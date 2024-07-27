@@ -3,7 +3,7 @@ from __future__ import annotations
 from threading import local
 from typing import Generic
 
-from typing_extensions import TypeVar
+from typing_extensions import TypeVar, override
 
 from async_wrapper.exception import PendingError
 
@@ -21,6 +21,7 @@ class SoonValue(Generic[ValueT]):
     def __init__(self) -> None:
         self._value: ValueT | local = Pending
 
+    @override
     def __repr__(self) -> str:
         status = "pending" if self._value is Pending else "done"
         return f"<SoonValue: status={status}>"

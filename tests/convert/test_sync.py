@@ -93,7 +93,7 @@ async def check_current_backend(
     if use_uvloop:
         import asyncio
 
-        import uvloop  # type: ignore
+        import uvloop
 
         policy = asyncio.get_event_loop_policy()
         assert isinstance(policy, uvloop.EventLoopPolicy)

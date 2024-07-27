@@ -239,7 +239,7 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
             disposable = SimpleDisposable(disposable)
         self._listeners[disposable] = dispose
         if isinstance(disposable, DisposableWithCallback):
-            disposable.prepare_callback(self)  # pyright: ignore[reportUnknownMemberType]
+            disposable.prepare_callback(self)
 
     @override
     def unsubscribe(self, disposable: Disposable[Any, Any]) -> None:

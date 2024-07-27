@@ -8,7 +8,7 @@ from typing import Any, Awaitable, Callable
 
 import anyio
 import pytest
-from typing_extensions import TypeVar
+from typing_extensions import TypeVar, override
 
 from .base import Timer
 from async_wrapper.exception import AlreadyDisposedError
@@ -59,6 +59,7 @@ class CustomDisposableWithCallback(CustomDisposable):
         super().__init__(dispose)
         self._subscribables: deque[Subscribable[Any, Any]] = deque()
 
+    @override
     async def dispose(self) -> Any:
         await super().dispose()
         for subscribable in self._subscribables:
@@ -77,11 +78,13 @@ class CustomSubscribable(CustomDisposable):
     def size(self) -> int:
         return len(self._listeners)
 
+    @override
     async def next(self, value: Any) -> Any:
         result = await super().next(value)
         for listener in self._listeners:
             await listener.next(result)
 
+    @override
     async def dispose(self) -> Any:
         with suppress(TypeError):
             await super().dispose()
@@ -100,7 +103,7 @@ class CustomSubscribable(CustomDisposable):
             disposable = create_disposable(disposable)
         self._listeners[disposable] = dispose
         if isinstance(disposable, DisposableWithCallback):
-            disposable.prepare_callback(self)  # pyright: ignore[reportUnknownMemberType]
+            disposable.prepare_callback(self)
 
     def unsubscribe(self, disposable: Disposable[Any, Any]) -> None:
         self._listeners.pop(disposable, None)
