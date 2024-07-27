@@ -1,4 +1,4 @@
-name: test
+name: lint
 
 on:
   push:
@@ -17,9 +17,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +25,7 @@ jobs:
         uses: phi-friday/install-rye@v1.5
         id: install-rye
         with:
-          python_version: ${{ matrix.python-version }}
+          python_version: "3.8"
           use_uv: true
 
       - name: Load cached venv
@@ -43,12 +40,6 @@ jobs:
         run: |
           rye sync
 
-      - name: Test with pytest
+      - name: Code checks
         run: |
-          rye run pytest
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
-        if: matrix.python-version == '3.12'
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          rye run pre-commit run --all-files --show-diff-on-failure
