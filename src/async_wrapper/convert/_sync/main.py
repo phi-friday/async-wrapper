@@ -109,11 +109,14 @@ def async_to_sync(
     """
     if callable(func_or_awaitable):
         return _async_func_to_sync(func_or_awaitable)
-    result = run_sa_greenlet(func_or_awaitable)
-    if check_is_unset(result):
-        awaitable_func = _awaitable_to_function(func_or_awaitable)
-        return _async_func_to_sync(awaitable_func)
-    return result  # pyright: ignore[reportReturnType]
+
+    if has_sqlalchemy:
+        result = run_sa_greenlet(func_or_awaitable)
+        if not check_is_unset(result):
+            return result  # pyright: ignore[reportReturnType]
+
+    awaitable_func = _awaitable_to_function(func_or_awaitable)
+    return _async_func_to_sync(awaitable_func)
 
 
 def _async_func_to_sync(
