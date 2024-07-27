@@ -1,3 +1,4 @@
+# pyright: reportUnnecessaryTypeIgnoreComment=false
 from __future__ import annotations
 
 import math
@@ -28,7 +29,7 @@ from async_wrapper.exception import (
 )
 
 if sys.version_info < (3, 11):  # pragma: no cover
-    from exceptiongroup import ExceptionGroup  # type: ignore
+    from exceptiongroup import ExceptionGroup  # pyright: ignore[reportMissingImports]
 
 if TYPE_CHECKING:
     from types import TracebackType
