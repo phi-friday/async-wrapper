@@ -32,6 +32,7 @@ Repository = "https://github.com/phi-friday/async-wrapper"
 
 [project.optional-dependencies]
 uvloop = ["uvloop; platform_system != 'Windows'"]
+sqlalchemy = ["sqlalchemy[asyncio]", "greenlet"]
 docs = [
     "sphinx>=7.1.0",
     "readthedocs-sphinx-search>=0.3.2",
@@ -49,6 +50,7 @@ dev-dependencies = [
     "trio>=0.24.0",
     "pyyaml>=6.0.1",
     "pytest-cov>=4.1.0",
+    "async_wrapper[uvloop,sqlalchemy]",
 ]
 
 [tool.rye.scripts]
