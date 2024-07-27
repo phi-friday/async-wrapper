@@ -43,7 +43,6 @@ if TYPE_CHECKING:
 __all__ = ["Queue", "create_queue"]
 
 ValueT = TypeVar("ValueT", infer_variance=True)
-QueueT = TypeVar("QueueT", infer_variance=True, bound="Queue[Any]")
 
 
 class Queue(Generic[ValueT]):

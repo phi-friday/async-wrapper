@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from functools import partial
-from threading import local
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Iterable
 
 from anyio import EndOfStream, Event, create_memory_object_stream, create_task_group
@@ -21,7 +20,6 @@ __all__ = ["Waiter", "Completed", "wait_for"]
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
-Pending = local()
 
 
 class Waiter(Event):

@@ -16,9 +16,7 @@ if TYPE_CHECKING:
     from anyio.abc import CancelScope, CapacityLimiter, Lock, Semaphore
 
 ValueT = TypeVar("ValueT", infer_variance=True)
-OtherValueT = TypeVar("OtherValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
-OtherParamT = ParamSpec("OtherParamT")
 
 __all__ = ["TaskGroupWrapper", "create_task_group_wrapper"]
 
