@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install rye
-        uses: phi-friday/install-rye@v1.4
+        uses: phi-friday/install-rye@v1.5
         id: install-rye
         with:
           python_version: ${{ matrix.python-version }}
@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         if: steps.cached-venv-dependencies.outputs.cache-hit != 'true'
         run: |
-          rye sync --features uvloop
+          rye sync
 
       - name: Load cached pre-commit
         id: cached-pre-commit-dependencies
