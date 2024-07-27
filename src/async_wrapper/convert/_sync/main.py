@@ -3,11 +3,14 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, wait
 from contextvars import ContextVar
 from functools import partial, wraps
+from importlib.util import find_spec
 from typing import Any, Awaitable, Callable, Coroutine, overload
 
 import anyio
 from sniffio import AsyncLibraryNotFoundError, current_async_library
 from typing_extensions import ParamSpec, TypeAlias, TypeVar
+
+from async_wrapper.convert._sync.sqlalchemy import check_is_unset, run_sa_greenlet
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
@@ -17,6 +20,9 @@ __all__ = ["async_to_sync"]
 
 current_async_lib_var = ContextVar("current_async_lib", default="asyncio")
 use_uvloop_var = ContextVar("use_uvloop", default=False)
+has_sqlalchemy = (
+    find_spec("sqlalchemy") is not None and find_spec("greenlet") is not None
+)
 
 
 @overload
@@ -103,8 +109,11 @@ def async_to_sync(
     """
     if callable(func_or_awaitable):
         return _async_func_to_sync(func_or_awaitable)
-    awaitable_func = _awaitable_to_function(func_or_awaitable)
-    return _async_func_to_sync(awaitable_func)
+    result = run_sa_greenlet(func_or_awaitable)
+    if check_is_unset(result):
+        awaitable_func = _awaitable_to_function(func_or_awaitable)
+        return _async_func_to_sync(awaitable_func)
+    return result  # pyright: ignore[reportReturnType]
 
 
 def _async_func_to_sync(

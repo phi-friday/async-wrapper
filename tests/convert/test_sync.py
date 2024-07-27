@@ -10,7 +10,7 @@ from typing_extensions import TypeVar
 
 from ..base import Timer  # noqa: TID252
 from .base import BaseTest
-from async_wrapper.convert._sync import _check_uvloop
+from async_wrapper.convert._sync.main import _check_uvloop
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 
