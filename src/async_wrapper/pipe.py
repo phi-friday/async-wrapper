@@ -139,7 +139,7 @@ class SimpleDisposable(
     async def dispose(self) -> Any:
         async with self._async_lock:
             while self._journals:
-                journal = self._journals.pop()
+                journal = self._journals.popleft()
                 journal.unsubscribe(self)
         self._is_disposed = True
 
