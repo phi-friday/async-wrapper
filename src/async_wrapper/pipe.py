@@ -64,6 +64,9 @@ class Disposable(Protocol[InputT, OutputT]):
     async def dispose(self) -> Any:
         """Disposes the resource and releases any associated resources."""
 
+    @override
+    def __hash__(self) -> int: ...
+
 
 @runtime_checkable
 class DisposableWithCallback(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
@@ -150,6 +153,10 @@ class SimpleDisposable(
 
         with self._thread_lock:
             self._journals.append(subscribable)
+
+    @override
+    def __hash__(self) -> int:
+        return hash((id(self), id(self._func)))
 
 
 class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
@@ -250,6 +257,10 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
     @override
     def unsubscribe(self, disposable: Disposable[Any, Any]) -> None:
         self._listeners.pop(disposable, None)
+
+    @override
+    def __hash__(self) -> int:
+        return hash((id(self), id(self._listener)))
 
 
 def create_disposable(
