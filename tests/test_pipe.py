@@ -502,11 +502,28 @@ async def test_simple_dispose():
     assert disposable.is_disposed is True
 
 
+async def test_simple_prepare_callback():
+    disposable: SimpleDisposable[Any, Any] = create_disposable(return_self)
+    subscribable: Subscribable[Any, Any] = CustomSubscribable()
+    assert not disposable._journals  # noqa: SLF001
+    disposable.prepare_callback(subscribable)
+    assert disposable._journals  # noqa: SLF001
+    assert len(disposable._journals) == 1  # noqa: SLF001
+
+
 async def test_simple_next_after_disposed():
     disposable: SimpleDisposable[Any, Any] = create_disposable(return_self)
     await disposable.dispose()
     with pytest.raises(AlreadyDisposedError, match="disposable already disposed"):
         await disposable.next(1)
+
+
+async def test_simple_prepare_callback_after_disposed():
+    disposable: SimpleDisposable[Any, Any] = create_disposable(return_self)
+    subscribable: Subscribable[Any, Any] = CustomSubscribable()
+    await disposable.dispose()
+    with pytest.raises(AlreadyDisposedError, match="disposable already disposed"):
+        disposable.prepare_callback(subscribable)
 
 
 def _construct_subcribable(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from collections import deque
 from contextlib import AsyncExitStack, suppress
 from typing import (
@@ -114,15 +115,14 @@ class SimpleDisposable(
     """simple disposable impl."""
 
     _journals: deque[Subscribable[InputT, OutputT]]
-    __slots__ = ("_func", "_dispose", "_is_disposed", "_journals")
+    __slots__ = ("_func", "_is_disposed", "_journals", "_async_lock", "_thread_lock")
 
-    def __init__(
-        self, func: Callable[[InputT], Awaitable[OutputT]], *, dispose: bool = True
-    ) -> None:
+    def __init__(self, func: Callable[[InputT], Awaitable[OutputT]]) -> None:
         self._func = func
-        self._dispose = dispose
         self._is_disposed = False
         self._journals = deque()
+        self._async_lock = anyio.Lock()
+        self._thread_lock = threading.Lock()
 
     @property
     @override
@@ -137,13 +137,19 @@ class SimpleDisposable(
 
     @override
     async def dispose(self) -> Any:
-        for journal in self._journals:
-            journal.unsubscribe(self)
+        async with self._async_lock:
+            while self._journals:
+                journal = self._journals.pop()
+                journal.unsubscribe(self)
         self._is_disposed = True
 
     @override
     def prepare_callback(self, subscribable: Subscribable[InputT, OutputT]) -> Any:
-        self._journals.append(subscribable)
+        if self._is_disposed:
+            raise AlreadyDisposedError("disposable already disposed")
+
+        with self._thread_lock:
+            self._journals.append(subscribable)
 
 
 class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
@@ -247,18 +253,17 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
 
 
 def create_disposable(
-    func: Callable[[InputT], Awaitable[OutputT]], *, dispose: bool = True
+    func: Callable[[InputT], Awaitable[OutputT]],
 ) -> SimpleDisposable[InputT, OutputT]:
     """SimpleDisposable shortcut
 
     Args:
         func: awaitable function.
-        dispose: dispose flag. Defaults to True.
 
     Returns:
         SimpleDisposable object
     """
-    return SimpleDisposable(func, dispose=dispose)
+    return SimpleDisposable(func)
 
 
 async def _enter_context(stack: AsyncExitStack, context: Synchronization) -> None:
