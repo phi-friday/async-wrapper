@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import inspect
 from collections import deque
+from collections.abc import Awaitable
 from contextlib import suppress
 from functools import partial
-from typing import Any, Awaitable, Callable
+from typing import Any, Callable
 
 import anyio
 import pytest

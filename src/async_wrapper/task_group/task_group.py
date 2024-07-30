@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import AsyncExitStack
 from functools import partial, wraps
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Coroutine, Generic
+from typing import TYPE_CHECKING, Any, Callable, Generic
 
 from anyio import create_task_group as _create_task_group
 from anyio.abc import TaskGroup as _TaskGroup
@@ -11,6 +11,7 @@ from typing_extensions import Concatenate, ParamSpec, Self, TypeVar, override
 from async_wrapper.task_group.value import SoonValue
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Coroutine
     from types import TracebackType
 
     from anyio.abc import CancelScope, CapacityLimiter, Lock, Semaphore

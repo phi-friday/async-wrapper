@@ -2,18 +2,13 @@ from __future__ import annotations
 
 import math
 import sys
-from contextlib import asynccontextmanager, contextmanager
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    AsyncContextManager,
-    AsyncGenerator,
-    ContextManager,
-    Generator,
-    Generic,
-    Literal,
-    NoReturn,
+from contextlib import (
+    AbstractAsyncContextManager,
+    AbstractContextManager,
+    asynccontextmanager,
+    contextmanager,
 )
+from typing import TYPE_CHECKING, Any, Generic, Literal, NoReturn
 
 from anyio import WouldBlock, create_memory_object_stream, create_task_group, fail_after
 from anyio.streams.memory import BrokenResourceError, ClosedResourceError, EndOfStream
@@ -31,6 +26,7 @@ if sys.version_info < (3, 11):  # pragma: no cover
     from exceptiongroup import ExceptionGroup
 
 if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator, Generator
     from types import TracebackType
 
     from anyio.streams.memory import (
@@ -131,22 +127,22 @@ class Queue(Generic[ValueT]):
         self._close_getter: bool = True
 
     @property
-    def aputter(self) -> AsyncContextManager[Self]:
+    def aputter(self) -> AbstractAsyncContextManager[Self]:
         """aclose putter only"""
         return self._as_aputter()
 
     @property
-    def agetter(self) -> AsyncContextManager[Self]:
+    def agetter(self) -> AbstractAsyncContextManager[Self]:
         """aclose getter only"""
         return self._as_agetter()
 
     @property
-    def putter(self) -> ContextManager[Self]:
+    def putter(self) -> AbstractContextManager[Self]:
         """close putter only"""
         return self._as_putter()
 
     @property
-    def getter(self) -> ContextManager[Self]:
+    def getter(self) -> AbstractContextManager[Self]:
         """close getter only"""
         return self._as_getter()
 

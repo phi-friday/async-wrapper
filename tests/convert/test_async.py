@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import inspect
 import time
+from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, AsyncGenerator, Generator
+from typing import Any
 
 import anyio
 import pytest

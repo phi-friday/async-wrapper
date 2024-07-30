@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from inspect import iscoroutinefunction
-from typing import Any, Callable, Coroutine, overload
+from typing import TYPE_CHECKING, Any, Callable, overload
 
 from typing_extensions import ParamSpec, TypeVar
 
 from async_wrapper.convert._async import sync_to_async
 from async_wrapper.convert._sync import async_to_sync
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")

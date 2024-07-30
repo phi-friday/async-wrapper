@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import TYPE_CHECKING, Any, Awaitable, Coroutine
+from typing import TYPE_CHECKING, Any
 
 from typing_extensions import TypeAlias, TypeGuard, TypeVar
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Coroutine
+
     import greenlet
 
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, Coroutine, Generator, Generic
+from collections.abc import Coroutine, Generator
+from typing import Any, Generic
 
 import anyio
 import pytest

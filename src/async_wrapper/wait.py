@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING, Any, Awaitable, Callable, Iterable
+from typing import TYPE_CHECKING, Any, Callable
 
 from anyio import EndOfStream, Event, create_memory_object_stream, create_task_group
 from typing_extensions import ParamSpec, Self, TypeVar, override
@@ -9,6 +9,7 @@ from typing_extensions import ParamSpec, Self, TypeVar, override
 from async_wrapper.exception import PendingError
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Iterable
     from types import TracebackType
 
     from anyio import EventStatistics

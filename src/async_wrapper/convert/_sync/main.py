@@ -4,13 +4,16 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from contextvars import ContextVar
 from functools import partial, wraps
 from importlib.util import find_spec
-from typing import Any, Awaitable, Callable, Coroutine, overload
+from typing import TYPE_CHECKING, Any, Callable, overload
 
 import anyio
 from sniffio import AsyncLibraryNotFoundError, current_async_library
 from typing_extensions import ParamSpec, TypeAlias, TypeVar
 
 from async_wrapper.convert._sync.sqlalchemy import check_is_unset, run_sa_greenlet
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Coroutine
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")

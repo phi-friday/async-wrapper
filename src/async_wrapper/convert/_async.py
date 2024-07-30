@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from functools import partial, wraps
-from typing import Any, Callable, Coroutine
+from typing import TYPE_CHECKING, Any, Callable
 
 from anyio import to_thread
 from typing_extensions import ParamSpec, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
