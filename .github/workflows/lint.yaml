@@ -5,14 +5,18 @@ on:
     branches: [dev]
     paths:
       - "**.py"
-      - ".github/workflows/check.yaml"
+      - ".github/workflows/lint.yaml"
       - "pyproject.toml"
+      - "pyrightconfig.json"
+      - ".pre-commit-config.yaml"
   pull_request:
     branches: [dev, main]
     paths:
       - "**.py"
-      - ".github/workflows/check.yaml"
+      - ".github/workflows/lint.yaml"
       - "pyproject.toml"
+      - "pyrightconfig.json"
+      - ".pre-commit-config.yaml"
 
 jobs:
   build:
