@@ -1,23 +1,40 @@
 from __future__ import annotations
 
-from functools import partial, wraps
-from typing import TYPE_CHECKING, Any, Callable
+from functools import cached_property, partial, wraps
+from typing import TYPE_CHECKING, Any, Generic
 
 from anyio import to_thread
-from typing_extensions import ParamSpec, TypeVar
+from typing_extensions import ParamSpec, TypeAlias, TypeVar
 
 if TYPE_CHECKING:
-    from collections.abc import Coroutine
+    from collections.abc import Awaitable, Callable, Coroutine
 
+AnyAwaitable: TypeAlias = "Awaitable[ValueT] | Coroutine[Any, Any, ValueT]"
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
 
 __all__ = ["sync_to_async"]
 
 
+class Async(Generic[ParamT, ValueT]):
+    def __init__(self, func: Callable[ParamT, ValueT]) -> None:
+        self._func = func
+
+    @cached_property
+    def _wrapped(self) -> Callable[ParamT, Coroutine[Any, Any, ValueT]]:
+        @wraps(self._func)
+        async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
+            return await to_thread.run_sync(partial(self._func, *args, **kwargs))
+
+        return inner
+
+    async def __call__(self, *args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
+        return await self._wrapped(*args, **kwargs)
+
+
 def sync_to_async(
     func: Callable[ParamT, ValueT],
-) -> Callable[ParamT, Coroutine[Any, Any, ValueT]]:
+) -> Callable[ParamT, AnyAwaitable[ValueT]]:
     """
     Convert a synchronous function to an asynchronous function.
 
@@ -56,9 +73,8 @@ def sync_to_async(
         >>> if __name__ == "__main__":
         >>>     anyio.run(main)
     """
+    from async_wrapper.convert._sync.main import Sync
 
-    @wraps(func)
-    async def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
-        return await to_thread.run_sync(partial(func, *args, **kwargs))
-
-    return inner
+    if isinstance(func, Sync):
+        return func._func  # pyright: ignore[reportReturnType]  # noqa: SLF001
+    return Async(func)
