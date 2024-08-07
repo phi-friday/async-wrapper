@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 import time
 from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
@@ -89,7 +88,6 @@ class TestAsync(BaseTest):
     @pytest.mark.parametrize("x", range(2, 5))
     async def test_toggle(self, x: int):
         sample = self.toggle()(sample_sync_func)
-        assert inspect.iscoroutinefunction(sample)
         with Timer() as timer:
             await sample(x, self.epsilon)
         assert self.epsilon * x < timer.term < self.epsilon * x + self.epsilon

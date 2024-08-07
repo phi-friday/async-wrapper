@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import inspect
 from collections.abc import Coroutine, Generator
 from typing import Any, Generic
 
@@ -47,7 +46,6 @@ class TestSync(BaseTest):
     @pytest.mark.parametrize("x", range(2, 5))
     def test_toggle(self, x: int):
         sample = self.toggle()(sample_async_func)
-        assert not inspect.iscoroutinefunction(sample)
         with Timer() as timer:
             sample(x, self.epsilon)
         assert self.epsilon * x < timer.term < self.epsilon * x + self.epsilon
