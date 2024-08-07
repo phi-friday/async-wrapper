@@ -8,16 +8,15 @@ from typing import TYPE_CHECKING, Any, Generic, overload
 
 import anyio
 from sniffio import AsyncLibraryNotFoundError, current_async_library
-from typing_extensions import ParamSpec, TypeAlias, TypeVar
+from typing_extensions import ParamSpec, TypeVar
 
 from async_wrapper.convert._sync.sqlalchemy import check_is_unset, run_sa_greenlet
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable, Coroutine
+    from collections.abc import Awaitable, Callable
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
-AnyAwaitable: TypeAlias = "Awaitable[ValueT] | Coroutine[Any, Any, ValueT]"
 
 __all__ = ["async_to_sync"]
 
@@ -29,7 +28,7 @@ has_sqlalchemy = (
 
 
 class Sync(Generic[ParamT, ValueT]):
-    def __init__(self, func: Callable[ParamT, AnyAwaitable[ValueT]]) -> None:
+    def __init__(self, func: Callable[ParamT, Awaitable[ValueT]]) -> None:
         self._func = func
 
     @cached_property
@@ -59,16 +58,16 @@ class Sync(Generic[ParamT, ValueT]):
 
 @overload
 def async_to_sync(
-    func_or_awaitable: Callable[ParamT, AnyAwaitable[ValueT]],
+    func_or_awaitable: Callable[ParamT, Awaitable[ValueT]],
 ) -> Callable[ParamT, ValueT]: ...
 @overload
-def async_to_sync(func_or_awaitable: AnyAwaitable[ValueT]) -> Callable[[], ValueT]: ...
+def async_to_sync(func_or_awaitable: Awaitable[ValueT]) -> Callable[[], ValueT]: ...
 @overload
 def async_to_sync(
-    func_or_awaitable: Callable[..., AnyAwaitable[ValueT]] | AnyAwaitable[ValueT],
+    func_or_awaitable: Callable[..., Awaitable[ValueT]] | Awaitable[ValueT],
 ) -> Callable[..., ValueT]: ...
 def async_to_sync(
-    func_or_awaitable: Callable[ParamT, AnyAwaitable[ValueT]] | AnyAwaitable[ValueT],
+    func_or_awaitable: Callable[ParamT, Awaitable[ValueT]] | Awaitable[ValueT],
 ) -> Callable[ParamT, ValueT] | Callable[[], ValueT]:
     """
     Convert an awaitable function or awaitable object to a synchronous function.
@@ -156,7 +155,7 @@ def async_to_sync(
 
 
 def _async_func_to_sync(
-    func: Callable[ParamT, AnyAwaitable[ValueT]],
+    func: Callable[ParamT, Awaitable[ValueT]],
 ) -> Callable[ParamT, ValueT]:
     sync_func = _as_sync(func)
 
@@ -178,7 +177,7 @@ def _async_func_to_sync(
     return inner
 
 
-def _as_sync(func: Callable[ParamT, AnyAwaitable[ValueT]]) -> Callable[ParamT, ValueT]:
+def _as_sync(func: Callable[ParamT, Awaitable[ValueT]]) -> Callable[ParamT, ValueT]:
     @wraps(func)
     def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
         return _run(func, *args, **kwargs)
@@ -187,7 +186,7 @@ def _as_sync(func: Callable[ParamT, AnyAwaitable[ValueT]]) -> Callable[ParamT, V
 
 
 def _run(
-    func: Callable[ParamT, AnyAwaitable[ValueT]],
+    func: Callable[ParamT, Awaitable[ValueT]],
     *args: ParamT.args,
     **kwargs: ParamT.kwargs,
 ) -> ValueT:
@@ -233,9 +232,7 @@ def _init(backend: str, use_uvloop: bool) -> None:  # noqa: FBT001
     use_uvloop_var.set(use_uvloop)
 
 
-def _awaitable_to_function(
-    value: AnyAwaitable[ValueT],
-) -> Callable[[], AnyAwaitable[ValueT]]:
+def _awaitable_to_function(value: Awaitable[ValueT]) -> Callable[[], Awaitable[ValueT]]:
     async def awaitable() -> ValueT:
         return await value
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Any, overload
 
-from typing_extensions import ParamSpec, TypeAlias, TypeVar
+from typing_extensions import ParamSpec, TypeVar
 
 from async_wrapper.convert._async import Async, sync_to_async
 from async_wrapper.convert._sync import async_to_sync
@@ -14,7 +14,6 @@ if TYPE_CHECKING:
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
-AnyAwaitable: TypeAlias = "Awaitable[ValueT] | Coroutine[Any, Any, ValueT]"
 
 __all__ = ["toggle_func", "async_to_sync", "sync_to_async"]
 
@@ -28,13 +27,13 @@ def toggle_func(
 @overload
 def toggle_func(
     func: Callable[ParamT, ValueT],
-) -> Callable[ParamT, AnyAwaitable[ValueT]]: ...  # pragma: no cover
+) -> Callable[ParamT, Awaitable[ValueT]]: ...  # pragma: no cover
 
 
-# TODO: Coroutine -> AnyAwaitable
+# TODO: Coroutine -> Awaitable
 def toggle_func(
     func: Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]],
-) -> Callable[ParamT, ValueT] | Callable[ParamT, AnyAwaitable[ValueT]]:
+) -> Callable[ParamT, ValueT] | Callable[ParamT, Awaitable[ValueT]]:
     """
     Convert between synchronous and asynchronous functions.
 

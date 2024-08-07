@@ -4,12 +4,11 @@ from functools import cached_property, partial, wraps
 from typing import TYPE_CHECKING, Any, Generic
 
 from anyio import to_thread
-from typing_extensions import ParamSpec, TypeAlias, TypeVar
+from typing_extensions import ParamSpec, TypeVar
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Coroutine
 
-AnyAwaitable: TypeAlias = "Awaitable[ValueT] | Coroutine[Any, Any, ValueT]"
 ValueT = TypeVar("ValueT", infer_variance=True)
 ParamT = ParamSpec("ParamT")
 
@@ -34,7 +33,7 @@ class Async(Generic[ParamT, ValueT]):
 
 def sync_to_async(
     func: Callable[ParamT, ValueT],
-) -> Callable[ParamT, AnyAwaitable[ValueT]]:
+) -> Callable[ParamT, Awaitable[ValueT]]:
     """
     Convert a synchronous function to an asynchronous function.
 
