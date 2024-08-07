@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 from collections import deque
 from contextlib import AsyncExitStack, suppress
-from typing import TYPE_CHECKING, Any, Callable, Generic, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Generic, Protocol, runtime_checkable
 
 import anyio
 from typing_extensions import TypedDict, TypeVar, override
@@ -11,7 +11,7 @@ from typing_extensions import TypedDict, TypeVar, override
 from async_wrapper.exception import AlreadyDisposedError
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
+    from collections.abc import Awaitable, Callable
 
     from anyio.abc import CapacityLimiter, Lock, Semaphore
 
