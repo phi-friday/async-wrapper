@@ -71,6 +71,9 @@ allow-direct-references = true
 [tool.hatch.build.targets.wheel]
 packages = ["src/async_wrapper"]
 
+[tool.hatch.build.targets.sdist]
+include = ["src/async_wrapper"]
+
 [tool.pyright]
 include = ["src", "tests"]
 pythonVersion = '3.8'
