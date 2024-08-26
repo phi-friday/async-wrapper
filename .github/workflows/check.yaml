@@ -54,12 +54,6 @@ jobs:
         if: steps.uv-cache.outputs.cache-hit != 'true'
         run: uv sync
 
-      - name: Restore pre-commit cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ steps.setup-python.outputs.PY }}-${{ hashFiles('.pre-commit-config.yaml') }}
-
       - name: Test with pytest
         run: |
           uv run pytest
