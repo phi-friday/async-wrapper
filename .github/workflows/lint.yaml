@@ -45,7 +45,7 @@ jobs:
         uses: actions/cache@v4
         id: uv-cache
         with:
-          path: /tmp/.uv-cache
+          path: ${{ env.UV_CACHE_DIR }}
           key: uv-${{ steps.setup-python.outputs.PY }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
             uv-${{ steps.setup-python.outputs.PY }}-${{ hashFiles('uv.lock') }}
