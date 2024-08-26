@@ -21,30 +21,44 @@ jobs:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
+    name: check ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v4
+  
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install rye
-        uses: phi-friday/install-rye@v2
-        id: install-rye
+      - name: Set up Python ${{ matrix.python-version }}
+        id: setup-python
+        run: |
+          uv python install ${{ matrix.python-version }}
+          uv python pin ${{ matrix.python-version }}
+          uv lock
+          echo "PY=$(uv run python -VV | shasum -a 256 | cut -d' ' -f1)" >> $GIHUB_OUPUT
+
+      - name: Restore uv cache
+        uses: actions/cache@v4
+        id: uv-cache
         with:
-          python_version: ${{ matrix.python-version }}
+          path: /tmp/.uv-cache
+          key: uv-${{ steps.setup-python.outputs.PY }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ steps.setup-python.outputs.PY }}-${{ hashFiles('uv.lock') }}
+            uv-${{ steps.setup-python.outputs.PY }}
+  
+      - name: Install dependencies
+        if: steps.uv-cache.outputs.cache-hit != 'true'
+        run: uv sync
 
-      - name: Load cached venv
-        id: cached-venv-dependencies
+      - name: Restore pre-commit cache
         uses: actions/cache@v4
         with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ steps.install-rye.outputs.python-version }}-${{ hashFiles('**/pyproject.toml') }}
-
-      - name: Install dependencies
-        if: steps.cached-venv-dependencies.outputs.cache-hit != 'true'
-        run: |
-          rye sync
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ steps.setup-python.outputs.PY }}-${{ hashFiles('.pre-commit-config.yaml') }}
 
       - name: Test with pytest
         run: |
-          rye run pytest
+          uv run pytest
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
