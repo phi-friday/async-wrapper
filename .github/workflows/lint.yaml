@@ -36,7 +36,9 @@ jobs:
           uv python install ${{ env.PYTHON_VERSION }}
           uv python pin ${{ env.PYTHON_VERSION }}
           uv lock
-          echo "PY=$(uv run python -VV | shasum -a 256 | cut -d' ' -f1)" >> $GIHUB_OUPUT
+          PY=$(uv run python -VV | shasum -a 256 | cut -d' ' -f1)
+          echo PY: $PY
+          echo "PY=$PY" >> "$GITHUB_OUTPUT"
 
       - name: Restore uv cache
         uses: actions/cache@v4
