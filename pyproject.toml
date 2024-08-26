@@ -52,6 +52,7 @@ dev-dependencies = [
     "ipykernel>=6.29.0",
     "pre-commit>=3.5.0",
     "async_wrapper[uvloop,sqlalchemy,test]",
+    "poethepoet>=0.27.0",
 ]
 
 [tool.poe.tasks]
