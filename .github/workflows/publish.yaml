@@ -8,8 +8,6 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     name: "Publish library"
-    env:
-      PYTHON_VERSION: 3.12
 
     steps:
       - name: Check out
@@ -20,12 +18,6 @@ jobs:
 
       - name: Set up uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: Set up Python
-        id: setup-python
-        run: |
-          uv python install ${{ env.PYTHON_VERSION }}
-          uv python pin ${{ env.PYTHON_VERSION }}
 
       - name: Build package
         run: |
