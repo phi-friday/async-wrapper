@@ -45,7 +45,7 @@ docs = [
     "sphinx-mdinclude>=0.5.3",
 ]
 
-[tool.rye]
+[tool.uv]
 managed = true
 dev-dependencies = [
     "ruff==0.5.7",
@@ -54,9 +54,9 @@ dev-dependencies = [
     "async_wrapper[uvloop,sqlalchemy,test]",
 ]
 
-[tool.rye.scripts]
-html = { cmd = "make html" }
-lint = { chain = ["lint:check", "lint:format"] }
+[tool.poe.tasks]
+html = "make html"
+lint = ["lint:check", "lint:format"]
 "lint:check" = "ruff check src tests --fix"
 "lint:format" = "ruff format src tests"
 check = "pre-commit run --all-files --show-diff-on-failure"
