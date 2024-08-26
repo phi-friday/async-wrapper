@@ -28,13 +28,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install python
+        uses: actions/setup-python@v4
+        id: install-python
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Set up uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
       - name: Set up Python
         id: setup-python
         run: |
-          uv python install ${{ env.PYTHON_VERSION }}
           uv python pin ${{ env.PYTHON_VERSION }}
           uv lock
           PY=$(uv run python -VV | shasum -a 256 | cut -d' ' -f1)
