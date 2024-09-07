@@ -9,6 +9,7 @@ from typing import Any, Callable
 
 import anyio
 import pytest
+from anyio.lowlevel import checkpoint
 from typing_extensions import TypeVar, override
 
 from .base import Timer
@@ -41,12 +42,12 @@ class CustomDisposable:
         return self.disposed
 
     async def next(self, value: Any) -> Any:
-        await anyio.sleep(0)
+        await checkpoint()
         self.value = value
         return value
 
     async def dispose(self) -> Any:
-        await anyio.sleep(0)
+        await checkpoint()
         self.disposed = True
 
         if self._dispose is not None:
@@ -121,12 +122,12 @@ def subscribable_type(request: pytest.FixtureRequest) -> type[Subscribable[Any, 
 
 
 async def as_tuple(value: ValueT) -> tuple[ValueT]:
-    await anyio.sleep(0)
+    await checkpoint()
     return (value,)
 
 
 async def return_self(value: ValueT) -> ValueT:
-    await anyio.sleep(0)
+    await checkpoint()
     return value
 
 
@@ -134,12 +135,12 @@ def use_value():
     result = None
 
     async def getter() -> Any:
-        await anyio.sleep(0)
+        await checkpoint()
         return result
 
     async def setter(value: Any) -> None:
         nonlocal result
-        await anyio.sleep(0)
+        await checkpoint()
         result = value
 
     return getter, setter
@@ -154,7 +155,7 @@ async def test_next():
 
     async def hit(value: Any) -> None:  # noqa: ARG001
         nonlocal flag
-        await anyio.sleep(0)
+        await checkpoint()
         flag = True
 
     pipe = Pipe(hit)
@@ -213,7 +214,7 @@ async def test_subscribe_many(x: int, subscribable_type: type[Subscribable[Any, 
 
     async def hit(value: Any, index: int) -> None:
         nonlocal check
-        await anyio.sleep(0)
+        await checkpoint()
         check[index] = value
 
     pipe: Subscribable[int, tuple[Any, ...]] = _construct_subcribable(
@@ -304,7 +305,7 @@ async def test_dispose(subscribable_type: type[Subscribable[Any, Any]]):
 
     async def hit() -> None:
         nonlocal flag
-        await anyio.sleep(0)
+        await checkpoint()
         flag = True
 
     pipe: Subscribable[Any, Any]
@@ -329,7 +330,7 @@ async def test_dispose_many(subscribable_type: type[Subscribable[Any, Any]]):
 
     async def hit(index: int) -> None:
         nonlocal check
-        await anyio.sleep(0)
+        await checkpoint()
         check[index] = True
 
     pipe: Subscribable[Any, Any] = _construct_subcribable(
@@ -369,7 +370,7 @@ async def test_pipe_dispose_only_once():
 
     async def hit() -> None:
         nonlocal count
-        await anyio.sleep(0)
+        await checkpoint()
         count += 1
 
     pipe = Pipe(return_self, dispose=hit)
@@ -384,7 +385,7 @@ async def test_do_not_dispose(subscribable_type: type[Subscribable[Any, Any]]):
 
     async def hit() -> None:
         nonlocal flag
-        await anyio.sleep(0)
+        await checkpoint()
         flag = True
 
     pipe: Subscribable[int, int] = _construct_subcribable(
@@ -467,7 +468,7 @@ async def test_pipe_next_after_disposed():
 
     async def hit(value: Any) -> None:  # noqa: ARG001
         nonlocal flag
-        await anyio.sleep(0)
+        await checkpoint()
         flag = True
 
     pipe = Pipe(hit)

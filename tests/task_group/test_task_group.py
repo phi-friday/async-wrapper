@@ -12,7 +12,7 @@ from async_wrapper import TaskGroupWrapper, create_task_group_wrapper
 from async_wrapper.task_group import SoonValue
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 class TestTaskGroupWrapper:
     epsilon: Final[float] = 0.1
 

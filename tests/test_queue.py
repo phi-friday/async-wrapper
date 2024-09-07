@@ -30,7 +30,7 @@ def test_negative_max_buffer() -> None:
         Queue(-1)
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_aget_then_aput() -> None:
     queue: Queue[str] = create_queue()
     result: list[str] = []
@@ -48,7 +48,7 @@ async def test_aget_then_aput() -> None:
     assert result == ["hello", "anyio"]
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_aget_then_put() -> None:
     queue: Queue[str] = create_queue()
     result: list[str] = []
@@ -66,7 +66,7 @@ async def test_aget_then_put() -> None:
     assert sorted(result, reverse=True) == ["hello", "anyio"]
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_aput_then_get() -> None:
     queue: Queue[str] = create_queue()
     async with create_task_group() as task_group:
@@ -75,7 +75,7 @@ async def test_aput_then_get() -> None:
         assert queue.get() == "hello"
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_aput_is_unblocked_after_get() -> None:
     queue: Queue[str] = create_queue()
     queue.put("hello")
@@ -89,7 +89,7 @@ async def test_aput_is_unblocked_after_get() -> None:
     assert queue.get() == "anyio"
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_put_then_get() -> None:
     queue: Queue[str] = create_queue()
     queue.put("hello")
@@ -99,7 +99,7 @@ async def test_put_then_get() -> None:
     assert queue.get() == "anyio"
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_iterate() -> None:
     queue: Queue[str] = create_queue()
     result: list[str] = []
@@ -119,7 +119,7 @@ async def test_iterate() -> None:
     assert result == ["hello", "anyio"]
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_aget_aput_closed_queue() -> None:
     queue: Queue[Any] = create_queue()
 
@@ -137,7 +137,7 @@ async def test_aget_aput_closed_queue() -> None:
         await queue.aput(None)
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_clone() -> None:
     queue: Queue[str] = create_queue(1)
     putter = queue.clone.putter
@@ -148,7 +148,7 @@ async def test_clone() -> None:
     assert getter.get() == "hello"
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_clone_closed() -> None:
     queue: Queue[str] = create_queue(1)
     await queue.aclose()
@@ -160,7 +160,7 @@ async def test_clone_closed() -> None:
         _ = queue.clone.putter
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_clone_closed_using_cloning() -> None:
     queue: Queue[str] = create_queue(1)
     await queue.aclose()
@@ -168,7 +168,7 @@ async def test_clone_closed_using_cloning() -> None:
         _ = queue.clone
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_clone_closed_using_cloning_after_create() -> None:
     queue: Queue[str] = create_queue(1)
     clone = queue.clone
@@ -177,7 +177,7 @@ async def test_clone_closed_using_cloning_after_create() -> None:
         _ = clone.getter
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_aget_when_cancelled() -> None:
     queue: Queue[str] = create_queue()
     async with create_task_group() as task_group:
@@ -194,7 +194,7 @@ async def test_aget_when_cancelled() -> None:
         assert await queue.aget() == "world"
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_aput_when_cancelled() -> None:
     queue: Queue[str] = create_queue()
     result: list[str] = []
@@ -212,7 +212,7 @@ async def test_aput_when_cancelled() -> None:
     assert result == ["world"]
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_cancel_during_aget() -> None:
     receiver_scope: CancelScope | None = None
     queue: Queue[str] = create_queue()
@@ -235,7 +235,7 @@ async def test_cancel_during_aget() -> None:
     assert result == ["hello"]
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_close_queue_after_aput() -> None:
     queue: Queue[str] = create_queue()
 
@@ -252,7 +252,7 @@ async def test_close_queue_after_aput() -> None:
         task_group.start_soon(get)
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_statistics() -> None:
     queue: Queue[None] = create_queue(1)
     streams = queue._putter, queue._getter  # noqa: SLF001
@@ -308,7 +308,7 @@ async def test_statistics() -> None:
         assert stream.statistics().tasks_waiting_receive == 0
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_sync_close() -> None:
     queue: Queue[None] = create_queue(1)
     with queue:
@@ -321,7 +321,7 @@ async def test_sync_close() -> None:
         queue.get()
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_clone_each():
     queue: Queue[Any] = create_queue(1)
 
@@ -347,7 +347,7 @@ async def test_clone_each():
     assert status.open_send_streams == 1
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_queue_async_iterator_aputter():
     queue: Queue[Any] = create_queue(10)
 
@@ -366,7 +366,7 @@ async def test_queue_async_iterator_aputter():
     assert set(result) == set(range(10))
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_queue_iterator_aputter():
     queue: Queue[Any] = create_queue(10)
 
@@ -385,7 +385,7 @@ async def test_queue_iterator_aputter():
     assert set(result) == set(range(10))
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_queue_async_iterator():
     queue: Queue[Any] = create_queue(10)
 
@@ -407,7 +407,7 @@ async def test_queue_async_iterator():
     assert queue._closed  # noqa: SLF001
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_queue_iterator():
     queue: Queue[Any] = create_queue(10)
 
@@ -429,7 +429,7 @@ async def test_queue_iterator():
     assert queue._closed  # noqa: SLF001
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_queue_empty(x: int):
     queue: Queue[Any] = create_queue(x)
@@ -441,7 +441,7 @@ async def test_queue_empty(x: int):
     assert queue.empty()
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_queue_full(x: int):
     queue: Queue[Any] = create_queue(x)
@@ -457,7 +457,7 @@ async def test_queue_full(x: int):
     assert queue.full()
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_queue_size(x: int):
     queue: Queue[Any] = create_queue(x)
@@ -471,7 +471,7 @@ async def test_queue_size(x: int):
     assert queue.qsize() == x - 1
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_queue_size_using_len(x: int):
     queue: Queue[Any] = create_queue(x)
@@ -485,14 +485,14 @@ async def test_queue_size_using_len(x: int):
     assert len(queue) == x - 1
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 @pytest.mark.parametrize("x", range(1, 4))
 async def test_queue_length(x: int):
     queue: Queue[Any] = create_queue(x)
     assert queue.maxsize == x
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 @pytest.mark.parametrize("x", chain((None,), range(1, 4)))
 async def test_queue_repr(x: int | None):
     queue: Queue[Any] = create_queue(x)
@@ -507,7 +507,7 @@ async def test_queue_repr(x: int | None):
     assert repr(queue) == expected_repr
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 @pytest.mark.parametrize("x", chain((None,), range(1, 4)))
 async def test_cloning_repr(x: int | None):
     queue: Queue[Any] = create_queue(x)
@@ -522,7 +522,7 @@ async def test_cloning_repr(x: int | None):
     assert repr(queue.clone) == expected_repr
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 @pytest.mark.parametrize("x", chain((None,), range(1, 4)))
 async def test_restricted_queue_repr(x: int | None):
     queue: Queue[Any] = create_queue(x)
@@ -539,7 +539,7 @@ async def test_restricted_queue_repr(x: int | None):
         assert repr(clone) == expected_repr.format(where)
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_restricted_queue_error():
     queue = create_queue()
     clone = queue.clone
@@ -562,7 +562,7 @@ async def test_restricted_queue_error():
         _ = putter.clone
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_restricted_queue_eixt():
     queue = create_queue()
     result: list[Any] = []

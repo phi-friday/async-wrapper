@@ -1,3 +1,5 @@
+# FIXME: pyright v1.1.379 && pylance v2024.8.2
+# pyright: reportUnnecessaryTypeIgnoreComment=false
 from __future__ import annotations
 
 from functools import cached_property, partial, wraps

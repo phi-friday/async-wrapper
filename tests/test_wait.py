@@ -14,7 +14,7 @@ from async_wrapper.task_group import SoonValue
 TIC = 0.01
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_waiter():
     soon: SoonValue[Any] = SoonValue()
 
@@ -27,7 +27,7 @@ async def test_waiter():
     assert soon.value == 1
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_waiter_reuse():
     soon: SoonValue[Any] = SoonValue()
     new_soon: SoonValue[Any] = SoonValue()
@@ -46,7 +46,7 @@ async def test_waiter_reuse():
     assert new_soon.value == 2
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_waiter_reuse_overwrite():
     soon: SoonValue[Any] = SoonValue()
 
@@ -61,7 +61,7 @@ async def test_waiter_reuse_overwrite():
     assert soon.value == 3
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_wait_for():
     event = anyio.Event()
     soon: SoonValue[Any] = SoonValue()
@@ -74,7 +74,7 @@ async def test_wait_for():
     assert soon.value == 1
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_wait_many():
     events = [anyio.Event() for _ in range(10)]
     soon: SoonValue[Any] = SoonValue()
@@ -89,7 +89,7 @@ async def test_wait_many():
     assert soon.value == 1
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_completed_with_task_group():
     result: list[int] = []
     async with anyio.create_task_group() as task_group:
@@ -103,7 +103,7 @@ async def test_completed_with_task_group():
     assert result == [3, 2, 1]
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_completed_without_task_group():
     result: list[int] = []
     async with anyio.create_task_group() as task_group:
@@ -117,7 +117,7 @@ async def test_completed_without_task_group():
     assert result == [3, 2, 1]
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_completed_overwrite_task_group():
     result: list[int] = []
     async with anyio.create_task_group() as task_group:
@@ -131,7 +131,7 @@ async def test_completed_overwrite_task_group():
     assert result == [3, 2, 1]
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_completed_overwrite_diff_task_group():
     async with anyio.create_task_group() as task_group:
         async with Completed(task_group) as completed:
@@ -140,7 +140,7 @@ async def test_completed_overwrite_diff_task_group():
                     completed.start_soon(new_tg, sample_func2, 2, 2)
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_completed_no_task_group():
     async with anyio.create_task_group():
         async with Completed() as completed:
@@ -148,7 +148,7 @@ async def test_completed_no_task_group():
                 completed.start_soon(None, sample_func2, 2, 2)
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_completed_without_enter():
     async with anyio.create_task_group() as task_group:
         completed = Completed(task_group)
@@ -156,7 +156,7 @@ async def test_completed_without_enter():
             completed.start_soon(None, sample_func2, 2, 2)
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 async def test_completed_after_exit():
     async with anyio.create_task_group() as task_group:
         async with Completed(task_group) as completed:

@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-import anyio
 import pytest
+from anyio.lowlevel import checkpoint
 
 from async_wrapper import toggle_func
 
@@ -14,7 +14,7 @@ def sample_sync_func(x: Any) -> Any:
 
 
 async def sample_async_func(x: Any) -> Any:
-    await anyio.sleep(0)
+    await checkpoint()
     return x
 
 

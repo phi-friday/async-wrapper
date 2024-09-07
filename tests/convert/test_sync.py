@@ -5,6 +5,7 @@ from typing import Any, Generic
 
 import anyio
 import pytest
+from anyio.lowlevel import checkpoint
 from sniffio import current_async_library
 from typing_extensions import TypeVar
 
@@ -50,7 +51,7 @@ class TestSync(BaseTest):
             sample(x, self.epsilon)
         assert self.epsilon * x < timer.term < self.epsilon * x + self.epsilon
 
-    @pytest.mark.anyio()
+    @pytest.mark.anyio
     @pytest.mark.parametrize("x", range(1, 4))
     async def test_async_to_sync_in_async(self, x: int):
         backend = current_async_library()
@@ -72,7 +73,7 @@ class AwaitableObject(Generic[ValueT]):
 
 def sample_coroutine(value: ValueT) -> Coroutine[Any, Any, ValueT]:
     async def inner() -> ValueT:
-        await anyio.sleep(0)
+        await checkpoint()
         return value
 
     return inner()

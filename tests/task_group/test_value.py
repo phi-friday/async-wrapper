@@ -30,7 +30,7 @@ def test_value_setattr(x: int):
     assert maybe == x
 
 
-@pytest.mark.anyio()
+@pytest.mark.anyio
 @pytest.mark.parametrize("x", range(4))
 async def test_value_setattr_async(x: int):
     value: SoonValue[Any] = SoonValue()

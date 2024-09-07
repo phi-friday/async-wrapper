@@ -62,7 +62,7 @@ async def engine(
         await engine.dispose()
 
 
-@pytest.fixture()
+@pytest.fixture
 async def session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(engine) as session:
         yield session
