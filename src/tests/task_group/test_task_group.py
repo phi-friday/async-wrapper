@@ -7,9 +7,9 @@ import anyio
 import pytest
 from anyio.lowlevel import checkpoint
 
-from ..base import Timer  # noqa: TID252
 from async_wrapper import TaskGroupWrapper, create_task_group_wrapper
 from async_wrapper.task_group import SoonValue
+from tests.base import Timer
 
 
 @pytest.mark.anyio

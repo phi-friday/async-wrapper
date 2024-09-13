@@ -13,8 +13,8 @@ from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import Mapped, registry
 
-from ..base import Timer  # noqa: TID252
-from .base import BaseTest
+from tests.base import Timer
+from tests.convert.base import BaseTest
 
 pytestmark = pytest.mark.anyio
 

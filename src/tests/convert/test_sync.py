@@ -9,9 +9,9 @@ from anyio.lowlevel import checkpoint
 from sniffio import current_async_library
 from typing_extensions import TypeVar
 
-from ..base import Timer  # noqa: TID252
-from .base import BaseTest
 from async_wrapper.convert._sync.main import _check_uvloop
+from tests.base import Timer
+from tests.convert.base import BaseTest
 
 ValueT = TypeVar("ValueT", infer_variance=True)
 
