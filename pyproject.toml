@@ -84,7 +84,7 @@ reportPrivateUsage = false
 
 [tool.pytest.ini_options]
 addopts = "--cov=src/async_wrapper --cov-report html --cov-report=xml"
-testpaths = ["tests"]
+testpaths = ["src/tests"]
 
 [tool.coverage.run]
 omit = ["./src/tests/**/*"]
