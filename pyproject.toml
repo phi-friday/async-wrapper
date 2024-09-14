@@ -37,6 +37,7 @@ test = [
     "trio>=0.24.0",
     "pytest-cov>=5.0.0",
     "aiosqlite>=0.20.0",
+    "pytest-xdist>=3.6.1",
 ]
 docs = [
     "sphinx>=7.1.0",
