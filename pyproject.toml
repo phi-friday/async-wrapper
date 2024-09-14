@@ -35,7 +35,7 @@ sqlalchemy = ["sqlalchemy[asyncio]", "greenlet"]
 test = [
     "pytest>=8.0.0",
     "trio>=0.24.0",
-    "pytest-cov>=4.1.0",
+    "pytest-cov>=5.0.0",
     "aiosqlite>=0.20.0",
 ]
 docs = [
