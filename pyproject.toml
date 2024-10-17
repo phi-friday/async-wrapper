@@ -31,7 +31,7 @@ Documentation = "https://async-wrapper.readthedocs.io/"
 Repository = "https://github.com/phi-friday/async-wrapper"
 
 [project.optional-dependencies]
-uvloop = ["uvloop; platform_system != 'Windows' and python_version != '3.13'"]
+uvloop = ["uvloop; platform_system != 'Windows'"]
 sqlalchemy = ["sqlalchemy[asyncio]", "greenlet"]
 test = [
     "pytest>=8.0.0",
