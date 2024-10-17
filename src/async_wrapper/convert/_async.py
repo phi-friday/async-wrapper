@@ -1,5 +1,3 @@
-# FIXME: pyright v1.1.379 && pylance v2024.8.2
-# pyright: reportUnnecessaryTypeIgnoreComment=false
 from __future__ import annotations
 
 from functools import cached_property, partial, wraps
@@ -77,5 +75,5 @@ def sync_to_async(
     from async_wrapper.convert._sync.main import Sync
 
     if isinstance(func, Sync):
-        return func._func  # pyright: ignore[reportReturnType]  # noqa: SLF001
+        return func._func  # noqa: SLF001
     return Async(func)

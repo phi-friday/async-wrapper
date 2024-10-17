@@ -1,5 +1,3 @@
-# FIXME: pyright v1.1.379 && pylance v2024.8.2
-# pyright: reportUnnecessaryTypeIgnoreComment=false
 from __future__ import annotations
 
 from inspect import iscoroutinefunction
@@ -47,7 +45,7 @@ def toggle_func(
         either synchronous or asynchronous.
     """
     if isinstance(func, (Async, Sync)):
-        return func._func  # pyright: ignore[reportReturnType]  # noqa: SLF001
+        return func._func  # noqa: SLF001
     if iscoroutinefunction(func):
         return async_to_sync(func)
     return sync_to_async(func)  # pyright: ignore[reportReturnType]
