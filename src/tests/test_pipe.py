@@ -25,8 +25,8 @@ from async_wrapper.pipe import (
 
 pytestmark = pytest.mark.anyio
 
-ValueT = TypeVar("ValueT", infer_variance=True)
-SubscribableT = TypeVar("SubscribableT", bound=Subscribable[Any, Any])
+_T = TypeVar("_T", infer_variance=True)
+_ST = TypeVar("_ST", bound=Subscribable[Any, Any])
 
 EPSILON: float = 0.1
 
@@ -121,12 +121,12 @@ def subscribable_type(request: pytest.FixtureRequest) -> type[Subscribable[Any, 
     return request.param
 
 
-async def as_tuple(value: ValueT) -> tuple[ValueT]:
+async def as_tuple(value: _T) -> tuple[_T]:
     await checkpoint()
     return (value,)
 
 
-async def return_self(value: ValueT) -> ValueT:
+async def return_self(value: _T) -> _T:
     await checkpoint()
     return value
 
@@ -529,6 +529,6 @@ async def test_simple_prepare_callback_after_disposed():
 
 
 def _construct_subcribable(
-    subscribable_type: type[SubscribableT], *args: Any, **kwargs: Any
-) -> SubscribableT:
+    subscribable_type: type[_ST], *args: Any, **kwargs: Any
+) -> _ST:
     return subscribable_type(*args, **kwargs)

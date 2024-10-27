@@ -15,8 +15,8 @@ from async_wrapper.convert._sync.sqlalchemy import check_is_unset, run_sa_greenl
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
-ValueT = TypeVar("ValueT", infer_variance=True)
-ParamT = ParamSpec("ParamT")
+_T = TypeVar("_T", infer_variance=True)
+_P = ParamSpec("_P")
 
 __all__ = ["async_to_sync"]
 
@@ -27,16 +27,16 @@ has_sqlalchemy = (
 )
 
 
-class Sync(Generic[ParamT, ValueT]):
-    def __init__(self, func: Callable[ParamT, Awaitable[ValueT]]) -> None:
+class Sync(Generic[_P, _T]):
+    def __init__(self, func: Callable[_P, Awaitable[_T]]) -> None:
         self._func = func
 
     @cached_property
-    def _wrapped(self) -> Callable[ParamT, ValueT]:
+    def _wrapped(self) -> Callable[_P, _T]:
         sync_func = _as_sync(self._func)
 
         @wraps(self._func)
-        def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
+        def inner(*args: _P.args, **kwargs: _P.kwargs) -> _T:
             if not _running_in_async_context():
                 return _run(self._func, *args, **kwargs)
 
@@ -52,23 +52,23 @@ class Sync(Generic[ParamT, ValueT]):
 
         return inner
 
-    def __call__(self, *args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
+    def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> _T:
         return self._wrapped(*args, **kwargs)
 
 
 @overload
 def async_to_sync(
-    func_or_awaitable: Callable[ParamT, Awaitable[ValueT]],
-) -> Callable[ParamT, ValueT]: ...
+    func_or_awaitable: Callable[_P, Awaitable[_T]],
+) -> Callable[_P, _T]: ...
 @overload
-def async_to_sync(func_or_awaitable: Awaitable[ValueT]) -> Callable[[], ValueT]: ...
+def async_to_sync(func_or_awaitable: Awaitable[_T]) -> Callable[[], _T]: ...
 @overload
 def async_to_sync(
-    func_or_awaitable: Callable[..., Awaitable[ValueT]] | Awaitable[ValueT],
-) -> Callable[..., ValueT]: ...
+    func_or_awaitable: Callable[..., Awaitable[_T]] | Awaitable[_T],
+) -> Callable[..., _T]: ...
 def async_to_sync(
-    func_or_awaitable: Callable[ParamT, Awaitable[ValueT]] | Awaitable[ValueT],
-) -> Callable[ParamT, ValueT] | Callable[[], ValueT]:
+    func_or_awaitable: Callable[_P, Awaitable[_T]] | Awaitable[_T],
+) -> Callable[_P, _T] | Callable[[], _T]:
     """
     Convert an awaitable function or awaitable object to a synchronous function.
 
@@ -82,61 +82,58 @@ def async_to_sync(
         A synchronous function.
 
     Example:
-        >>> import asyncio
-        >>> import time
-        >>>
-        >>> import anyio
-        >>> import sniffio
-        >>>
-        >>> from async_wrapper import async_to_sync
-        >>>
-        >>>
-        >>> @async_to_sync
-        >>> async def test(x: int) -> int:
-        >>>     backend = sniffio.current_async_library()
-        >>>     if backend == "asyncio":
-        >>>         loop = asyncio.get_running_loop()
-        >>>         print(backend, loop)
-        >>>     else:
-        >>>         print(backend)
-        >>>     await anyio.sleep(1)
-        >>>     return x
-        >>>
-        >>>
-        >>> def main() -> None:
-        >>>     start = time.perf_counter()
-        >>>     result = test(1)
-        >>>     end = time.perf_counter()
-        >>>     assert result == 1
-        >>>     assert end - start < 1.1
-        >>>
-        >>>
-        >>> async def async_main() -> None:
-        >>>     start = time.perf_counter()
-        >>>     result = test(1)
-        >>>     end = time.perf_counter()
-        >>>     assert result == 1
-        >>>     assert end - start < 1.1
-        >>>
-        >>>
-        >>> if __name__ == "__main__":
-        >>>     main()
-        >>>     anyio.run(
-        >>>         async_main,
-        >>>         backend="asyncio",
-        >>>         backend_options={"use_uvloop": True},
-        >>>     )
-        >>>     anyio.run(
-        >>>         async_main,
-        >>>         backend="asyncio",
-        >>>         backend_options={"use_uvloop": True},
-        >>>     )
-        >>>     anyio.run(async_main, backend="trio")
-        $ poetry run python main.py
-        asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
-        asyncio <_UnixSelectorEventLoop running=True closed=False debug=False>
-        asyncio <uvloop.Loop running=True closed=False debug=False>
-        trio
+        .. code-block:: python
+
+            import asyncio
+            import time
+
+            import anyio
+            import sniffio
+
+            from async_wrapper import async_to_sync
+
+
+            @async_to_sync
+            async def test(x: int) -> int:
+                backend = sniffio.current_async_library()
+                if backend == "asyncio":
+                    loop = asyncio.get_running_loop()
+                    print(backend, loop)
+                else:
+                    print(backend)
+                await anyio.sleep(1)
+                return x
+
+
+            def main() -> None:
+                start = time.perf_counter()
+                result = test(1)
+                end = time.perf_counter()
+                assert result == 1
+                assert end - start < 1.1
+
+
+            async def async_main() -> None:
+                start = time.perf_counter()
+                result = test(1)
+                end = time.perf_counter()
+                assert result == 1
+                assert end - start < 1.1
+
+
+            if __name__ == "__main__":
+                main()
+                anyio.run(
+                    async_main,
+                    backend="asyncio",
+                    backend_options={"use_uvloop": True},
+                )
+                anyio.run(
+                    async_main,
+                    backend="asyncio",
+                    backend_options={"use_uvloop": True},
+                )
+                anyio.run(async_main, backend="trio")
     """
     if callable(func_or_awaitable):
         from async_wrapper.convert._async import Async
@@ -154,13 +151,11 @@ def async_to_sync(
     return _async_func_to_sync(awaitable_func)
 
 
-def _async_func_to_sync(
-    func: Callable[ParamT, Awaitable[ValueT]],
-) -> Callable[ParamT, ValueT]:
+def _async_func_to_sync(func: Callable[_P, Awaitable[_T]]) -> Callable[_P, _T]:
     sync_func = _as_sync(func)
 
     @wraps(func)
-    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
+    def inner(*args: _P.args, **kwargs: _P.kwargs) -> _T:
         if not _running_in_async_context():
             return _run(func, *args, **kwargs)
 
@@ -177,19 +172,15 @@ def _async_func_to_sync(
     return inner
 
 
-def _as_sync(func: Callable[ParamT, Awaitable[ValueT]]) -> Callable[ParamT, ValueT]:
+def _as_sync(func: Callable[_P, Awaitable[_T]]) -> Callable[_P, _T]:
     @wraps(func)
-    def inner(*args: ParamT.args, **kwargs: ParamT.kwargs) -> ValueT:
+    def inner(*args: _P.args, **kwargs: _P.kwargs) -> _T:
         return _run(func, *args, **kwargs)
 
     return inner
 
 
-def _run(
-    func: Callable[ParamT, Awaitable[ValueT]],
-    *args: ParamT.args,
-    **kwargs: ParamT.kwargs,
-) -> ValueT:
+def _run(func: Callable[_P, Awaitable[_T]], *args: _P.args, **kwargs: _P.kwargs) -> _T:
     backend = _get_current_backend()
     new_func = partial(func, *args, **kwargs)
     backend_options: dict[str, Any] = {}
@@ -232,8 +223,8 @@ def _init(backend: str, use_uvloop: bool) -> None:  # noqa: FBT001
     use_uvloop_var.set(use_uvloop)
 
 
-def _awaitable_to_function(value: Awaitable[ValueT]) -> Callable[[], Awaitable[ValueT]]:
-    async def awaitable() -> ValueT:
+def _awaitable_to_function(value: Awaitable[_T]) -> Callable[[], Awaitable[_T]]:
+    async def awaitable() -> _T:
         return await value
 
     return awaitable

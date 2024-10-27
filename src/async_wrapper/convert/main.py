@@ -12,28 +12,28 @@ from async_wrapper.convert._sync.main import Sync
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Coroutine
 
-ValueT = TypeVar("ValueT", infer_variance=True)
-ParamT = ParamSpec("ParamT")
+_T = TypeVar("_T", infer_variance=True)
+_P = ParamSpec("_P")
 
 __all__ = ["toggle_func", "async_to_sync", "sync_to_async"]
 
 
 @overload
 def toggle_func(
-    func: Callable[ParamT, Coroutine[Any, Any, ValueT]],
-) -> Callable[ParamT, ValueT]: ...  # pragma: no cover
+    func: Callable[_P, Coroutine[Any, Any, _T]],
+) -> Callable[_P, _T]: ...  # pragma: no cover
 
 
 @overload
 def toggle_func(
-    func: Callable[ParamT, ValueT],
-) -> Callable[ParamT, Awaitable[ValueT]]: ...  # pragma: no cover
+    func: Callable[_P, _T],
+) -> Callable[_P, Awaitable[_T]]: ...  # pragma: no cover
 
 
 # TODO: Coroutine -> Awaitable
 def toggle_func(
-    func: Callable[ParamT, ValueT] | Callable[ParamT, Coroutine[Any, Any, ValueT]],
-) -> Callable[ParamT, ValueT] | Callable[ParamT, Awaitable[ValueT]]:
+    func: Callable[_P, _T] | Callable[_P, Coroutine[Any, Any, _T]],
+) -> Callable[_P, _T] | Callable[_P, Awaitable[_T]]:
     """
     Convert between synchronous and asynchronous functions.
 

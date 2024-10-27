@@ -107,7 +107,7 @@ ignore = [
     "D102",
     "PLR2004",
 ]
-"./src/docs/conf.py" = ['E402']
+"src/docs/conf.py" = ["INP001", "A001"]
 
 [format]
 indent-style = "space"

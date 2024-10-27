@@ -13,7 +13,7 @@ from async_wrapper.convert._sync.main import _check_uvloop
 from tests.base import Timer
 from tests.convert.base import BaseTest
 
-ValueT = TypeVar("ValueT", infer_variance=True)
+_T = TypeVar("_T", infer_variance=True)
 
 
 class TestSync(BaseTest):
@@ -62,17 +62,17 @@ class TestSync(BaseTest):
         assert self.epsilon * x < timer.term < self.epsilon * x + self.epsilon
 
 
-class AwaitableObject(Generic[ValueT]):
-    def __init__(self, value: ValueT) -> None:
+class AwaitableObject(Generic[_T]):
+    def __init__(self, value: _T) -> None:
         self.value = value
 
-    def __await__(self) -> Generator[Any, None, ValueT]:
+    def __await__(self) -> Generator[Any, None, _T]:
         yield
         return self.value
 
 
-def sample_coroutine(value: ValueT) -> Coroutine[Any, Any, ValueT]:
-    async def inner() -> ValueT:
+def sample_coroutine(value: _T) -> Coroutine[Any, Any, _T]:
+    async def inner() -> _T:
         await checkpoint()
         return value
 

@@ -38,44 +38,46 @@ if TYPE_CHECKING:
 
 __all__ = ["Queue", "create_queue"]
 
-ValueT = TypeVar("ValueT", infer_variance=True)
+_T = TypeVar("_T", infer_variance=True)
 
 
-class Queue(Generic[ValueT]):
+class Queue(Generic[_T]):
     """
     obtained from :class:`asyncio.Queue`
 
     Example:
-        >>> from __future__ import annotations
-        >>>
-        >>> from typing import Any
-        >>>
-        >>> import anyio
-        >>>
-        >>> from async_wrapper import Queue
-        >>>
-        >>>
-        >>> async def aput(queue: Queue[Any], value: Any) -> None:
-        >>>     async with queue:
-        >>>         await queue.aput(value)
-        >>>
-        >>>
-        >>> async def main() -> None:
-        >>>     queue: Queue[Any] = Queue(10)
-        >>>
-        >>>     async with anyio.create_task_group() as task_group:
-        >>>         async with queue.aputter:
-        >>>             for i in range(10):
-        >>>                 task_group.start_soon(aput, queue.clone.putter, i)
-        >>>
-        >>>     async with queue.agetter:
-        >>>         result = {x async for x in queue}
-        >>>
-        >>>     assert result == set(range(10))
-        >>>
-        >>>
-        >>> if __name__ == "__main__":
-        >>>     anyio.run(main)
+        .. code-block:: python
+
+            from __future__ import annotations
+
+            from typing import Any
+
+            import anyio
+
+            from async_wrapper import Queue
+
+
+            async def aput(queue: Queue[Any], value: Any) -> None:
+                async with queue:
+                    await queue.aput(value)
+
+
+            async def main() -> None:
+                queue: Queue[Any] = Queue(10)
+
+                async with anyio.create_task_group() as task_group:
+                    async with queue.aputter:
+                        for i in range(10):
+                            task_group.start_soon(aput, queue.clone.putter, i)
+
+                async with queue.agetter:
+                    result = {x async for x in queue}
+
+                assert result == set(range(10))
+
+
+            if __name__ == "__main__":
+                anyio.run(main)
     """
 
     __slots__ = ("_putter", "_getter", "_close_putter", "_close_getter")
@@ -84,10 +86,10 @@ class Queue(Generic[ValueT]):
 
         def __init__(self, max_size: float | None = None) -> None: ...
         @property
-        def _putter(self) -> MemoryObjectSendStream[ValueT]: ...
+        def _putter(self) -> MemoryObjectSendStream[_T]: ...
 
         @property
-        def _getter(self) -> MemoryObjectReceiveStream[ValueT]: ...
+        def _getter(self) -> MemoryObjectReceiveStream[_T]: ...
 
     else:
 
@@ -95,9 +97,7 @@ class Queue(Generic[ValueT]):
             self,
             max_size: float | None = None,
             *,
-            _stream: tuple[
-                MemoryObjectSendStream[ValueT], MemoryObjectReceiveStream[ValueT]
-            ]
+            _stream: tuple[MemoryObjectSendStream[_T], MemoryObjectReceiveStream[_T]]
             | None = None,
         ) -> None:
             self._init(max_size, _stream=_stream)
@@ -106,9 +106,7 @@ class Queue(Generic[ValueT]):
         self,
         max_size: float | None = None,
         *,
-        _stream: tuple[
-            MemoryObjectSendStream[ValueT], MemoryObjectReceiveStream[ValueT]
-        ]
+        _stream: tuple[MemoryObjectSendStream[_T], MemoryObjectReceiveStream[_T]]
         | None = None,
     ) -> None:
         if _stream is None:
@@ -199,7 +197,7 @@ class Queue(Generic[ValueT]):
             return False
         return self.qsize() >= self.maxsize
 
-    async def aget(self, *, timeout: float | None = None) -> ValueT:
+    async def aget(self, *, timeout: float | None = None) -> _T:
         """
         remove and return an item from the queue.
 
@@ -212,7 +210,7 @@ class Queue(Generic[ValueT]):
         with fail_after(timeout):
             return await self._aget()
 
-    async def aput(self, value: ValueT, *, timeout: float | None = None) -> None:
+    async def aput(self, value: _T, *, timeout: float | None = None) -> None:
         """
         put an item into the queue.
 
@@ -223,7 +221,7 @@ class Queue(Generic[ValueT]):
         with fail_after(timeout):
             await self._aput(value)
 
-    async def _aget(self) -> ValueT:
+    async def _aget(self) -> _T:
         """remove and return an item from the queue."""
         try:
             return await self._getter.receive()
@@ -234,7 +232,7 @@ class Queue(Generic[ValueT]):
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
-    async def _aput(self, value: ValueT) -> None:
+    async def _aput(self, value: _T) -> None:
         """put an item into the queue."""
         try:
             await self._putter.send(value)
@@ -245,7 +243,7 @@ class Queue(Generic[ValueT]):
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
-    def get(self) -> ValueT:
+    def get(self) -> _T:
         """remove and return an item from the queue without blocking."""
         try:
             return self._getter.receive_nowait()
@@ -256,7 +254,7 @@ class Queue(Generic[ValueT]):
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
-    def put(self, value: ValueT) -> None:
+    def put(self, value: _T) -> None:
         """put an item into the queue without blocking."""
         try:
             self._putter.send_nowait(value)
@@ -305,7 +303,7 @@ class Queue(Generic[ValueT]):
             self._putter.close()
 
     @property
-    def clone(self) -> _Clone[ValueT]:
+    def clone(self) -> _Clone[_T]:
         """
         Create a queue factory for generating RestrictedQueue instances.
 
@@ -316,7 +314,7 @@ class Queue(Generic[ValueT]):
         """
         return _Clone(self)
 
-    def _clone(self, *, putter: bool, getter: bool) -> Queue[ValueT]:
+    def _clone(self, *, putter: bool, getter: bool) -> Queue[_T]:
         """create clone of this queue"""
         if self._closed:
             raise QueueClosedError("the queue is already closed")
@@ -329,7 +327,7 @@ class Queue(Generic[ValueT]):
         except (ClosedResourceError, BrokenResourceError) as exc:
             raise QueueBrokenError from exc
 
-        new: Queue[ValueT]
+        new: Queue[_T]
         new = Queue(_stream=(_putter, _getter))  # type: ignore
         new._close_putter = putter  # noqa: SLF001
         new._close_getter = getter  # noqa: SLF001
@@ -372,7 +370,7 @@ class Queue(Generic[ValueT]):
     def __aiter__(self) -> Self:
         return self
 
-    async def __anext__(self) -> ValueT:
+    async def __anext__(self) -> _T:
         try:
             return await self.aget()
         except (
@@ -386,7 +384,7 @@ class Queue(Generic[ValueT]):
     def __iter__(self) -> Self:
         return self
 
-    def __next__(self) -> ValueT:
+    def __next__(self) -> _T:
         try:
             return self.get()
         except (
@@ -407,10 +405,10 @@ class Queue(Generic[ValueT]):
         return _render("Queue", max=max_size, size=size)
 
 
-class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
+class _RestrictedQueue(Queue[_T], Generic[_T]):
     __slots__ = ("_queue", "_do_putter", "_do_getter")
 
-    def __init__(self, queue: Queue[ValueT], *, putter: bool, getter: bool) -> None:
+    def __init__(self, queue: Queue[_T], *, putter: bool, getter: bool) -> None:
         self._queue = queue
         if getter is putter:
             raise QueueRestrictedError("putter and getter are the same")
@@ -419,13 +417,13 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
 
     @property
     @override
-    def _putter(self) -> MemoryObjectSendStream[ValueT]:
+    def _putter(self) -> MemoryObjectSendStream[_T]:
         self._raise_restricted(putter=True)
         return self._queue._putter  # noqa: SLF001
 
     @property
     @override
-    def _getter(self) -> MemoryObjectReceiveStream[ValueT]:
+    def _getter(self) -> MemoryObjectReceiveStream[_T]:
         self._raise_restricted(getter=True)
         return self._queue._getter  # noqa: SLF001
 
@@ -448,9 +446,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
         raise RuntimeError("never")  # pragma: no cover
 
     @property
-    def _stream(
-        self,
-    ) -> MemoryObjectSendStream[ValueT] | MemoryObjectReceiveStream[ValueT]:
+    def _stream(self) -> MemoryObjectSendStream[_T] | MemoryObjectReceiveStream[_T]:
         if self._do_getter:
             return self._getter
         if self._do_putter:
@@ -485,7 +481,7 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
         raise TypeError("do not clone restricted queue")
 
     @override
-    def _clone(self, *, putter: bool, getter: bool) -> Queue[ValueT]:
+    def _clone(self, *, putter: bool, getter: bool) -> Queue[_T]:
         raise TypeError("do not clone restricted queue")
 
     @override
@@ -537,15 +533,15 @@ class _RestrictedQueue(Queue[ValueT], Generic[ValueT]):
         return _render("RestrictedQueue", max=max_size, size=size, where=where)
 
 
-class _Clone(Generic[ValueT]):
+class _Clone(Generic[_T]):
     __slots__ = ("_queue",)
 
-    def __init__(self, queue: Queue[ValueT]) -> None:
+    def __init__(self, queue: Queue[_T]) -> None:
         if queue._closed:  # noqa: SLF001
             raise QueueClosedError("queue is already closed")
         self._queue = queue
 
-    def create(self, where: Literal["putter", "getter"]) -> _RestrictedQueue[ValueT]:
+    def create(self, where: Literal["putter", "getter"]) -> _RestrictedQueue[_T]:
         if where == "putter":
             return self.putter
         if where == "getter":
@@ -553,13 +549,13 @@ class _Clone(Generic[ValueT]):
         raise RuntimeError("never")  # pragma: no cover
 
     @property
-    def putter(self) -> _RestrictedQueue[ValueT]:
+    def putter(self) -> _RestrictedQueue[_T]:
         self._raise_if_closed()
         new = self._queue._clone(putter=True, getter=False)  # noqa: SLF001
         return _RestrictedQueue(new, putter=True, getter=False)
 
     @property
-    def getter(self) -> _RestrictedQueue[ValueT]:
+    def getter(self) -> _RestrictedQueue[_T]:
         self._raise_if_closed()
         new = self._queue._clone(getter=True, putter=False)  # noqa: SLF001
         return _RestrictedQueue(new, putter=False, getter=True)

@@ -30,12 +30,12 @@ __all__ = [
     "create_disposable",
 ]
 
-InputT = TypeVar("InputT", infer_variance=True)
-OutputT = TypeVar("OutputT", infer_variance=True)
+_T = TypeVar("_T", infer_variance=True)
+_T2 = TypeVar("_T2", infer_variance=True)
 
 
 @runtime_checkable
-class Disposable(Protocol[InputT, OutputT]):
+class Disposable(Protocol[_T, _T2]):
     """Defines the interface for a disposable resource."""
 
     @property
@@ -43,7 +43,7 @@ class Disposable(Protocol[InputT, OutputT]):
         """Check if disposed"""
         ...  # pragma: no cover
 
-    async def next(self, value: InputT) -> OutputT:
+    async def next(self, value: _T) -> _T2:
         """
         Processes the next input value and produces an output value.
 
@@ -63,10 +63,10 @@ class Disposable(Protocol[InputT, OutputT]):
 
 
 @runtime_checkable
-class DisposableWithCallback(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
+class DisposableWithCallback(Disposable[_T, _T2], Protocol[_T, _T2]):
     """disposable & callback"""
 
-    def prepare_callback(self, subscribable: Subscribable[InputT, OutputT]) -> Any:
+    def prepare_callback(self, subscribable: Subscribable[_T, _T2]) -> Any:
         """Prepare a callback to use when dispose is executed.
 
         Args:
@@ -75,7 +75,7 @@ class DisposableWithCallback(Disposable[InputT, OutputT], Protocol[InputT, Outpu
 
 
 @runtime_checkable
-class Subscribable(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
+class Subscribable(Disposable[_T, _T2], Protocol[_T, _T2]):
     """subscribable & disposable"""
 
     @property
@@ -85,7 +85,7 @@ class Subscribable(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
 
     def subscribe(
         self,
-        disposable: Disposable[OutputT, Any] | Callable[[OutputT], Awaitable[Any]],
+        disposable: Disposable[_T2, Any] | Callable[[_T2], Awaitable[Any]],
         *,
         dispose: bool = True,
     ) -> Any:
@@ -106,15 +106,13 @@ class Subscribable(Disposable[InputT, OutputT], Protocol[InputT, OutputT]):
         """
 
 
-class SimpleDisposable(
-    DisposableWithCallback[InputT, OutputT], Generic[InputT, OutputT]
-):
+class SimpleDisposable(DisposableWithCallback[_T, _T2], Generic[_T, _T2]):
     """simple disposable impl."""
 
-    _journals: deque[Subscribable[InputT, OutputT]]
+    _journals: deque[Subscribable[_T, _T2]]
     __slots__ = ("_func", "_is_disposed", "_journals", "_async_lock", "_thread_lock")
 
-    def __init__(self, func: Callable[[InputT], Awaitable[OutputT]]) -> None:
+    def __init__(self, func: Callable[[_T], Awaitable[_T2]]) -> None:
         self._func = func
         self._is_disposed = False
         self._journals = deque()
@@ -127,7 +125,7 @@ class SimpleDisposable(
         return self._is_disposed
 
     @override
-    async def next(self, value: InputT) -> OutputT:
+    async def next(self, value: _T) -> _T2:
         if self._is_disposed:
             raise AlreadyDisposedError("disposable already disposed")
         return await self._func(value)
@@ -141,7 +139,7 @@ class SimpleDisposable(
         self._is_disposed = True
 
     @override
-    def prepare_callback(self, subscribable: Subscribable[InputT, OutputT]) -> Any:
+    def prepare_callback(self, subscribable: Subscribable[_T, _T2]) -> Any:
         if self._is_disposed:
             raise AlreadyDisposedError("disposable already disposed")
 
@@ -153,7 +151,7 @@ class SimpleDisposable(
         return hash((id(self), id(self._func)))
 
 
-class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
+class Pipe(Subscribable[_T, _T2], Generic[_T, _T2]):
     """
     Implements a pipe that can be used to communicate data between coroutines.
 
@@ -164,8 +162,8 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
     """
 
     _context: Synchronization
-    _listener: Callable[[InputT], Awaitable[OutputT]]
-    _listeners: dict[Disposable[OutputT, Any], bool]
+    _listener: Callable[[_T], Awaitable[_T2]]
+    _listeners: dict[Disposable[_T2, Any], bool]
     _dispose: Callable[[], Awaitable[Any]] | None
     _is_disposed: bool
     _dispose_lock: Lock
@@ -181,7 +179,7 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
 
     def __init__(
         self,
-        listener: Callable[[InputT], Awaitable[OutputT]],
+        listener: Callable[[_T], Awaitable[_T2]],
         context: Synchronization | None = None,
         dispose: Callable[[], Awaitable[Any]] | None = None,
     ) -> None:
@@ -203,7 +201,7 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
         return len(self._listeners)
 
     @override
-    async def next(self, value: InputT) -> OutputT:
+    async def next(self, value: _T) -> _T2:
         if self._is_disposed:
             raise AlreadyDisposedError("pipe already disposed")
 
@@ -235,7 +233,7 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
     @override
     def subscribe(
         self,
-        disposable: Disposable[OutputT, Any] | Callable[[OutputT], Awaitable[Any]],
+        disposable: Disposable[_T2, Any] | Callable[[_T2], Awaitable[Any]],
         *,
         dispose: bool = True,
     ) -> None:
@@ -258,8 +256,8 @@ class Pipe(Subscribable[InputT, OutputT], Generic[InputT, OutputT]):
 
 
 def create_disposable(
-    func: Callable[[InputT], Awaitable[OutputT]],
-) -> SimpleDisposable[InputT, OutputT]:
+    func: Callable[[_T], Awaitable[_T2]],
+) -> SimpleDisposable[_T, _T2]:
     """SimpleDisposable shortcut
 
     Args:
@@ -286,7 +284,7 @@ async def _enter_context(stack: AsyncExitStack, context: Synchronization) -> Non
 
 
 async def _call_next(
-    context: Synchronization, disposable: Disposable[InputT, Any], value: InputT
+    context: Synchronization, disposable: Disposable[_T, Any], value: _T
 ) -> None:
     async with AsyncExitStack() as stack:
         await _enter_context(stack, context)

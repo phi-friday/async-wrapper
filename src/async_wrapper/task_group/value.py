@@ -7,19 +7,19 @@ from typing_extensions import TypeVar, override
 
 from async_wrapper.exception import PendingError
 
-ValueT = TypeVar("ValueT", infer_variance=True)
+_T = TypeVar("_T", infer_variance=True)
 Pending = local()
 
 __all__ = ["SoonValue"]
 
 
-class SoonValue(Generic[ValueT]):
+class SoonValue(Generic[_T]):
     """A class representing a value that will be available soon."""
 
     __slots__ = ("_value",)
 
     def __init__(self) -> None:
-        self._value: ValueT | local = Pending
+        self._value: _T | local = Pending
 
     @override
     def __repr__(self) -> str:
@@ -27,7 +27,7 @@ class SoonValue(Generic[ValueT]):
         return f"<SoonValue: status={status}>"
 
     @property
-    def value(self) -> ValueT:
+    def value(self) -> _T:
         """
         Gets the soon-to-be available value.
 

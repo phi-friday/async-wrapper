@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
     from anyio.abc import CancelScope, CapacityLimiter, Lock, Semaphore
 
-ValueT = TypeVar("ValueT", infer_variance=True)
-ParamT = ParamSpec("ParamT")
+_T = TypeVar("_T", infer_variance=True)
+_P = ParamSpec("_P")
 
 __all__ = ["TaskGroupWrapper", "create_task_group_wrapper"]
 
@@ -27,31 +27,33 @@ class TaskGroupWrapper(_TaskGroup):
     wrap :class:`anyio.abc.TaskGroup`
 
     Example:
-        >>> import anyio
-        >>>
-        >>> from async_wrapper import TaskGroupWrapper
-        >>>
-        >>>
-        >>> async def test(x: int) -> int:
-        >>>     await anyio.sleep(0.1)
-        >>>     return x
-        >>>
-        >>>
-        >>> async def main() -> None:
-        >>>     async with anyio.create_task_group() as task_group:
-        >>>         async with TaskGroupWrapper(task_group) as tg:
-        >>>             func = tg.wrap(test)
-        >>>             soon_1 = func(1)
-        >>>             soon_2 = func(2)
-        >>>
-        >>>     assert soon_1.is_ready
-        >>>     assert soon_2.is_ready
-        >>>     assert soon_1.value == 1
-        >>>     assert soon_2.value == 2
-        >>>
-        >>>
-        >>> if __name__ == "__main__":
-        >>>     anyio.run(main)
+        .. code-block:: python
+
+            import anyio
+
+            from async_wrapper import TaskGroupWrapper
+
+
+            async def test(x: int) -> int:
+                await anyio.sleep(0.1)
+                return x
+
+
+            async def main() -> None:
+                async with anyio.create_task_group() as task_group:
+                    async with TaskGroupWrapper(task_group) as tg:
+                        func = tg.wrap(test)
+                        soon_1 = func(1)
+                        soon_2 = func(2)
+
+                assert soon_1.is_ready
+                assert soon_2.is_ready
+                assert soon_1.value == 1
+                assert soon_2.value == 2
+
+
+            if __name__ == "__main__":
+                anyio.run(main)
     """
 
     __slots__ = ("_task_group", "_active_self")
@@ -101,11 +103,11 @@ class TaskGroupWrapper(_TaskGroup):
 
     def wrap(
         self,
-        func: Callable[ParamT, Awaitable[ValueT]],
+        func: Callable[_P, Awaitable[_T]],
         semaphore: Semaphore | None = None,
         limiter: CapacityLimiter | None = None,
         lock: Lock | None = None,
-    ) -> SoonWrapper[ParamT, ValueT]:
+    ) -> SoonWrapper[_P, _T]:
         """
         Wrap a function to be used within a wrapper.
 
@@ -123,14 +125,14 @@ class TaskGroupWrapper(_TaskGroup):
         return SoonWrapper(func, self, semaphore=semaphore, limiter=limiter, lock=lock)
 
 
-class SoonWrapper(Generic[ParamT, ValueT]):
+class SoonWrapper(Generic[_P, _T]):
     """wrapped func using in :class:`TaskGroupWrapper`"""
 
     __slots__ = ("func", "task_group", "semaphore", "limiter", "lock", "_wrapped")
 
     def __init__(
         self,
-        func: Callable[ParamT, Awaitable[ValueT]],
+        func: Callable[_P, Awaitable[_T]],
         task_group: _TaskGroup,
         semaphore: Semaphore | None = None,
         limiter: CapacityLimiter | None = None,
@@ -144,10 +146,8 @@ class SoonWrapper(Generic[ParamT, ValueT]):
 
         self._wrapped = None
 
-    def __call__(
-        self, *args: ParamT.args, **kwargs: ParamT.kwargs
-    ) -> SoonValue[ValueT]:
-        value: SoonValue[ValueT] = SoonValue()
+    def __call__(self, *args: _P.args, **kwargs: _P.kwargs) -> SoonValue[_T]:
+        value: SoonValue[_T] = SoonValue()
         wrapped = partial(self.wrapped, value, *args, **kwargs)
         self.task_group.start_soon(wrapped)
         return value
@@ -155,15 +155,15 @@ class SoonWrapper(Generic[ParamT, ValueT]):
     @property
     def wrapped(
         self,
-    ) -> Callable[Concatenate[SoonValue[ValueT], ParamT], Coroutine[Any, Any, ValueT]]:
+    ) -> Callable[Concatenate[SoonValue[_T], _P], Coroutine[Any, Any, _T]]:
         """wrapped func using semaphore"""
         if self._wrapped is not None:
             return self._wrapped
 
         @wraps(self.func)
         async def wrapped(
-            value: SoonValue[ValueT], *args: ParamT.args, **kwargs: ParamT.kwargs
-        ) -> ValueT:
+            value: SoonValue[_T], *args: _P.args, **kwargs: _P.kwargs
+        ) -> _T:
             async with AsyncExitStack() as stack:
                 if self.semaphore is not None:
                     await stack.enter_async_context(self.semaphore)

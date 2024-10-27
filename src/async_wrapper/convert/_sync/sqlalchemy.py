@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     import greenlet
 
 
-ValueT = TypeVar("ValueT", infer_variance=True)
+_T = TypeVar("_T", infer_variance=True)
 _SA_GREENLET_ATTR = "__sqlalchemy_greenlet_provider__"
 
 
@@ -38,7 +38,7 @@ def _check_sa_current_greenlet() -> bool:
     return _check_sa_greenlet(current)
 
 
-def run_sa_greenlet(awaitable: Awaitable[ValueT]) -> ValueT | Unset:
+def run_sa_greenlet(awaitable: Awaitable[_T]) -> _T | Unset:
     with suppress(ImportError):
         if _check_sa_current_greenlet():
             return _wait_sa_greenlet(awaitable)
@@ -46,7 +46,7 @@ def run_sa_greenlet(awaitable: Awaitable[ValueT]) -> ValueT | Unset:
     return unset
 
 
-def _wait_sa_greenlet(awaitable: Awaitable[ValueT]) -> ValueT:
+def _wait_sa_greenlet(awaitable: Awaitable[_T]) -> _T:
     try:
         from sqlalchemy.util import await_only
     except ImportError as exc:  # pragma: no cover
