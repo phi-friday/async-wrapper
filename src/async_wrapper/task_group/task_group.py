@@ -24,36 +24,36 @@ __all__ = ["TaskGroupWrapper", "create_task_group_wrapper"]
 
 class TaskGroupWrapper(_TaskGroup):
     """
-    wrap :class:`anyio.abc.TaskGroup`
+    wrap [`anyio.abc.TaskGroup`][]
 
-    Example:
-        .. code-block:: python
+    Examples:
+        ```python
+        import anyio
 
-            import anyio
-
-            from async_wrapper import TaskGroupWrapper
-
-
-            async def test(x: int) -> int:
-                await anyio.sleep(0.1)
-                return x
+        from async_wrapper import TaskGroupWrapper
 
 
-            async def main() -> None:
-                async with anyio.create_task_group() as task_group:
-                    async with TaskGroupWrapper(task_group) as tg:
-                        func = tg.wrap(test)
-                        soon_1 = func(1)
-                        soon_2 = func(2)
-
-                assert soon_1.is_ready
-                assert soon_2.is_ready
-                assert soon_1.value == 1
-                assert soon_2.value == 2
+        async def test(x: int) -> int:
+            await anyio.sleep(0.1)
+            return x
 
 
-            if __name__ == "__main__":
-                anyio.run(main)
+        async def main() -> None:
+            async with anyio.create_task_group() as task_group:
+                async with TaskGroupWrapper(task_group) as tg:
+                    func = tg.wrap(test)
+                    soon_1 = func(1)
+                    soon_2 = func(2)
+
+            assert soon_1.is_ready
+            assert soon_2.is_ready
+            assert soon_1.value == 1
+            assert soon_2.value == 2
+
+
+        if __name__ == "__main__":
+            anyio.run(main)
+        ```
     """
 
     __slots__ = ("_task_group", "_active_self")
@@ -115,9 +115,9 @@ class TaskGroupWrapper(_TaskGroup):
 
         Args:
             func: The target function to be wrapped.
-            semaphore: An :obj:`anyio.abc.Semaphore`. Defaults to None.
-            limiter: An :obj:`anyio.abc.CapacityLimiter`. Defaults to None.
-            lock: An :obj:`anyio.abc.Lock`. Defaults to None.
+            semaphore: An [`anyio.Semaphore`][]. Defaults to None.
+            limiter: An [`anyio.CapacityLimiter`][]. Defaults to None.
+            lock: An [`anyio.Lock`][]. Defaults to None.
 
         Returns:
             The wrapped function.
@@ -126,7 +126,7 @@ class TaskGroupWrapper(_TaskGroup):
 
 
 class SoonWrapper(Generic[_P, _T]):
-    """wrapped func using in :class:`TaskGroupWrapper`"""
+    """wrapped func using in `TaskGroupWrapper`"""
 
     __slots__ = ("func", "task_group", "semaphore", "limiter", "lock", "_wrapped")
 
@@ -190,11 +190,11 @@ class SoonWrapper(Generic[_P, _T]):
         Create a copy of this object.
 
         Args:
-            semaphore: An :obj:`anyio.abc.Semaphore`.
+            semaphore: An [`anyio.Semaphore`][].
                 If provided, it will overwrite the existing semaphore. Defaults to None.
-            limiter: An :obj:`anyio.abc.CapacityLimiter`.
+            limiter: An [`anyio.CapacityLimiter`][].
                 If provided, it will overwrite the existing limiter. Defaults to None.
-            lock: An :obj:`anyio.abc.Lock`.
+            lock: An [`anyio.Lock`][].
                 If provided, it will overwrite the existing lock. Defaults to None.
 
         Returns:
@@ -216,7 +216,7 @@ def create_task_group_wrapper() -> TaskGroupWrapper:
     create new task group wrapper
 
     Returns:
-        new :obj:`TaskGroupWrapper`
+        new [`TaskGroupWrapper`][async_wrapper.task_group.task_group.TaskGroupWrapper]
     """
     return TaskGroupWrapper(_create_task_group())
 

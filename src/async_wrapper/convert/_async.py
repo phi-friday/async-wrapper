@@ -42,35 +42,35 @@ def sync_to_async(func: Callable[_P, _T]) -> Callable[_P, Awaitable[_T]]:
         An asynchronous function
         that behaves equivalently to the input synchronous function.
 
-    Example:
-        .. code-block:: python
+    Examples:
+        ```python
+        import time
 
-            import time
+        import anyio
 
-            import anyio
-
-            from async_wrapper import sync_to_async
-
-
-            @sync_to_async
-            def test(x: int) -> int:
-                print(f"[{x}] test: start")
-                time.sleep(1)
-                print(f"[{x}] test: end")
-                return x
+        from async_wrapper import sync_to_async
 
 
-            async def main() -> None:
-                start = time.perf_counter()
-                async with anyio.create_task_group() as task_group:
-                    for i in range(4):
-                        task_group.start_soon(test, i)
-                end = time.perf_counter()
-                assert end - start < 1.1
+        @sync_to_async
+        def test(x: int) -> int:
+            print(f"[{x}] test: start")
+            time.sleep(1)
+            print(f"[{x}] test: end")
+            return x
 
 
-            if __name__ == "__main__":
-                anyio.run(main)
+        async def main() -> None:
+            start = time.perf_counter()
+            async with anyio.create_task_group() as task_group:
+                for i in range(4):
+                    task_group.start_soon(test, i)
+            end = time.perf_counter()
+            assert end - start < 1.1
+
+
+        if __name__ == "__main__":
+            anyio.run(main)
+        ```
     """
     from async_wrapper.convert._sync.main import Sync
 

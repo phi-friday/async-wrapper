@@ -82,58 +82,58 @@ def async_to_sync(
         A synchronous function.
 
     Example:
-        .. code-block:: python
+        ```python
+        import asyncio
+        import time
 
-            import asyncio
-            import time
+        import anyio
+        import sniffio
 
-            import anyio
-            import sniffio
-
-            from async_wrapper import async_to_sync
-
-
-            @async_to_sync
-            async def test(x: int) -> int:
-                backend = sniffio.current_async_library()
-                if backend == "asyncio":
-                    loop = asyncio.get_running_loop()
-                    print(backend, loop)
-                else:
-                    print(backend)
-                await anyio.sleep(1)
-                return x
+        from async_wrapper import async_to_sync
 
 
-            def main() -> None:
-                start = time.perf_counter()
-                result = test(1)
-                end = time.perf_counter()
-                assert result == 1
-                assert end - start < 1.1
+        @async_to_sync
+        async def test(x: int) -> int:
+            backend = sniffio.current_async_library()
+            if backend == "asyncio":
+                loop = asyncio.get_running_loop()
+                print(backend, loop)
+            else:
+                print(backend)
+            await anyio.sleep(1)
+            return x
 
 
-            async def async_main() -> None:
-                start = time.perf_counter()
-                result = test(1)
-                end = time.perf_counter()
-                assert result == 1
-                assert end - start < 1.1
+        def main() -> None:
+            start = time.perf_counter()
+            result = test(1)
+            end = time.perf_counter()
+            assert result == 1
+            assert end - start < 1.1
 
 
-            if __name__ == "__main__":
-                main()
-                anyio.run(
-                    async_main,
-                    backend="asyncio",
-                    backend_options={"use_uvloop": True},
-                )
-                anyio.run(
-                    async_main,
-                    backend="asyncio",
-                    backend_options={"use_uvloop": True},
-                )
-                anyio.run(async_main, backend="trio")
+        async def async_main() -> None:
+            start = time.perf_counter()
+            result = test(1)
+            end = time.perf_counter()
+            assert result == 1
+            assert end - start < 1.1
+
+
+        if __name__ == "__main__":
+            main()
+            anyio.run(
+                async_main,
+                backend="asyncio",
+                backend_options={"use_uvloop": True},
+            )
+            anyio.run(
+                async_main,
+                backend="asyncio",
+                backend_options={"use_uvloop": True},
+            )
+            anyio.run(async_main, backend="trio")
+        ```
     """
     if callable(func_or_awaitable):
         from async_wrapper.convert._async import Async

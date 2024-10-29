@@ -43,41 +43,41 @@ _T = TypeVar("_T", infer_variance=True)
 
 class Queue(Generic[_T]):
     """
-    obtained from :class:`asyncio.Queue`
+    obtained from [`asyncio.Queue`][]
 
-    Example:
-        .. code-block:: python
+    Examples:
+        ```python
+        from __future__ import annotations
 
-            from __future__ import annotations
+        from typing import Any
 
-            from typing import Any
+        import anyio
 
-            import anyio
-
-            from async_wrapper import Queue
-
-
-            async def aput(queue: Queue[Any], value: Any) -> None:
-                async with queue:
-                    await queue.aput(value)
+        from async_wrapper import Queue
 
 
-            async def main() -> None:
-                queue: Queue[Any] = Queue(10)
-
-                async with anyio.create_task_group() as task_group:
-                    async with queue.aputter:
-                        for i in range(10):
-                            task_group.start_soon(aput, queue.clone.putter, i)
-
-                async with queue.agetter:
-                    result = {x async for x in queue}
-
-                assert result == set(range(10))
+        async def aput(queue: Queue[Any], value: Any) -> None:
+            async with queue:
+                await queue.aput(value)
 
 
-            if __name__ == "__main__":
-                anyio.run(main)
+        async def main() -> None:
+            queue: Queue[Any] = Queue(10)
+
+            async with anyio.create_task_group() as task_group:
+                async with queue.aputter:
+                    for i in range(10):
+                        task_group.start_soon(aput, queue.clone.putter, i)
+
+            async with queue.agetter:
+                result = {x async for x in queue}
+
+            assert result == set(range(10))
+
+
+        if __name__ == "__main__":
+            anyio.run(main)
+        ```
     """
 
     __slots__ = ("_putter", "_getter", "_close_putter", "_close_getter")
@@ -573,13 +573,13 @@ class _Clone(Generic[_T]):
 
 def create_queue(max_size: float | None = None) -> Queue[Any]:
     """
-    create queue like :class:`asyncio.Queue`
+    create queue like [`asyncio.Queue`][]
 
     Args:
         max_size: queue size. Defaults to None.
 
     Returns:
-        new :obj:`Queue` using :class:`anyio.abc.ObjectStream`
+        new [`Queue`][async_wrapper.Queue] using [`anyio.abc.ObjectStream`][]
     """
     return Queue(max_size)
 

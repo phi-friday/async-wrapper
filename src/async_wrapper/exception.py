@@ -52,9 +52,11 @@ class QueueClosedError(QueueError):
     Error that occurs when attempting to get from or put into a closed queue.
 
     This error is different from QueueBrokenError.
-        :exc:`QueueBrokenError` is an unintended error.
 
-        :exc:`QueueClosedError` is an error deliberately raised.
+    - [`QueueBrokenError`][async_wrapper.exception.QueueBrokenError]
+    is an unintended error.
+    - [`QueueClosedError`][async_wrapper.exception.QueueClosedError]
+    is an error deliberately raised.
     """
 
 
@@ -63,9 +65,11 @@ class QueueBrokenError(QueueError):
     Error that occurs when trying to get from or put into a closed queue.
 
     This error is different from QueueClosedError.
-        :exc:`QueueClosedError` is an error deliberately raised.
 
-        :exc:`QueueBrokenError` is an unintended error.
+    - [`QueueClosedError`][async_wrapper.exception.QueueClosedError]
+    is an error deliberately raised.
+    - [`QueueBrokenError`][async_wrapper.exception.QueueBrokenError]
+    is an unintended error.
     """
 
 
