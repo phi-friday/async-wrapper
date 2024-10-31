@@ -1,4 +1,4 @@
-site_name: typed-diskcache
+site_name: !ENV [SITE_NAME, "async-wrapper"]
 site_url: https://async-wrapper.readthedocs.io
 repo_url: https://github.com/phi-friday/async-wrapper
 repo_name: phi-friday/async-wrapper
