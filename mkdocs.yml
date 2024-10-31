@@ -7,6 +7,7 @@ site_author: Choi Min-yeong
 copyright: 2023-2024, Choi Min-yeong
 watch:
   - src/async_wrapper
+  - README.md
 nav:
   - README: index.md
   - LICENSE: license.md
@@ -47,7 +48,8 @@ theme:
     - content.code.copy
 markdown_extensions:
   - pymdownx.snippets
-  - pymdownx.tasklist
+  - pymdownx.tasklist:
+      custom_checkbox: true
   - pymdownx.highlight:
       linenums: true
       anchor_linenums: true
@@ -56,6 +58,7 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - admonition
 plugins:
   - search
   - autorefs
@@ -70,12 +73,15 @@ plugins:
             - https://typing-extensions.readthedocs.io/en/stable/objects.inv
             - https://anyio.readthedocs.io/en/stable/objects.inv
           options:
+            extensions:
+              - griffe_inherited_docstrings:
+                  merge: true
             # general
             allow_inspection: true
             show_bases: true
             show_source: true
             # title
-            heading_level: 1
+            heading_level: 2
             parameter_headings: true
             show_root_toc_entry: true
             show_root_heading: true
