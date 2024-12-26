@@ -24,9 +24,9 @@ if TYPE_CHECKING:
 __all__ = [
     "Disposable",
     "DisposableWithCallback",
-    "Subscribable",
-    "SimpleDisposable",
     "Pipe",
+    "SimpleDisposable",
+    "Subscribable",
     "create_disposable",
 ]
 
@@ -110,7 +110,7 @@ class SimpleDisposable(DisposableWithCallback[_T, _T2], Generic[_T, _T2]):
     """simple disposable impl."""
 
     _journals: deque[Subscribable[_T, _T2]]
-    __slots__ = ("_func", "_is_disposed", "_journals", "_async_lock", "_thread_lock")
+    __slots__ = ("_async_lock", "_func", "_is_disposed", "_journals", "_thread_lock")
 
     def __init__(self, func: Callable[[_T], Awaitable[_T2]]) -> None:
         self._func = func
@@ -170,11 +170,11 @@ class Pipe(Subscribable[_T, _T2], Generic[_T, _T2]):
 
     __slots__ = (
         "_context",
+        "_dispose",
+        "_dispose_lock",
+        "_is_disposed",
         "_listener",
         "_listeners",
-        "_dispose",
-        "_is_disposed",
-        "_dispose_lock",
     )
 
     def __init__(

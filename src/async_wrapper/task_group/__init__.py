@@ -6,4 +6,4 @@ from async_wrapper.task_group.task_group import (
 )
 from async_wrapper.task_group.value import SoonValue
 
-__all__ = ["TaskGroupWrapper", "SoonValue", "create_task_group_wrapper"]
+__all__ = ["SoonValue", "TaskGroupWrapper", "create_task_group_wrapper"]

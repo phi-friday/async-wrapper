@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
 
-__all__ = ["Waiter", "Completed", "wait_for"]
+__all__ = ["Completed", "Waiter", "wait_for"]
 
 _T = TypeVar("_T", infer_variance=True)
 _P = ParamSpec("_P")
@@ -57,7 +57,7 @@ class Waiter(Event):
         ```
     """
 
-    __slots__ = ("_event", "_func", "_args", "_kwargs")
+    __slots__ = ("_args", "_event", "_func", "_kwargs")
 
     _event: Event
 
@@ -173,7 +173,7 @@ class Completed:
         ```
     """
 
-    __slots__ = ("_events", "__setter", "__getter", "__task_group")
+    __slots__ = ("__getter", "__setter", "__task_group", "_events")
 
     def __init__(self, task_group: TaskGroup | None = None) -> None:
         self._events: dict[Waiter, MemoryObjectReceiveStream[Any]] = {}

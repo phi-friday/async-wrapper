@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 _T = TypeVar("_T", infer_variance=True)
 _P = ParamSpec("_P")
 
-__all__ = ["toggle_func", "async_to_sync", "sync_to_async"]
+__all__ = ["async_to_sync", "sync_to_async", "toggle_func"]
 
 
 @overload

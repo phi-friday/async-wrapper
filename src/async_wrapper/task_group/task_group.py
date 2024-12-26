@@ -56,7 +56,7 @@ class TaskGroupWrapper(_TaskGroup):
         ```
     """
 
-    __slots__ = ("_task_group", "_active_self")
+    __slots__ = ("_active_self", "_task_group")
 
     def __init__(self, task_group: _TaskGroup) -> None:
         self._task_group = task_group
@@ -128,7 +128,7 @@ class TaskGroupWrapper(_TaskGroup):
 class SoonWrapper(Generic[_P, _T]):
     """wrapped func using in `TaskGroupWrapper`"""
 
-    __slots__ = ("func", "task_group", "semaphore", "limiter", "lock", "_wrapped")
+    __slots__ = ("_wrapped", "func", "limiter", "lock", "semaphore", "task_group")
 
     def __init__(
         self,

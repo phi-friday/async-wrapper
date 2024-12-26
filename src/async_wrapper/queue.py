@@ -80,7 +80,7 @@ class Queue(Generic[_T]):
         ```
     """
 
-    __slots__ = ("_putter", "_getter", "_close_putter", "_close_getter")
+    __slots__ = ("_close_getter", "_close_putter", "_getter", "_putter")
 
     if TYPE_CHECKING:
 
@@ -406,7 +406,7 @@ class Queue(Generic[_T]):
 
 
 class _RestrictedQueue(Queue[_T], Generic[_T]):
-    __slots__ = ("_queue", "_do_putter", "_do_getter")
+    __slots__ = ("_do_getter", "_do_putter", "_queue")
 
     def __init__(self, queue: Queue[_T], *, putter: bool, getter: bool) -> None:
         self._queue = queue

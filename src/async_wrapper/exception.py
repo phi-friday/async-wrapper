@@ -1,15 +1,15 @@
 from __future__ import annotations
 
 __all__ = [
-    "PendingError",
-    "QueueError",
-    "QueueEmptyError",
-    "QueueFullError",
-    "QueueClosedError",
-    "QueueBrokenError",
-    "QueueRestrictedError",
-    "DisposableError",
     "AlreadyDisposedError",
+    "DisposableError",
+    "PendingError",
+    "QueueBrokenError",
+    "QueueClosedError",
+    "QueueEmptyError",
+    "QueueError",
+    "QueueFullError",
+    "QueueRestrictedError",
 ]
 
 

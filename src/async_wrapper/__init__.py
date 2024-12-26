@@ -9,19 +9,19 @@ from async_wrapper.task_group import TaskGroupWrapper, create_task_group_wrapper
 from async_wrapper.wait import Completed, Waiter, wait_for
 
 __all__ = [
-    "TaskGroupWrapper",
-    "Queue",
-    "Waiter",
     "Completed",
     "Pipe",
+    "Queue",
     "SimpleDisposable",
-    "toggle_func",
+    "TaskGroupWrapper",
+    "Waiter",
     "async_to_sync",
-    "sync_to_async",
-    "create_task_group_wrapper",
-    "create_queue",
-    "wait_for",
     "create_disposable",
+    "create_queue",
+    "create_task_group_wrapper",
+    "sync_to_async",
+    "toggle_func",
+    "wait_for",
 ]
 
 __version__: str
