@@ -329,8 +329,8 @@ class Queue(Generic[_T]):
 
         new: Queue[_T]
         new = Queue(_stream=(_putter, _getter))  # type: ignore
-        new._close_putter = putter  # noqa: SLF001
-        new._close_getter = getter  # noqa: SLF001
+        new._close_putter = putter
+        new._close_getter = getter
         return new
 
     def statistics(self) -> MemoryObjectStreamStatistics:
