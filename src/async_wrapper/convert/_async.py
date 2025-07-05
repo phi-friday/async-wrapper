@@ -72,7 +72,7 @@ def sync_to_async(func: Callable[_P, _T]) -> Callable[_P, Awaitable[_T]]:
             anyio.run(main)
         ```
     """
-    from async_wrapper.convert._sync.main import Sync
+    from async_wrapper.convert._sync.main import Sync  # noqa: PLC0415
 
     if isinstance(func, Sync):
         return func._func  # noqa: SLF001

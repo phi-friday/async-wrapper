@@ -27,7 +27,7 @@ def _check_sa_greenlet(green: greenlet.greenlet) -> bool:
 
 def _check_sa_current_greenlet() -> bool:
     try:
-        import greenlet
+        import greenlet  # noqa: PLC0415
     except ImportError as exc:  # pragma: no cover
         error_msg = (
             "Please install the dependencies "
@@ -48,7 +48,7 @@ def run_sa_greenlet(awaitable: Awaitable[_T]) -> _T | Unset:
 
 def _wait_sa_greenlet(awaitable: Awaitable[_T]) -> _T:
     try:
-        from sqlalchemy.util import await_only
+        from sqlalchemy.util import await_only  # noqa: PLC0415
     except ImportError as exc:  # pragma: no cover
         error_msg = (
             "Please install the dependencies "

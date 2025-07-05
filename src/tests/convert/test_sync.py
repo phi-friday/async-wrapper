@@ -91,9 +91,9 @@ async def check_current_backend(
     assert maybe == backend
 
     if use_uvloop:
-        import asyncio
+        import asyncio  # noqa: PLC0415
 
-        import uvloop
+        import uvloop  # noqa: PLC0415
 
         policy = asyncio.get_event_loop_policy()
         assert isinstance(policy, uvloop.EventLoopPolicy)

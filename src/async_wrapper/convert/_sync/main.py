@@ -136,7 +136,7 @@ def async_to_sync(
         ```
     """
     if callable(func_or_awaitable):
-        from async_wrapper.convert._async import Async
+        from async_wrapper.convert._async import Async  # noqa: PLC0415
 
         if isinstance(func_or_awaitable, Async):
             return func_or_awaitable._func  # noqa: SLF001
@@ -194,10 +194,10 @@ def _check_uvloop() -> bool:
         return True
 
     try:
-        import uvloop
+        import uvloop  # noqa: PLC0415
     except ImportError:  # pragma: no cover
         return False
-    import asyncio
+    import asyncio  # noqa: PLC0415
 
     policy = asyncio.get_event_loop_policy()
     return isinstance(policy, uvloop.EventLoopPolicy)
