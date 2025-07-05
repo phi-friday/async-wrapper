@@ -80,16 +80,11 @@ class Queue(Generic[_T]):
         ```
     """
 
-    __slots__ = ("_close_getter", "_close_putter", "_getter", "_putter")
+    __slots__ = ("__getter", "__putter", "_close_getter", "_close_putter")
 
     if TYPE_CHECKING:
 
         def __init__(self, max_size: float | None = None) -> None: ...
-        @property
-        def _putter(self) -> MemoryObjectSendStream[_T]: ...
-
-        @property
-        def _getter(self) -> MemoryObjectReceiveStream[_T]: ...
 
     else:
 
@@ -110,7 +105,7 @@ class Queue(Generic[_T]):
         | None = None,
     ) -> None:
         if _stream is None:
-            self._putter, self._getter = create_memory_object_stream(  # pyright: ignore[reportAttributeAccessIssue]
+            self.__putter, self.__getter = create_memory_object_stream(
                 max_buffer_size=max_size or math.inf
             )
         else:
@@ -119,10 +114,26 @@ class Queue(Generic[_T]):
                 raise QueueBrokenError("putter or getter is closed")
             if putter._state.buffer is not getter._state.buffer:  # noqa: SLF001
                 raise QueueBrokenError("putter and getter has diff buffer.")
-            self._putter, self._getter = _stream  # pyright: ignore[reportAttributeAccessIssue]
+            self.__putter, self.__getter = _stream
 
         self._close_putter: bool = True
         self._close_getter: bool = True
+
+    @property
+    def _putter(self) -> MemoryObjectSendStream[_T]:
+        return self.__putter
+
+    @_putter.setter
+    def _putter(self, value: MemoryObjectSendStream[_T]) -> None:
+        self.__putter = value
+
+    @property
+    def _getter(self) -> MemoryObjectReceiveStream[_T]:
+        return self.__getter
+
+    @_getter.setter
+    def _getter(self, value: MemoryObjectReceiveStream[_T]) -> None:
+        self.__getter = value
 
     @property
     def aputter(self) -> AbstractAsyncContextManager[Self]:
@@ -421,11 +432,21 @@ class _RestrictedQueue(Queue[_T], Generic[_T]):
         self._raise_restricted(putter=True)
         return self._queue._putter  # noqa: SLF001
 
+    @_putter.setter
+    def _putter(self, value: MemoryObjectSendStream[_T]) -> None:
+        self._raise_restricted(putter=True)
+        self._queue._putter = value  # noqa: SLF001
+
     @property
     @override
     def _getter(self) -> MemoryObjectReceiveStream[_T]:
         self._raise_restricted(getter=True)
         return self._queue._getter  # noqa: SLF001
+
+    @_getter.setter
+    def _getter(self, value: MemoryObjectReceiveStream[_T]) -> None:
+        self._raise_restricted(getter=True)
+        self._queue._getter = value  # noqa: SLF001
 
     @property
     @override
